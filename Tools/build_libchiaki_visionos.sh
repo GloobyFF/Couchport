@@ -72,7 +72,10 @@ PY
 
 # 3. Toolchain.
 TOOLCHAIN="$WORK/ios.toolchain.cmake"
-[ -f "$TOOLCHAIN" ] || curl -sL -o "$TOOLCHAIN" "$TOOLCHAIN_URL"
+if [ ! -s "$TOOLCHAIN" ]; then
+    curl --fail --location --retry 3 -o "$TOOLCHAIN.tmp" "$TOOLCHAIN_URL"
+    mv "$TOOLCHAIN.tmp" "$TOOLCHAIN"
+fi
 
 build_platform() {
     local platform="$1" dir="$WORK/build-$1"
@@ -90,7 +93,7 @@ build_platform() {
     # One fat static archive: chiaki + mbedtls + opus + json-c + miniupnpc + curl ...
     find "$dir" -name "*.a" ! -name "libvpchiaki.a" -print0 \
         | xargs -0 libtool -static -o "$dir/libvpchiaki.a"
-    nm -g "$dir/libvpchiaki.a" 2>/dev/null | grep -q "_vp_session_create" \
+    nm -g "$dir/libvpchiaki.a" 2>/dev/null | grep "_vp_session_create" >/dev/null \
         || { echo "ERROR: shim symbols missing from $dir/libvpchiaki.a"; exit 1; }
 }
 
@@ -110,15 +113,17 @@ copy_license() { # name, search dir
     f="$(find "$2" -maxdepth 1 \( -iname 'COPYING*' -o -iname 'LICENSE*' \) -type f 2>/dev/null | head -1)"
     [ -n "$f" ] && cp "$f" "$LIC/LICENSE-$1.txt" || echo "warning: no license file for $1 in $2"
 }
-copy_license Pylux "$SRC/LICENSES"
+cp "$SRC/LICENSES/AGPL-3.0-only-OpenSSL.txt" "$LIC/LICENSE-Pylux.txt"
 copy_license nanopb "$SRC/third-party/nanopb"
 copy_license Jerasure "$SRC/third-party/jerasure"
 copy_license GF-Complete "$SRC/third-party/gf-complete"
 copy_license curl "$SRC/third-party/curl"
-for dep in mbedtls json-c miniupnp miniupnpc opus; do
-    d="$(find "$WORK/build-${PLATFORMS[0]}" -maxdepth 4 -type d -iname "${dep}*" -path '*_deps*' ! -name '*-build' ! -name '*-subbuild' 2>/dev/null | head -1)"
-    [ -n "$d" ] && copy_license "$dep" "$d" || echo "warning: $dep source not found for license copy"
-done
+DEPS="$WORK/build-${PLATFORMS[0]}/_deps"
+copy_license mbedtls "$DEPS/mbedtls-src"
+copy_license json-c "$WORK/build-${PLATFORMS[0]}/parent/third-party/_deps/json-c"
+copy_license miniupnp "$DEPS/miniupnp-src"
+# Opus' COPYING contains the full notices; LICENSE_PLEASE_READ only points to it.
+cp "$DEPS/opus-src/COPYING" "$LIC/LICENSE-opus.txt"
 
 # 4. Headers + module map.
 HDR="$WORK/headers"

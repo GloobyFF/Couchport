@@ -228,7 +228,6 @@ VPSession *vp_session_create(const VPSessionConfig *config, int *error_out)
     info.holepunch_session = NULL;
     info.rudp_sock = NULL;
     info.packet_loss_max = 0.05;
-    info.enable_idr_on_fec_failure = true;
 
     ChiakiErrorCode err = chiaki_session_init(&s->session, &info, &s->log);
     if(err != CHIAKI_ERR_SUCCESS)
@@ -354,7 +353,8 @@ int vp_session_set_login_pin(VPSession *s, const char *pin)
 
 int vp_session_request_idr(VPSession *s)
 {
-    return s ? chiaki_session_request_idr(&s->session) : CHIAKI_ERR_INVALID_DATA;
+    // The pinned Pylux version does not expose a manual IDR request API.
+    return s ? CHIAKI_ERR_VERSION_MISMATCH : CHIAKI_ERR_INVALID_DATA;
 }
 
 int vp_session_go_home(VPSession *s)

@@ -1,5 +1,6 @@
 import Foundation
 import StoreKit
+import SwiftUI
 
 /// What the free version allows. Everything else needs Couchport Pro.
 enum FreeTier {
@@ -46,7 +47,7 @@ final class PurchaseManager: ObservableObject {
     private init() {
         isPro = UserDefaults.standard.bool(forKey: Self.cacheKey)
         updatesTask = Task { [weak self] in
-            for await result in Transaction.updates {
+            for await result in StoreKit.Transaction.updates {
                 await self?.handle(result)
             }
         }
@@ -83,7 +84,7 @@ final class PurchaseManager: ObservableObject {
 
     func refreshEntitlements() async {
         var owned = false
-        for await result in Transaction.currentEntitlements {
+        for await result in StoreKit.Transaction.currentEntitlements {
             if case .verified(let transaction) = result,
                transaction.productID == Self.proProductID,
                transaction.revocationDate == nil {
@@ -142,7 +143,7 @@ final class PurchaseManager: ObservableObject {
         }
     }
 
-    private func handle(_ result: VerificationResult<Transaction>) async {
+    private func handle(_ result: VerificationResult<StoreKit.Transaction>) async {
         guard case .verified(let transaction) = result else { return }
         if transaction.productID == Self.proProductID {
             setPro(transaction.revocationDate == nil)

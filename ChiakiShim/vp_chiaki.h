@@ -160,6 +160,7 @@ void vp_session_stop(VPSession *session);
 void vp_session_destroy(VPSession *session);
 int vp_session_set_controller(VPSession *session, const VPControllerState *state);
 int vp_session_set_login_pin(VPSession *session, const char *pin);
+/// Returns CHIAKI_ERR_VERSION_MISMATCH with the currently pinned backend.
 int vp_session_request_idr(VPSession *session);
 int vp_session_go_home(VPSession *session);
 int vp_session_sleep_console(VPSession *session);

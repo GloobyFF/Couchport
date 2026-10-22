@@ -67,7 +67,7 @@ extension Font {
 extension View {
     /// Glass on visionOS; a material card on iPhone and iPad.
     @ViewBuilder
-    func adaptiveGlass<S: Shape>(in shape: S) -> some View {
+    func adaptiveGlass<S: InsettableShape>(in shape: S) -> some View {
         #if os(visionOS)
         self.glassBackgroundEffect(in: shape)
         #else

@@ -20,29 +20,35 @@ enum TouchContent: Equatable {
 /// | Situation                                          | Arrangement |
 /// |----------------------------------------------------|-------------|
 /// | Duo half-folded, fold across the screen (tabletop)  | video above the fold, reflection + controller or big touchpad below |
-/// | Portrait: any iPhone, Duo closed, Duo open upright  | video on top, controller (or touchpad) panel underneath |
+/// | Portrait: any iPhone, iPad, Duo closed or open      | video at the top (under the status bar), reflection filling the rest, controller (or touchpad) over it |
 /// | Landscape: phone sideways, Duo open flat, iPad      | full-screen video, translucent controller (or touchpad strip) over it |
 /// | Duo half-folded like a book (fold top to bottom)    | full-screen video; controller halves either side of the fold |
-/// | DualSense connected, not tabletop (Automatic)       | video only, centred |
+/// | DualSense connected, landscape (Automatic)          | video only, centred |
 enum PlayerArrangement: Equatable {
     case videoOnly
     case overlay
-    /// `videoBottom`: where the video area ends; `controlsTop`: where the
+    /// `videoTop`: where the video starts (the status bar inset in
+    /// portrait); `videoBottom`: where it ends; `controlsTop`: where the
     /// lower area starts (equal unless a fold band separates them).
     /// `tabletop`: the split is the iPhone Duo fold.
-    case stacked(videoBottom: CGFloat, controlsTop: CGFloat, tabletop: Bool)
+    case stacked(videoTop: CGFloat, videoBottom: CGFloat, controlsTop: CGFloat, tabletop: Bool)
 
-    static func resolve(size: CGSize, fold: FoldBand?, content: TouchContent, reflection: Bool) -> PlayerArrangement {
+    static func resolve(size: CGSize, fold: FoldBand?, content: TouchContent, reflection: Bool,
+                        topInset: CGFloat = 0) -> PlayerArrangement {
         if let fold, fold.isHorizontal, fold.minY > size.height * 0.2, fold.maxY < size.height * 0.85,
            content != .none || reflection {
-            return .stacked(videoBottom: fold.minY, controlsTop: fold.maxY, tabletop: true)
+            return .stacked(videoTop: 0, videoBottom: fold.minY, controlsTop: fold.maxY, tabletop: true)
+        }
+        if size.height > size.width * 1.1 {
+            // Portrait on every iPhone and iPad: the picture sits at the top,
+            // just under the status bar, as wide as the screen (at most 55 %
+            // of the height); the reflection fills everything below it.
+            guard content != .none || reflection else { return .videoOnly }
+            let video = min(size.width * 9 / 16, (size.height - topInset) * 0.55)
+            return .stacked(videoTop: topInset, videoBottom: topInset + video,
+                            controlsTop: topInset + video, tabletop: false)
         }
         guard content != .none else { return .videoOnly }
-        if size.height > size.width * 1.1 {
-            // Video as wide as the screen, at most 55 % of the height.
-            let video = min(size.width * 9 / 16, size.height * 0.55)
-            return .stacked(videoBottom: video, controlsTop: video, tabletop: false)
-        }
         return .overlay
     }
 }
@@ -122,13 +128,30 @@ struct PhonePlayerStage<Video: View, Overlay: View>: View {
     private func tabletopContent() -> TouchContent { content }
 
     var body: some View {
+        // The outer reader keeps the safe area so the status bar height is
+        // known; the stage itself draws edge to edge.
+        GeometryReader { outer in
+            stage(topInset: outer.safeAreaInsets.top)
+        }
+        .modifier(HingeReflectionModifier(strength: $reflectionStrength))
+        .onAppear { UIApplication.shared.isIdleTimerDisabled = true }
+        .onDisappear {
+            UIApplication.shared.isIdleTimerDisabled = false
+            holder.current?.releaseAll()
+            pip.tearDown()
+        }
+        .onChange(of: content) { _, new in if new == .none { holder.current?.releaseAll() } }
+        .onChange(of: settings.pictureInPicture) { _, on in if !on { pip.tearDown() } }
+    }
+
+    private func stage(topInset: CGFloat) -> some View {
         GeometryReader { proxy in
             let size = proxy.size
             let fold = FoldBand.read(proxy)
             let reflection = settings.tabletopReflection
             let arrangement = PlayerArrangement.resolve(size: size, fold: fold,
                                                         content: fold?.isHorizontal == true ? tabletopContent() : content,
-                                                        reflection: reflection)
+                                                        reflection: reflection, topInset: topInset)
             let pad = holder.pad(for: gamepad, haptics: settings.touchHaptics)
 
             ZStack(alignment: .top) {
@@ -149,20 +172,24 @@ struct PhonePlayerStage<Video: View, Overlay: View>: View {
                                         avoidCenter: fold.map { !$0.isHorizontal } ?? false)
                         .frame(width: size.width, height: size.height)
 
-                case .stacked(let videoBottom, let controlsTop, let tabletop):
+                case .stacked(let videoTop, let videoBottom, let controlsTop, let tabletop):
                     let lower = tabletop ? tabletopContent() : content
-                    let videoWidth = min(size.width, videoBottom * 16 / 9)
+                    let videoWidth = min(size.width, (videoBottom - videoTop) * 16 / 9)
                     VStack(spacing: 0) {
-                        // On the table the picture sits on the fold, so its
-                        // reflection starts right under it.
-                        videoArea(alignment: tabletop ? .bottom : .center)
-                            .frame(width: size.width, height: videoBottom)
+                        // Status bar band (portrait), then the picture. On the
+                        // table it sits on the fold; in portrait it hugs the
+                        // bottom of its area so the reflection starts under it.
+                        Color.black.frame(height: videoTop)
+                        videoArea(alignment: .bottom)
+                            .frame(width: size.width, height: max(0, videoBottom - videoTop))
                         // The fold band itself: nothing interactive on the crease.
                         Color.black.frame(height: max(0, controlsTop - videoBottom))
                         ZStack(alignment: .top) {
-                            if tabletop && reflection {
+                            if reflection {
+                                // The hinge angle only fades it on the table;
+                                // upright or flat it is always full.
                                 ReflectionView(renderer: renderer, videoWidth: videoWidth,
-                                               strength: reflectionStrength,
+                                               strength: tabletop ? reflectionStrength : 1,
                                                ripples: settings.waterRipples)
                             } else {
                                 Brand.night
@@ -184,7 +211,7 @@ struct PhonePlayerStage<Video: View, Overlay: View>: View {
                         // Every touch on the lower half drops a ring on the
                         // water, controls included.
                         .simultaneousGesture(SpatialTapGesture().onEnded { tap in
-                            guard tabletop, reflection, settings.waterRipples else { return }
+                            guard reflection, settings.waterRipples else { return }
                             let h = max(1, size.height - controlsTop)
                             renderer.addWaterDrop(at: CGPoint(x: tap.location.x / size.width,
                                                               y: tap.location.y / h))
@@ -195,15 +222,6 @@ struct PhonePlayerStage<Video: View, Overlay: View>: View {
             .animation(.easeInOut(duration: 0.25), value: arrangement)
         }
         .ignoresSafeArea(.container, edges: .all)
-        .modifier(HingeReflectionModifier(strength: $reflectionStrength))
-        .onAppear { UIApplication.shared.isIdleTimerDisabled = true }
-        .onDisappear {
-            UIApplication.shared.isIdleTimerDisabled = false
-            holder.current?.releaseAll()
-            pip.tearDown()
-        }
-        .onChange(of: content) { _, new in if new == .none { holder.current?.releaseAll() } }
-        .onChange(of: settings.pictureInPicture) { _, on in if !on { pip.tearDown() } }
     }
 
     private func videoArea(alignment: Alignment) -> some View {

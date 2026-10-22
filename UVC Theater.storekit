@@ -1,0 +1,58 @@
+{
+  "appPolicies" : {
+    "eula" : "",
+    "policies" : [
+      {
+        "locale" : "en_US",
+        "policyText" : "",
+        "policyURL" : ""
+      }
+    ]
+  },
+  "identifier" : "AF8B2F6A",
+  "nonRenewingSubscriptions" : [],
+  "products" : [
+    {
+      "displayPrice" : "9.99",
+      "familyShareable" : true,
+      "internalID" : "6789884862",
+      "localizations" : [
+        {
+          "description" : "Unlimited play time, 1080p, HDR, all bitrates, picture enhancement and the capture card mode.",
+          "displayName" : "Couchport Pro",
+          "locale" : "en_US"
+        },
+        {
+          "description" : "不限时游玩、1080p、HDR、全部码率、画面增强和采集卡模式。",
+          "displayName" : "Couchport Pro",
+          "locale" : "zh_CN"
+        }
+      ],
+      "productID" : "com.glooby.UVCTheater.pro",
+      "referenceName" : "Couchport Pro",
+      "type" : "NonConsumable"
+    }
+  ],
+  "settings" : {
+    "_applicationInternalID" : "6789884861",
+    "_askToBuyEnabled" : false,
+    "_billingGracePeriodEnabled" : false,
+    "_billingIssuesEnabled" : false,
+    "_developerTeamID" : "FLFYQXCCZM",
+    "_disableDialogs" : false,
+    "_failTransactionsEnabled" : false,
+    "_lastSynchronizedDate" : 814343001.439207,
+    "_locale" : "en_US",
+    "_renewalBillingIssuesEnabled" : false,
+    "_storefront" : "USA",
+    "_storeKitErrors" : [],
+    "_timeRate" : 0
+  },
+  "subscriptionBundleGroups" : [],
+  "subscriptionGroups" : [],
+  "subscriptionSuiteGroups" : [],
+  "version" : {
+    "major" : 6,
+    "minor" : 3
+  }
+}

@@ -336,6 +336,12 @@ private struct PlayerControlBar: View {
                             Label("Picture in Picture", systemImage: "pip.enter")
                         }
                     }
+                    Toggle(isOn: Binding(get: { app.remote.settings.tabletopReflection },
+                                         set: { app.remote.settings.tabletopReflection = $0 })) {
+                        Label("Tabletop Reflection", systemImage: "square.bottomhalf.filled")
+                    }
+                    // Shows what the app detected, to explain Automatic mode.
+                    Text("Detected controller: \(app.remote.gamepad.controllerName ?? String(localized: "None"))")
                     Picker(selection: touchModeBinding) {
                         ForEach(TouchControlsMode.allCases) { mode in
                             Text(LocalizedStringKey(mode.rawValue)).tag(mode)

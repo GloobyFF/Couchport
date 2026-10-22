@@ -116,13 +116,10 @@ struct PhonePlayerStage<Video: View, Overlay: View>: View {
         }
     }
 
-    /// Tabletop lower half: with any controller connected the big touchpad
-    /// is more useful there than nothing (Automatic mode).
-    private func tabletopContent() -> TouchContent {
-        guard isRemote else { return .none }
-        if settings.touchControls == .automatic, gamepad.hasPhysicalController { return .touchpad }
-        return content
-    }
+    /// Tabletop lower half follows the same rule: no controller = the full
+    /// on-screen controller; a controller without a touchpad = a compact
+    /// touchpad; DualSense = the reflection alone.
+    private func tabletopContent() -> TouchContent { content }
 
     var body: some View {
         GeometryReader { proxy in
@@ -171,7 +168,13 @@ struct PhonePlayerStage<Video: View, Overlay: View>: View {
                             }
                             switch lower {
                             case .controller: TouchControllerView(pad: pad, style: .panel)
-                            case .touchpad: TouchControllerView(pad: pad, style: .touchpad)
+                            case .touchpad:
+                                // Compact, at the bottom: the reflection
+                                // stays visible above it.
+                                TouchControllerView(pad: pad, style: .touchpad)
+                                    .frame(maxWidth: min(size.width, 520),
+                                           maxHeight: min(240, max(0, size.height - controlsTop) * 0.55))
+                                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
                             case .none: Color.clear
                             }
                         }

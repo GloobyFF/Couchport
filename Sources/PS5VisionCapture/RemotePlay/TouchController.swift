@@ -515,7 +515,7 @@ private struct TouchpadControl: View {
     var body: some View {
         GeometryReader { proxy in
             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(Color.white.opacity(start == nil ? 0.10 : 0.25))
+                .fill(Color.white.opacity(start == nil ? (large ? 0.06 : 0.10) : 0.25))
                 .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .strokeBorder(.white.opacity(0.3), lineWidth: 1))
                 .overlay(

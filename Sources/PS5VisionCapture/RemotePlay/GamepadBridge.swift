@@ -97,7 +97,15 @@ final class GamepadBridge: ObservableObject {
     // MARK: - Input
 
     private func attachBestController() {
-        let pads = GCController.controllers().filter { $0.extendedGamepad != nil }
+        // Only real game controllers count. Anything a keyboard, mouse or
+        // remote exposes through GameController is ignored, so the
+        // on-screen controller isn't hidden by a non-controller device.
+        let ignored: Set<String> = [GCProductCategoryKeyboard, GCProductCategoryMouse,
+                                    GCProductCategorySiriRemote1stGen, GCProductCategorySiriRemote2ndGen,
+                                    GCProductCategoryUniversalElectronicsRemote, GCProductCategoryCoalescedRemote]
+        let pads = GCController.controllers().filter {
+            $0.extendedGamepad != nil && !ignored.contains($0.productCategory)
+        }
         let next = pads.first { $0.extendedGamepad is GCDualSenseGamepad } ?? pads.first
         guard next !== current else { return }
         detach(current)

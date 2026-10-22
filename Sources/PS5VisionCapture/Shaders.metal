@@ -252,9 +252,9 @@ kernel void waterReflection(texture2d<float, access::sample> inTex  [[texture(0)
     float2 offset = float2(0.0);
     float t = p.misc.x;
     float strength = p.misc.y, waves = p.misc.z, aspect = p.misc.w;
-    float amb = sin(uv.y * 38.0 / (0.35 + depth) - t * 3.0 + sin(uv.x * 5.0 + t * 1.0) * 1.8)
-              + 0.6 * sin(uv.x * 23.0 + uv.y * 11.0 - t * 2.2);
-    offset += float2(amb * 0.006, amb * 0.010) * (0.25 + depth) * waves;
+    float amb = sin(uv.y * 38.0 / (0.35 + depth) - t * 2.2 + sin(uv.x * 5.0 + t * 0.7) * 1.5)
+              + 0.5 * sin(uv.x * 23.0 + uv.y * 11.0 - t * 1.6);
+    offset += float2(amb * 0.0035, amb * 0.006) * (0.25 + depth) * waves;
 
     // Rings from taps.
     float highlight = 0.0;

@@ -132,7 +132,7 @@ struct TouchControllerView: View {
         // The panel stacks shoulders, D-pad/face buttons and sticks: about
         // 7.5 units tall, so it fits the Duo's lower half without the
         // shoulder row being cut off under the fold.
-        case .panel: return max(28, min(70, min(size.width / 8.5, size.height / 7.6)))
+        case .panel: return max(26, min(70, min(size.width / 9.6, size.height / 7.6)))
         case .touchpad: return max(40, min(70, min(size.width / 8.5, size.height / 5.2)))
         }
     }

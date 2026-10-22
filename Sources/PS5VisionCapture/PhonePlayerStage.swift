@@ -131,7 +131,9 @@ struct PhonePlayerStage<Video: View, Overlay: View>: View {
         // The outer reader keeps the safe area so the status bar height is
         // known; the stage itself draws edge to edge.
         GeometryReader { outer in
-            stage(topInset: outer.safeAreaInsets.top)
+            // The player ignores the safe area higher up, which can zero the
+            // reader's insets; the window always knows the real value.
+            stage(topInset: max(outer.safeAreaInsets.top, Self.windowTopInset))
         }
         .modifier(HingeReflectionModifier(strength: $reflectionStrength))
         .onAppear { UIApplication.shared.isIdleTimerDisabled = true }
@@ -142,6 +144,12 @@ struct PhonePlayerStage<Video: View, Overlay: View>: View {
         }
         .onChange(of: content) { _, new in if new == .none { holder.current?.releaseAll() } }
         .onChange(of: settings.pictureInPicture) { _, on in if !on { pip.tearDown() } }
+    }
+
+    private static var windowTopInset: CGFloat {
+        UIApplication.shared.connectedScenes
+            .compactMap { ($0 as? UIWindowScene)?.keyWindow }
+            .first?.safeAreaInsets.top ?? 0
     }
 
     private func stage(topInset: CGFloat) -> some View {

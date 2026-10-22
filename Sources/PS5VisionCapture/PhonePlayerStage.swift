@@ -76,7 +76,7 @@ struct FoldBand: Equatable {
 /// floating control bar, arranged by `PlayerArrangement`. Re-evaluated on
 /// every size or fold change, so folding, unfolding, rotating and Split View
 /// rearrange it live while the stream keeps running.
-struct PhonePlayerStage<Video: View, Overlay: View, Bar: View>: View {
+struct PhonePlayerStage<Video: View, Overlay: View>: View {
     @ObservedObject var settings: RemotePlaySettings
     @ObservedObject var gamepad: GamepadBridge
     /// Remote Play (true) or capture card (false: no touch controller).
@@ -85,10 +85,6 @@ struct PhonePlayerStage<Video: View, Overlay: View, Bar: View>: View {
     let video: Video
     /// Status overlay drawn on the video area.
     let videoOverlay: Overlay
-    /// The control bar as a quiet strip, shown on the lower half in
-    /// tabletop pose (the floating bar at the top is hidden then).
-    let dockedBar: Bar
-    @Binding var tabletop: Bool
 
     @StateObject private var holder = PadHolder()
     @StateObject private var pip = PlayerPictureInPicture()
@@ -96,17 +92,14 @@ struct PhonePlayerStage<Video: View, Overlay: View, Bar: View>: View {
     @State private var reflectionStrength: Double = 1
 
     init(settings: RemotePlaySettings, gamepad: GamepadBridge, isRemote: Bool,
-         renderer: MetalVideoRenderer, tabletop: Binding<Bool>,
-         @ViewBuilder video: () -> Video, @ViewBuilder videoOverlay: () -> Overlay,
-         @ViewBuilder dockedBar: () -> Bar) {
+         renderer: MetalVideoRenderer,
+         @ViewBuilder video: () -> Video, @ViewBuilder videoOverlay: () -> Overlay) {
         self.settings = settings
         self.gamepad = gamepad
         self.isRemote = isRemote
         self.renderer = renderer
         self.video = video()
         self.videoOverlay = videoOverlay()
-        self.dockedBar = dockedBar()
-        self._tabletop = tabletop
     }
 
     /// What to show for the current mode and controller, outside tabletop.
@@ -174,19 +167,16 @@ struct PhonePlayerStage<Video: View, Overlay: View, Bar: View>: View {
                             } else {
                                 Brand.night
                             }
-                            VStack(spacing: 0) {
-                                if tabletop { dockedBar }
-                                switch lower {
-                                case .controller: TouchControllerView(pad: pad, style: .panel)
-                                case .touchpad:
-                                    // Compact, at the bottom: the reflection
-                                    // stays visible above it.
-                                    TouchControllerView(pad: pad, style: .touchpad)
-                                        .frame(maxWidth: min(size.width, 520),
-                                               maxHeight: min(240, max(0, size.height - controlsTop) * 0.55))
-                                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-                                case .none: Spacer(minLength: 0)
-                                }
+                            switch lower {
+                            case .controller: TouchControllerView(pad: pad, style: .panel)
+                            case .touchpad:
+                                // Compact, at the bottom: the reflection
+                                // stays visible above it.
+                                TouchControllerView(pad: pad, style: .touchpad)
+                                    .frame(maxWidth: min(size.width, 520),
+                                           maxHeight: min(240, max(0, size.height - controlsTop) * 0.55))
+                                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                            case .none: Color.clear
                             }
                         }
                         .frame(width: size.width, height: max(0, size.height - controlsTop))
@@ -203,9 +193,6 @@ struct PhonePlayerStage<Video: View, Overlay: View, Bar: View>: View {
                 }
             }
             .animation(.easeInOut(duration: 0.25), value: arrangement)
-            .onChange(of: arrangement, initial: true) { _, new in
-                if case .stacked(_, _, true) = new { tabletop = true } else { tabletop = false }
-            }
         }
         .ignoresSafeArea(.container, edges: .all)
         .modifier(HingeReflectionModifier(strength: $reflectionStrength))
@@ -214,7 +201,6 @@ struct PhonePlayerStage<Video: View, Overlay: View, Bar: View>: View {
             UIApplication.shared.isIdleTimerDisabled = false
             holder.current?.releaseAll()
             pip.tearDown()
-            tabletop = false
         }
         .onChange(of: content) { _, new in if new == .none { holder.current?.releaseAll() } }
         .onChange(of: settings.pictureInPicture) { _, on in if !on { pip.tearDown() } }

@@ -143,8 +143,13 @@ final class PlayerPictureInPicture: NSObject, ObservableObject {
         boundLayer = nil
         PiPFrameSink.shared.attach(nil)
         renderer?.presentationEnabled.value = true
-        isActive = false
-        isPossible = false
+        // tearDown can run while SwiftUI is updating a view (configure from
+        // a layer callback, onDisappear); publish on the next turn.
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            if self.isActive { self.isActive = false }
+            if self.isPossible { self.isPossible = false }
+        }
     }
 }
 

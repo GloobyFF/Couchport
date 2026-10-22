@@ -35,6 +35,7 @@ final class RemotePlaySettings: ObservableObject {
     @Published var phoneMotion: Bool { didSet { save() } }           // phone gyro when the pad has none
     @Published var pictureInPicture: Bool { didSet { save() } }      // iPhone / iPad
     @Published var tabletopReflection: Bool { didSet { save() } }    // iPhone Duo lower half
+    @Published var waterRipples: Bool { didSet { save() } }          // reflection as water
 
     private let d = UserDefaults.standard
 
@@ -57,6 +58,7 @@ final class RemotePlaySettings: ObservableObject {
         phoneMotion = d.object(forKey: "rp.phoneMotion") as? Bool ?? true
         pictureInPicture = d.object(forKey: "rp.pip") as? Bool ?? true
         tabletopReflection = d.object(forKey: "rp.reflection") as? Bool ?? true
+        waterRipples = d.object(forKey: "rp.water") as? Bool ?? true
     }
 
     private func save() {
@@ -78,6 +80,7 @@ final class RemotePlaySettings: ObservableObject {
         d.set(phoneMotion, forKey: "rp.phoneMotion")
         d.set(pictureInPicture, forKey: "rp.pip")
         d.set(tabletopReflection, forKey: "rp.reflection")
+        d.set(waterRipples, forKey: "rp.water")
     }
 }
 

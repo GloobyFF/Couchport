@@ -19,6 +19,9 @@ final class MetalVideoRenderer: NSObject, AVCaptureVideoDataOutputSampleBufferDe
     private let queue: MTLCommandQueue
     private let convertPipeline: MTLComputePipelineState
     private let sharpenPipeline: MTLComputePipelineState
+    /// iPhone Duo water reflection; nil if the shader is missing (then the
+    /// reflection falls back to a plain copy).
+    private let waterPipeline: MTLComputePipelineState?
     private let textureCache: CVMetalTextureCache
     private let texturePool: MetalTexturePool
 
@@ -28,6 +31,19 @@ final class MetalVideoRenderer: NSObject, AVCaptureVideoDataOutputSampleBufferDe
     /// False while the app is in the background (Picture in Picture shows
     /// the picture then): `nextDrawable()` on a hidden layer can block.
     let presentationEnabled = Locked<Bool>(true)
+
+    /// Water reflection state, written from the main actor.
+    struct WaterState {
+        var strength: Float = 1
+        var waves: Float = 1
+        var videoRect = SIMD4<Float>(0, 0, 1, 1)
+        var base = SIMD3<Float>(0.05, 0.06, 0.10)
+        var drops: [SIMD4<Float>] = []
+    }
+    let water = Locked<WaterState>(WaterState())
+    /// Pixel size of the reflection layer (half its point size × scale).
+    let mirrorPixelSize = Locked<CGSize>(.zero)
+    private let waterEpoch = CACurrentMediaTime()
 
     // Reused intermediate textures, managed by the texture pool.
     private var rgbTexture: MTLTexture?      // converted, native resolution
@@ -140,17 +156,21 @@ final class MetalVideoRenderer: NSObject, AVCaptureVideoDataOutputSampleBufferDe
             throw MetalRendererError.textureCacheCreationFailed
         }
 
+        let water = library.makeFunction(name: "waterReflection")
+            .flatMap { try? device.makeComputePipelineState(function: $0) }
+
         return MetalVideoRenderer(device: device, queue: queue,
-                                  convert: convert, sharpen: sharpen, cache: cache)
+                                  convert: convert, sharpen: sharpen, water: water, cache: cache)
     }
 
     private init(device: MTLDevice, queue: MTLCommandQueue,
                  convert: MTLComputePipelineState, sharpen: MTLComputePipelineState,
-                 cache: CVMetalTextureCache) {
+                 water: MTLComputePipelineState?, cache: CVMetalTextureCache) {
         self.device = device
         self.queue = queue
         self.convertPipeline = convert
         self.sharpenPipeline = sharpen
+        self.waterPipeline = water
         self.textureCache = cache
         self.texturePool = MetalTexturePool(device: device)
         super.init()
@@ -212,6 +232,16 @@ final class MetalVideoRenderer: NSObject, AVCaptureVideoDataOutputSampleBufferDe
     /// Removes the reflection output if it is still `layer`.
     func detachMirror(_ layer: CAMetalLayer) {
         if mirrorLayer === layer { mirrorLayer = nil }
+    }
+
+    /// A tap on the water, in the reflection's UV (0...1). Keeps the last six.
+    func addWaterDrop(at uv: CGPoint, amplitude: Float = 1) {
+        let now = Float(CACurrentMediaTime() - waterEpoch)
+        water.mutate { state in
+            state.drops.append(SIMD4(Float(uv.x), Float(uv.y), now, amplitude))
+            state.drops.removeAll { now - $0.z > 3 }
+            if state.drops.count > 6 { state.drops.removeFirst(state.drops.count - 6) }
+        }
     }
 
     /// Called from the main actor whenever the user changes options.
@@ -406,7 +436,11 @@ private extension MetalVideoRenderer {
             return
         }
         if let mirror = mirrorLayer {
-            encodeBlit(processed, to: mirror, commandBuffer: commandBuffer)
+            if waterPipeline != nil {
+                encodeWater(processed, to: mirror, commandBuffer: commandBuffer)
+            } else {
+                encodeBlit(processed, to: mirror, commandBuffer: commandBuffer)
+            }
         }
         if let layer {
             present(processed, to: layer, commandBuffer: commandBuffer)
@@ -463,6 +497,34 @@ private extension MetalVideoRenderer {
                   to: drawable.texture, destinationSlice: 0, destinationLevel: 0,
                   destinationOrigin: MTLOrigin(x: 0, y: 0, z: 0))
         blit.endEncoding()
+        commandBuffer.present(drawable)
+    }
+
+    /// Renders the water reflection straight into the reflection layer, at
+    /// half the view's resolution (it is soft anyway): one small compute
+    /// pass per frame.
+    func encodeWater(_ texture: MTLTexture, to layer: CAMetalLayer, commandBuffer: MTLCommandBuffer) {
+        guard let pipeline = waterPipeline else { return }
+        let size = mirrorPixelSize.value
+        guard size.width >= 2, size.height >= 2 else { return }
+        if layer.drawableSize != size { layer.drawableSize = size }
+        guard let drawable = layer.nextDrawable(),
+              let encoder = commandBuffer.makeComputeCommandEncoder() else { return }
+
+        let state = water.value
+        let time = Float(CACurrentMediaTime() - waterEpoch)
+        var params = [SIMD4<Float>](repeating: .zero, count: 10)
+        params[0] = SIMD4(time, state.strength, state.waves, Float(size.width / size.height))
+        params[1] = state.videoRect
+        params[2] = SIMD4(state.base, Float(min(state.drops.count, 6)))
+        for (i, drop) in state.drops.prefix(6).enumerated() { params[3 + i] = drop }
+
+        encoder.setComputePipelineState(pipeline)
+        encoder.setTexture(texture, index: 0)
+        encoder.setTexture(drawable.texture, index: 1)
+        encoder.setBytes(params, length: MemoryLayout<SIMD4<Float>>.stride * params.count, index: 0)
+        dispatch(encoder, pipeline: pipeline, width: Int(size.width), height: Int(size.height))
+        encoder.endEncoding()
         commandBuffer.present(drawable)
     }
 

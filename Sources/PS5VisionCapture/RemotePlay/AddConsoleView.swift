@@ -447,6 +447,8 @@ struct RemoteSettingsSections: View {
             Toggle("Phone Motion (Gyro)", isOn: $settings.phoneMotion)
                 .disabled(!settings.motion)
             Toggle("Tabletop Reflection", isOn: $settings.tabletopReflection)
+            Toggle("Water Ripples", isOn: $settings.waterRipples)
+                .disabled(!settings.tabletopReflection)
         } header: {
             Text("iPhone & iPad")
         } footer: {

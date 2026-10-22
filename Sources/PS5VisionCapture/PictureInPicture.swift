@@ -218,16 +218,31 @@ final class PiPLayerHostView: UIView {
 }
 
 /// Second copy of the video for the iPhone Duo tabletop reflection.
+/// The renderer draws the water at half the view's resolution.
 struct MirrorVideoView: UIViewRepresentable {
     let renderer: MetalVideoRenderer
 
-    func makeUIView(context: Context) -> MetalLayerView {
-        let view = MetalLayerView()
+    func makeUIView(context: Context) -> MirrorLayerView {
+        let view = MirrorLayerView()
         view.isUserInteractionEnabled = false
+        let renderer = renderer
+        view.onLayout = { size in renderer.mirrorPixelSize.value = size }
         renderer.attachMirror(view.metalLayer)
         return view
     }
 
-    func updateUIView(_ uiView: MetalLayerView, context: Context) {}
+    func updateUIView(_ uiView: MirrorLayerView, context: Context) {}
+}
+
+final class MirrorLayerView: MetalLayerView {
+    var onLayout: ((CGSize) -> Void)?
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        metalLayer.contentsGravity = .resize
+        let scale = (window?.screen.scale ?? 3) / 2
+        onLayout?(CGSize(width: (bounds.width * scale).rounded(),
+                         height: (bounds.height * scale).rounded()))
+    }
 }
 #endif

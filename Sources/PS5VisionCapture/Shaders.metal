@@ -221,3 +221,73 @@ kernel void sharpen(texture2d<float, access::read>  inTex  [[texture(0)]],
 
     outTex.write(float4(clamp(result, 0.0, 1.0), 1.0), gid);
 }
+
+// MARK: - iPhone Duo tabletop: water reflection
+
+/// Laid out as plain float4s so the Swift side can fill it as
+/// [SIMD4<Float>] without layout surprises.
+struct WaterParams {
+    float4 misc;          // x time (s), y strength 0...1, z waves 0...1, w aspect (w/h)
+    float4 videoRect;     // reflected picture in output UV (x, y, w, h)
+    float4 base;          // rgb water colour, a = number of drops
+    float4 drops[6];      // x, y centre (UV), z start time, w amplitude
+};
+
+/// Draws the lower half of the screen as a water surface reflecting the
+/// picture above the fold: flipped, distorted by gentle waves and by rings
+/// from taps, softened with distance and fading into the water colour.
+kernel void waterReflection(texture2d<float, access::sample> inTex  [[texture(0)]],
+                            texture2d<float, access::write>  outTex [[texture(1)]],
+                            constant WaterParams& p                 [[buffer(0)]],
+                            uint2 gid                               [[thread_position_in_grid]])
+{
+    uint w = outTex.get_width(), h = outTex.get_height();
+    if (gid.x >= w || gid.y >= h) return;
+    constexpr sampler s(address::clamp_to_edge, filter::linear);
+
+    float2 uv = (float2(gid) + 0.5) / float2(w, h);
+    float depth = uv.y;                       // 0 at the fold, 1 at the bottom edge
+
+    // Ambient waves: horizontal ripples that grow away from the fold.
+    float2 offset = float2(0.0);
+    float t = p.misc.x;
+    float strength = p.misc.y, waves = p.misc.z, aspect = p.misc.w;
+    float amb = sin(uv.y * 38.0 / (0.35 + depth) - t * 2.2 + sin(uv.x * 5.0 + t * 0.7) * 1.5)
+              + 0.5 * sin(uv.x * 23.0 + uv.y * 11.0 - t * 1.6);
+    offset += float2(amb * 0.0035, amb * 0.006) * (0.25 + depth) * waves;
+
+    // Rings from taps.
+    float highlight = 0.0;
+    int count = min(int(p.base.a), 6);
+    for (int i = 0; i < count; i++) {
+        float4 d = p.drops[i];
+        float age = t - d.z;
+        if (age < 0.0 || age > 3.0) continue;
+        float2 delta = (uv - d.xy) * float2(aspect, 1.0);
+        float dist = length(delta);
+        float front = age * 0.32;
+        float envelope = exp(-abs(dist - front) * 14.0) * exp(-age * 1.4) * d.w;
+        float ring = sin((dist - front) * 70.0) * envelope;
+        float2 dir = dist > 1e-4 ? delta / dist : float2(0.0);
+        offset += dir * ring * 0.018 * float2(1.0 / aspect, 1.0);
+        highlight += max(0.0, ring) * 0.25;
+    }
+
+    float3 color = p.base.rgb;
+    float2 local = (uv + offset - p.videoRect.xy) / p.videoRect.zw;
+    if (local.x >= 0.0 && local.x <= 1.0 && local.y >= 0.0 && local.y <= 1.0) {
+        // Mirror: the row next to the fold is the bottom row of the picture.
+        float2 src = float2(local.x, 1.0 - local.y);
+        // Softer further away: a small cross of taps, spread with depth.
+        float2 px = float2(1.0 / inTex.get_width(), 1.0 / inTex.get_height()) * (1.0 + depth * 6.0);
+        float3 c = inTex.sample(s, src).rgb * 0.4
+                 + inTex.sample(s, src + float2(px.x, 0)).rgb * 0.15
+                 + inTex.sample(s, src - float2(px.x, 0)).rgb * 0.15
+                 + inTex.sample(s, src + float2(0, px.y)).rgb * 0.15
+                 + inTex.sample(s, src - float2(0, px.y)).rgb * 0.15;
+        float fade = strength * 0.6 * pow(saturate(1.0 - local.y), 1.4);
+        color = mix(p.base.rgb, c, fade);
+    }
+    color += highlight * waves * strength;
+    outTex.write(float4(saturate(color), 1.0), gid);
+}

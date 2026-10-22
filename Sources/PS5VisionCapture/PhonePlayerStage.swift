@@ -161,8 +161,9 @@ struct PhonePlayerStage<Video: View, Overlay: View>: View {
                         Color.black.frame(height: max(0, controlsTop - videoBottom))
                         ZStack(alignment: .top) {
                             if tabletop && reflection {
-                                ReflectionView(renderer: renderer, width: videoWidth,
-                                               strength: reflectionStrength)
+                                ReflectionView(renderer: renderer, videoWidth: videoWidth,
+                                               strength: reflectionStrength,
+                                               ripples: settings.waterRipples)
                             } else {
                                 Brand.night
                             }
@@ -180,6 +181,14 @@ struct PhonePlayerStage<Video: View, Overlay: View>: View {
                         }
                         .frame(width: size.width, height: max(0, size.height - controlsTop))
                         .clipped()
+                        // Every touch on the lower half drops a ring on the
+                        // water, controls included.
+                        .simultaneousGesture(SpatialTapGesture().onEnded { tap in
+                            guard tabletop, reflection, settings.waterRipples else { return }
+                            let h = max(1, size.height - controlsTop)
+                            renderer.addWaterDrop(at: CGPoint(x: tap.location.x / size.width,
+                                                              y: tap.location.y / h))
+                        })
                     }
                 }
             }
@@ -214,27 +223,42 @@ struct PhonePlayerStage<Video: View, Overlay: View>: View {
     }
 }
 
-/// The picture mirrored on the iPhone Duo's lower half in tabletop pose,
-/// as if reflected on a glossy table: flipped, blurred, fading out.
-/// Drawn by the app (no system API provides it); a second output of the
-/// same Metal renderer, so it costs one extra blit per frame.
+/// The lower half of iPhone Duo in tabletop pose as a water surface that
+/// reflects the picture: flipped, rippling, fading into the water colour,
+/// with rings where you touch. Drawn by the renderer's water shader (no
+/// system API provides it) at half resolution: one small compute pass per
+/// frame, nothing when it is off.
 private struct ReflectionView: View {
     let renderer: MetalVideoRenderer
-    let width: CGFloat
+    let videoWidth: CGFloat
     let strength: Double
+    let ripples: Bool
 
     var body: some View {
-        ZStack(alignment: .top) {
-            Brand.night
+        GeometryReader { proxy in
             MirrorVideoView(renderer: renderer)
-                .frame(width: width, height: width * 9 / 16)
-                .scaleEffect(x: 1, y: -1)
-                .overlay(Rectangle().fill(.ultraThinMaterial))
-                .mask(LinearGradient(colors: [.white.opacity(0.55 * strength), .clear],
-                                     startPoint: .top, endPoint: .bottom))
                 .allowsHitTesting(false)
+                .onAppear { update(proxy.size) }
+                .onChange(of: proxy.size) { _, s in update(s) }
+                .onChange(of: strength) { _, _ in update(proxy.size) }
+                .onChange(of: ripples) { _, _ in update(proxy.size) }
+                .onChange(of: videoWidth) { _, _ in update(proxy.size) }
         }
         .accessibilityHidden(true)
+    }
+
+    /// The reflected picture is as wide as the picture above, centred, and
+    /// starts right under the fold.
+    private func update(_ size: CGSize) {
+        guard size.width > 0, size.height > 0 else { return }
+        let w = Float(videoWidth / size.width)
+        let h = Float(videoWidth * 9 / 16 / size.height)
+        renderer.water.mutate { s in
+            s.strength = Float(strength)
+            s.waves = ripples ? 1 : 0
+            s.videoRect = SIMD4((1 - w) / 2, 0, w, h)
+            s.base = SIMD3(0.02, 0.05, 0.15)   // Brand.night
+        }
     }
 }
 

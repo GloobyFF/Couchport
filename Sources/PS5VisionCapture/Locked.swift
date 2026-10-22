@@ -11,4 +11,10 @@ final class Locked<Value>: @unchecked Sendable {
         get { lock.lock(); defer { lock.unlock() }; return storage }
         set { lock.lock(); storage = newValue; lock.unlock() }
     }
+
+    /// Read-modify-write under one lock.
+    func mutate(_ body: (inout Value) -> Void) {
+        lock.lock(); defer { lock.unlock() }
+        body(&storage)
+    }
 }

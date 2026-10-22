@@ -17,7 +17,7 @@ struct MetalVideoView: UIViewRepresentable {
     }
 }
 
-final class MetalLayerView: UIView {
+class MetalLayerView: UIView {
     override class var layerClass: AnyClass { CAMetalLayer.self }
 
     var metalLayer: CAMetalLayer { layer as! CAMetalLayer }

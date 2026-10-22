@@ -21,6 +21,13 @@ final class GamepadBridge: ObservableObject {
     /// Send gyro/accelerometer to the console (motion aiming).
     var motionEnabled = true { didSet { configureMotion() } }
 
+    /// Swap ✕/○ (confirm / cancel) and □/△ on the hardware controller.
+    /// For controllers with a Nintendo-style layout, or games that use ○ to
+    /// confirm. The on-screen controller is never swapped: what you see is
+    /// what is sent.
+    var swapConfirmCancel = false { didSet { if swapConfirmCancel != oldValue { onState?(output) } } }
+    var swapSquareTriangle = false { didSet { if swapSquareTriangle != oldValue { onState?(output) } } }
+
     let feedback = ControllerFeedback()
 
     private var observers: [NSObjectProtocol] = []
@@ -102,6 +109,8 @@ final class GamepadBridge: ObservableObject {
     /// a stick or touchpad finger from the touch controller wins while held.
     private var output: GamepadSnapshot {
         var s = last
+        if swapConfirmCancel { s.buttons = Self.swapBits(s.buttons, 0, 1) }     // Cross ↔ Circle
+        if swapSquareTriangle { s.buttons = Self.swapBits(s.buttons, 2, 3) }    // Square ↔ Triangle
         let v = virtualPad
         s.buttons |= v.buttons
         s.l2 = max(s.l2, v.l2)
@@ -111,6 +120,12 @@ final class GamepadBridge: ObservableObject {
         if let t = v.touch0 { s.touch0 = t }
         if let t = v.touch1 { s.touch1 = t }
         return s
+    }
+
+    nonisolated static func swapBits(_ value: UInt32, _ a: UInt32, _ b: UInt32) -> UInt32 {
+        let bitA = (value >> a) & 1, bitB = (value >> b) & 1
+        guard bitA != bitB else { return value }
+        return value ^ ((1 << a) | (1 << b))
     }
 
     private func detach(_ controller: GCController?) {

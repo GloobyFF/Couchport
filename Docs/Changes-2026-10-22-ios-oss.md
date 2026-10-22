@@ -47,3 +47,8 @@
 - 控制栏在 iOS 上移到顶部，不会挡住下方的手柄。
 - 播放时屏幕不会自动锁定。
 - `project.yml` 只在使用 iOS 27.1–27.4 SDK 时打开 `DUO_SDK` 编译条件；用更早的 Xcode 编译时没有折痕 API，布局只按宽高判断，依然能正常构建。
+
+## 按键交换（参考 Pylux 的 Swap Cross/Moon 设置）
+- Stream Settings › Controller 新增两项：“Swap ✕ and ○ (Confirm / Cancel)”、“Swap □ and △”。
+- 只作用于实体手柄（`GamepadBridge.output` 中交换 bit 0/1、2/3），切换后立即生效；屏幕手柄不会交换，保证屏幕上显示的按键就是实际发送的按键。
+- 自己实现，未复制 Pylux 代码。

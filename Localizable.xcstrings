@@ -13764,6 +13764,144 @@
           }
         }
       }
+    },
+    "Swap ✕ and ○ (Confirm / Cancel)": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "交换 ✕ 和 ○（确定 / 取消）"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "交換 ✕ 和 ○（確定 / 取消）"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "✕ und ○ tauschen (Bestätigen / Abbrechen)"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Intercambiar ✕ y ○ (Aceptar / Cancelar)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inverser ✕ et ○ (Valider / Annuler)"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "✕ と ○ を入れ替える（決定 / キャンセル）"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "✕와 ○ 바꾸기(확인 / 취소)"
+          }
+        }
+      }
+    },
+    "Swap □ and △": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "交换 □ 和 △"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "交換 □ 和 △"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "□ und △ tauschen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Intercambiar □ y △"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inverser □ et △"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "□ と △ を入れ替える"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "□와 △ 바꾸기"
+          }
+        }
+      }
+    },
+    "The button swaps apply right away to a connected controller, for example one with a Nintendo-style layout or a game that confirms with ○. The on-screen controller is never swapped.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按键交换会立即作用于已连接的手柄，适合任天堂布局的手柄，或用 ○ 确定的游戏。屏幕手柄不受影响。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按鍵交換會立即作用於已連接的控制器，適合任天堂配置的控制器，或用 ○ 確定的遊戲。螢幕手把不受影響。"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die Tastentausche gelten sofort für einen verbundenen Controller, etwa mit Nintendo-Layout oder für Spiele, die mit ○ bestätigen. Der Bildschirm-Controller wird nie getauscht."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los intercambios se aplican al instante al mando conectado, por ejemplo uno con distribución de Nintendo o un juego que acepta con ○. El mando en pantalla nunca se intercambia."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les inversions s'appliquent aussitôt à la manette connectée, par exemple une manette à disposition Nintendo ou un jeu qui valide avec ○. La manette à l'écran n'est jamais inversée."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ボタンの入れ替えは接続中のコントローラにすぐ反映されます。任天堂配置のコントローラや ○ で決定するゲーム向けです。画面上のコントローラは入れ替わりません。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "버튼 바꾸기는 연결된 컨트롤러에 즉시 적용됩니다. 닌텐도 배열 컨트롤러나 ○로 확인하는 게임에 맞습니다. 화면 컨트롤러는 바뀌지 않습니다."
+          }
+        }
+      }
     }
   },
   "version": "1.2"

@@ -22,6 +22,8 @@ final class RemotePlaySettings: ObservableObject {
     @Published var hapticsStrength: Float { didSet { save() } }      // 0...1.5
     @Published var adaptiveTriggers: Bool { didSet { save() } }
     @Published var motion: Bool { didSet { save() } }                // gyro aiming
+    @Published var swapConfirmCancel: Bool { didSet { save() } }     // ✕ ↔ ○ on the hardware pad
+    @Published var swapSquareTriangle: Bool { didSet { save() } }    // □ ↔ △ on the hardware pad
     /// On-screen controller (iPhone / iPad): automatic = only when no
     /// hardware controller is connected.
     @Published var touchControls: TouchControlsMode { didSet { save() } }
@@ -41,6 +43,8 @@ final class RemotePlaySettings: ObservableObject {
         hapticsStrength = d.object(forKey: "rp.hapticsStrength") as? Float ?? 1
         adaptiveTriggers = d.object(forKey: "rp.triggers") as? Bool ?? true
         motion = d.object(forKey: "rp.motion") as? Bool ?? true
+        swapConfirmCancel = d.bool(forKey: "rp.swapConfirm")
+        swapSquareTriangle = d.bool(forKey: "rp.swapSquare")
         touchControls = TouchControlsMode(rawValue: d.string(forKey: "rp.touchControls") ?? "") ?? .automatic
         touchOpacity = d.object(forKey: "rp.touchOpacity") as? Double ?? 0.6
         touchHaptics = d.object(forKey: "rp.touchHaptics") as? Bool ?? true
@@ -57,6 +61,8 @@ final class RemotePlaySettings: ObservableObject {
         d.set(hapticsStrength, forKey: "rp.hapticsStrength")
         d.set(adaptiveTriggers, forKey: "rp.triggers")
         d.set(motion, forKey: "rp.motion")
+        d.set(swapConfirmCancel, forKey: "rp.swapConfirm")
+        d.set(swapSquareTriangle, forKey: "rp.swapSquare")
         d.set(touchControls.rawValue, forKey: "rp.touchControls")
         d.set(touchOpacity, forKey: "rp.touchOpacity")
         d.set(touchHaptics, forKey: "rp.touchHaptics")
@@ -137,7 +143,9 @@ final class RemotePlayManager: ObservableObject {
             settings.$haptics.sink { feedback.hapticsEnabled = $0; if !$0 { feedback.reset() } },
             settings.$hapticsStrength.sink { feedback.hapticsStrength = $0 },
             settings.$adaptiveTriggers.sink { feedback.setAdaptiveTriggersEnabled($0) },
-            settings.$motion.sink { [gamepad] in gamepad.motionEnabled = $0 }
+            settings.$motion.sink { [gamepad] in gamepad.motionEnabled = $0 },
+            settings.$swapConfirmCancel.sink { [gamepad] in gamepad.swapConfirmCancel = $0 },
+            settings.$swapSquareTriangle.sink { [gamepad] in gamepad.swapSquareTriangle = $0 }
         ]
     }
 

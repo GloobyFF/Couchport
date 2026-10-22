@@ -409,10 +409,14 @@ struct RemoteSettingsSections: View {
             }
             Toggle("Adaptive Triggers", isOn: $settings.adaptiveTriggers)
             Toggle("Motion Controls (Gyro)", isOn: $settings.motion)
+            Toggle("Swap ✕ and ○ (Confirm / Cancel)", isOn: $settings.swapConfirmCancel)
+            Toggle("Swap □ and △", isOn: $settings.swapSquareTriangle)
         } header: {
             Text("Controller")
         } footer: {
             Text("DualSense haptics, adaptive triggers and the light bar follow the game. The touchpad is sent as touch input. Haptics and HDR apply on the next connection.")
+                + Text(verbatim: " ")
+                + Text("The button swaps apply right away to a connected controller, for example one with a Nintendo-style layout or a game that confirms with ○. The on-screen controller is never swapped.")
         }
 
         #if os(iOS)

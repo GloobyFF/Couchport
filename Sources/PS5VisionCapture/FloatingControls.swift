@@ -2,7 +2,7 @@
 import SwiftUI
 
 /// iPhone / iPad / iPhone Duo player controls: one floating button the user
-/// can drag anywhere (it snaps to the nearest side edge and remembers its
+/// can drag anywhere (it snaps to the nearest of the four edges and remembers its
 /// spot). Tapping it opens a panel of large, labelled actions. Same in every
 /// pose, so nothing pops over the picture or the water reflection.
 struct FloatingPlayerControls: View {
@@ -94,9 +94,18 @@ struct FloatingPlayerControls: View {
                 let y = posY + value.translation.height / area.height
                 let x = posX + value.translation.width / area.width
                 withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
-                    // Snap to the closer side so it never sits mid-picture.
-                    posX = x < 0.5 ? 0 : 1
-                    posY = clamp(y, 0, 1)
+                    // Snap to the nearest of the four edges (top centre
+                    // included) so it never sits mid-picture; it slides
+                    // freely along that edge.
+                    let cx = clamp(x, 0, 1), cy = clamp(y, 0, 1)
+                    let dLeft = cx * area.width, dRight = (1 - cx) * area.width
+                    let dTop = cy * area.height, dBottom = (1 - cy) * area.height
+                    switch min(dLeft, dRight, dTop, dBottom) {
+                    case dLeft: posX = 0; posY = cy
+                    case dRight: posX = 1; posY = cy
+                    case dTop: posX = cx; posY = 0
+                    default: posX = cx; posY = 1
+                    }
                     drag = .zero
                     isDragging = false
                 }

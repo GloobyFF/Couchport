@@ -157,7 +157,7 @@ struct FloatingPlayerControls: View {
                     }
                 }
                 if app.activeSource == .remote {
-                    toggleTile("Tabletop Reflection", "square.bottomhalf.filled", isOn: settings.tabletopReflection) {
+                    toggleTile("Reflection", "square.bottomhalf.filled", isOn: settings.tabletopReflection) {
                         settings.tabletopReflection.toggle()
                     }
                     if settings.tabletopReflection {

@@ -446,13 +446,13 @@ struct RemoteSettingsSections: View {
             Toggle("Picture in Picture", isOn: $settings.pictureInPicture)
             Toggle("Phone Motion (Gyro)", isOn: $settings.phoneMotion)
                 .disabled(!settings.motion)
-            Toggle("Tabletop Reflection", isOn: $settings.tabletopReflection)
+            Toggle("Reflection", isOn: $settings.tabletopReflection)
             Toggle("Water Ripples", isOn: $settings.waterRipples)
                 .disabled(!settings.tabletopReflection)
         } header: {
             Text("iPhone & iPad")
         } footer: {
-            Text("Picture in Picture keeps the game in a small window when you leave the app. Phone Motion uses the phone's gyro for aiming when your controller has none. On iPhone Duo in tabletop pose, the lower half mirrors the picture like a glossy table, with the controller or a large touchpad on top.")
+            Text("Picture in Picture keeps the game in a small window when you leave the app. Phone Motion uses the phone's gyro for aiming when your controller has none. Reflection turns the space under the picture into water that mirrors the game, in portrait and on iPhone Duo in tabletop pose. Tap it to make ripples.")
         }
         #endif
     }

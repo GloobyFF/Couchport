@@ -331,7 +331,7 @@ private struct PlayerControlBar: View {
                     }
                     Toggle(isOn: Binding(get: { app.remote.settings.tabletopReflection },
                                          set: { app.remote.settings.tabletopReflection = $0 })) {
-                        Label("Tabletop Reflection", systemImage: "square.bottomhalf.filled")
+                        Label("Reflection", systemImage: "square.bottomhalf.filled")
                     }
                     // Shows what the app detected, to explain Automatic mode.
                     Text("Detected controller: \(app.remote.gamepad.controllerName ?? String(localized: "None"))")

@@ -14087,52 +14087,6 @@
         }
       }
     },
-    "Tabletop Reflection": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "桌面倒影"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "桌面倒影"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tisch-Spiegelung"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Reflejo en modo mesa"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Reflet en position table"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "テーブルトップの反射"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "테이블탑 반사"
-          }
-        }
-      }
-    },
     "iPhone & iPad": {
       "localizations": {
         "zh-Hans": {
@@ -14221,52 +14175,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "터치패드가 없는 컨트롤러에서는 '자동'이 터치패드만 표시합니다."
-          }
-        }
-      }
-    },
-    "Picture in Picture keeps the game in a small window when you leave the app. Phone Motion uses the phone's gyro for aiming when your controller has none. On iPhone Duo in tabletop pose, the lower half mirrors the picture like a glossy table, with the controller or a large touchpad on top.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "画中画会在你离开 App 后把游戏保留在小窗口里。手柄没有陀螺仪时，“手机陀螺仪”会用手机的陀螺仪来瞄准。iPhone Duo 处于桌面姿态时，下半屏会像光亮的桌面一样映出画面倒影，上面叠加手柄或大触摸板。"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "子母畫面會在你離開 App 後把遊戲保留在小視窗裡。控制器沒有陀螺儀時，「手機陀螺儀」會用手機的陀螺儀來瞄準。iPhone Duo 處於桌面姿態時，下半螢幕會像光亮的桌面一樣映出畫面倒影，上面疊加手把或大觸控板。"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bild-in-Bild zeigt das Spiel in einem kleinen Fenster, wenn du die App verlässt. Telefon-Bewegung nutzt das Gyroskop des iPhone zum Zielen, wenn dein Controller keines hat. Beim iPhone Duo in Tischhaltung spiegelt die untere Hälfte das Bild wie ein glänzender Tisch, darüber der Controller oder ein großes Touchpad."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Imagen dentro de imagen mantiene el juego en una ventana pequeña al salir de la app. Movimiento del teléfono usa el giroscopio del iPhone para apuntar si tu mando no tiene. En el iPhone Duo en modo mesa, la mitad inferior refleja la imagen como una mesa brillante, con el mando o un gran panel táctil encima."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Image dans l'image garde le jeu dans une petite fenêtre quand vous quittez l'app. Mouvement du téléphone utilise le gyroscope de l'iPhone pour viser si votre manette n'en a pas. Sur iPhone Duo en position table, la moitié inférieure reflète l'image comme une table brillante, avec la manette ou un grand pavé tactile par-dessus."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ピクチャ・イン・ピクチャは、App を離れてもゲームを小さなウインドウで表示します。iPhone のモーションは、コントローラにジャイロがないとき iPhone のジャイロで照準します。iPhone Duo のテーブルトップ姿勢では、下半分が光沢のあるテーブルのように映像を映し、その上にコントローラか大きなタッチパッドを表示します。"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "PIP는 앱을 떠나도 게임을 작은 창에 계속 보여 줍니다. 휴대폰 모션은 컨트롤러에 자이로가 없을 때 휴대폰 자이로로 조준합니다. iPhone Duo 테이블탑 자세에서는 아래쪽 절반이 광택 있는 테이블처럼 화면을 비추고, 그 위에 컨트롤러나 큰 터치패드가 표시됩니다."
           }
         }
       }
@@ -14497,6 +14405,98 @@
           "stringUnit": {
             "state": "translated",
             "value": "켬"
+          }
+        }
+      }
+    },
+    "Reflection": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "倒影"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "倒影"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spiegelung"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reflejo"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reflet"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "反射"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "반사"
+          }
+        }
+      }
+    },
+    "Picture in Picture keeps the game in a small window when you leave the app. Phone Motion uses the phone's gyro for aiming when your controller has none. Reflection turns the space under the picture into water that mirrors the game, in portrait and on iPhone Duo in tabletop pose. Tap it to make ripples.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "画中画会在你离开 App 时把游戏留在小窗口里。手机体感会在手柄没有陀螺仪时用手机陀螺仪来瞄准。倒影会把画面下方变成一片映出游戏的水面，竖屏和 iPhone Duo 桌面姿态下都会显示。轻点水面会泛起涟漪。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "子母畫面會在你離開 App 時把遊戲留在小視窗裡。手機體感會在控制器沒有陀螺儀時用手機陀螺儀來瞄準。倒影會把畫面下方變成一片映出遊戲的水面，直向和 iPhone Duo 桌面姿態下都會顯示。輕點水面會泛起漣漪。"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bild-in-Bild zeigt das Spiel in einem kleinen Fenster, wenn du die App verlässt. Telefonbewegung nutzt das Gyroskop des Telefons zum Zielen, wenn dein Controller keins hat. Spiegelung verwandelt den Bereich unter dem Bild in Wasser, das das Spiel spiegelt – im Hochformat und auf dem iPhone Duo in Tischhaltung. Tippe darauf für Wellen."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Imagen en imagen mantiene el juego en una ventana pequeña al salir de la app. Movimiento del teléfono usa el giroscopio del teléfono para apuntar cuando tu mando no lo tiene. Reflejo convierte el espacio bajo la imagen en agua que refleja el juego, en vertical y en el iPhone Duo en modo mesa. Tócalo para crear ondas."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Image dans l'image garde le jeu dans une petite fenêtre quand vous quittez l'app. Mouvement du téléphone utilise le gyroscope du téléphone pour viser si votre manette n'en a pas. Reflet transforme l'espace sous l'image en eau qui reflète le jeu, en portrait et sur iPhone Duo en position table. Touchez-le pour créer des ondes."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ピクチャ・イン・ピクチャは、Appを離れてもゲームを小さなウインドウで表示します。スマホのモーションは、コントローラにジャイロがないときにスマホのジャイロで照準を操作します。反射は、縦向きとテーブルトップ姿勢の iPhone Duo で、画面の下をゲームを映す水面にします。タップすると波紋が広がります。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PIP는 앱을 떠날 때 게임을 작은 창으로 보여 줍니다. 휴대폰 모션은 컨트롤러에 자이로가 없을 때 휴대폰 자이로로 조준합니다. 반사는 세로 모드와 테이블탑 자세의 iPhone Duo에서 화면 아래를 게임이 비치는 수면으로 바꿉니다. 탭하면 물결이 퍼집니다."
           }
         }
       }

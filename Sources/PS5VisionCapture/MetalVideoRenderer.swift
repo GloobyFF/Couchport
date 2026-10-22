@@ -235,7 +235,7 @@ final class MetalVideoRenderer: NSObject, AVCaptureVideoDataOutputSampleBufferDe
     }
 
     /// A tap on the water, in the reflection's UV (0...1). Keeps the last six.
-    func addWaterDrop(at uv: CGPoint, amplitude: Float = 0.5) {
+    func addWaterDrop(at uv: CGPoint, amplitude: Float = 0.75) {
         let now = Float(CACurrentMediaTime() - waterEpoch)
         water.mutate { state in
             state.drops.append(SIMD4(Float(uv.x), Float(uv.y), now, amplitude))

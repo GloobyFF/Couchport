@@ -252,9 +252,9 @@ kernel void waterReflection(texture2d<float, access::sample> inTex  [[texture(0)
     float2 offset = float2(0.0);
     float t = p.misc.x;
     float strength = p.misc.y, waves = p.misc.z, aspect = p.misc.w;
-    float amb = sin(uv.y * 38.0 / (0.35 + depth) - t * 2.2 + sin(uv.x * 5.0 + t * 0.7) * 1.5)
-              + 0.5 * sin(uv.x * 23.0 + uv.y * 11.0 - t * 1.6);
-    offset += float2(amb * 0.0035, amb * 0.006) * (0.25 + depth) * waves;
+    float amb = sin(uv.y * 38.0 / (0.35 + depth) - t * 3.0 + sin(uv.x * 5.0 + t * 1.0) * 1.8)
+              + 0.6 * sin(uv.x * 23.0 + uv.y * 11.0 - t * 2.2);
+    offset += float2(amb * 0.006, amb * 0.010) * (0.25 + depth) * waves;
 
     // Rings from taps.
     float highlight = 0.0;
@@ -262,18 +262,18 @@ kernel void waterReflection(texture2d<float, access::sample> inTex  [[texture(0)
     for (int i = 0; i < count; i++) {
         float4 d = p.drops[i];
         float age = t - d.z;
-        if (age < 0.0 || age > 1.6) continue;
+        if (age < 0.0 || age > 2.0) continue;
         float2 delta = (uv - d.xy) * float2(aspect, 1.0);
         float dist = length(delta);
         // Local ring: travels slowly and dies out within ~0.12 of the touch,
         // so only the area around the pressed button ripples.
-        float front = age * 0.1;
-        float envelope = exp(-abs(dist - front) * 22.0) * exp(-age * 2.4) * d.w
-                       * saturate(1.0 - dist / 0.12);
+        float front = age * 0.13;
+        float envelope = exp(-abs(dist - front) * 22.0) * exp(-age * 1.9) * d.w
+                       * saturate(1.0 - dist / 0.16);
         float ring = sin((dist - front) * 70.0) * envelope;
         float2 dir = dist > 1e-4 ? delta / dist : float2(0.0);
-        offset += dir * ring * 0.018 * float2(1.0 / aspect, 1.0);
-        highlight += max(0.0, ring) * 0.25;
+        offset += dir * ring * 0.03 * float2(1.0 / aspect, 1.0);
+        highlight += max(0.0, ring) * 0.4;
     }
 
     float3 color = p.base.rgb;

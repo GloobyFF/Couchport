@@ -29,11 +29,10 @@ final class AppModel: ObservableObject {
 
     // MARK: Free tier
 
-    /// Seconds of free play left in this session; nil for Pro or when idle.
+    /// Seconds of free play left today; nil for Pro or when idle.
     @Published private(set) var freeSecondsLeft: Int?
     /// Shows the "free time almost up" prompt.
     @Published var freeTimeWarning = false
-    private var freeElapsed: TimeInterval = 0
     private var freeWarned = false
     private var freeTimer: Task<Void, Never>?
 
@@ -120,8 +119,8 @@ final class AppModel: ObservableObject {
     }
 
     private func tickFreeTimer() {
-        freeElapsed += 1
-        let left = max(0, FreeTier.sessionLimit - freeElapsed)
+        FreeTier.addUsage(1)
+        let left = FreeTier.leftToday
         freeSecondsLeft = Int(left)
         if left <= FreeTier.warningLead && !freeWarned {
             freeWarned = true
@@ -137,10 +136,10 @@ final class AppModel: ObservableObject {
 
     private func resetFreeSession() {
         stopFreeTimer()
-        freeElapsed = 0
-        freeWarned = false
+        // Already inside the last minute today: no second warning.
+        freeWarned = FreeTier.leftToday <= FreeTier.warningLead
         freeTimeWarning = false
-        freeSecondsLeft = purchases.isPro ? nil : Int(FreeTier.sessionLimit)
+        freeSecondsLeft = purchases.isPro ? nil : Int(FreeTier.leftToday)
     }
 
     /// Free time is up: stop the stream, go Home and offer Pro.
@@ -231,6 +230,11 @@ final class AppModel: ObservableObject {
     }
 
     func play(_ console: PSConsole) {
+        // Today's free time is used up: offer Pro instead of connecting.
+        if !purchases.isPro && FreeTier.leftToday <= 0 {
+            purchases.requestPaywall(.timeUp)
+            return
+        }
         if capture.isRunning { capture.stop() }
         consoles.markPlayed(console)
         resetFreeSession()

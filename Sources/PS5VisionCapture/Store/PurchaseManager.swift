@@ -4,8 +4,9 @@ import SwiftUI
 
 /// What the free version allows. Everything else needs Couchport Pro.
 enum FreeTier {
-    /// Length of one free Remote Play session (streaming time only).
-    static let sessionLimit: TimeInterval = 10 * 60
+    /// Free Remote Play streaming time per calendar day (local time),
+    /// shared by every session that day. Connecting and waking don't count.
+    static let dailyLimit: TimeInterval = 10 * 60
     /// The "time is almost up" prompt appears this long before the end.
     static let warningLead: TimeInterval = 60
     static let maxResolution = 720
@@ -14,6 +15,36 @@ enum FreeTier {
 
     static func clampBitrate(_ kbps: Int) -> Int {
         kbps == 0 ? bitrates[0] : min(bitrates.last!, max(bitrates[0], kbps))
+    }
+
+    // MARK: Daily allowance (stored on the device)
+
+    private static let dayKey = "free.day"
+    private static let usedKey = "free.usedSeconds"
+
+    private static var today: String {
+        let f = DateFormatter()
+        f.calendar = Calendar(identifier: .gregorian)
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.timeZone = .current
+        f.dateFormat = "yyyy-MM-dd"
+        return f.string(from: Date())
+    }
+
+    /// Seconds already streamed today; starts again at 0 after midnight.
+    static var usedToday: TimeInterval {
+        let d = UserDefaults.standard
+        guard d.string(forKey: dayKey) == today else { return 0 }
+        return d.double(forKey: usedKey)
+    }
+
+    static var leftToday: TimeInterval { max(0, dailyLimit - usedToday) }
+
+    static func addUsage(_ seconds: TimeInterval) {
+        let d = UserDefaults.standard
+        let used = usedToday + seconds
+        d.set(today, forKey: dayKey)
+        d.set(used, forKey: usedKey)
     }
 }
 

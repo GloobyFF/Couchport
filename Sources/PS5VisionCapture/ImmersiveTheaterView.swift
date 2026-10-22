@@ -407,7 +407,7 @@ private struct FreeTimeWarningCard: View {
                 .foregroundStyle(.orange)
             Text("Free play ends in 1 minute")
                 .font(.largeTitle.weight(.semibold))
-            Text("Free sessions last 10 minutes. Unlock Pro to keep playing without a limit.")
+            Text("You get 10 minutes of free play each day. Unlock Pro to keep playing without a limit.")
                 .font(.title3)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)

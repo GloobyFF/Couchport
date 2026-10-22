@@ -62,7 +62,7 @@ struct PaywallView: View {
     private var headline: LocalizedStringKey {
         if store.isPro { return "Pro is unlocked. Thank you for supporting Couchport!" }
         switch reason {
-        case .timeUp: return "Your free 10 minutes are up. Unlock Pro to play without limits."
+        case .timeUp: return "Today's free 10 minutes are used up. Come back tomorrow, or unlock Pro to play without limits."
         case .capture: return "The capture card mode is part of Couchport Pro."
         case .feature: return "This setting is part of Couchport Pro."
         case .browse: return "One purchase. Yours forever, with no subscription."
@@ -77,7 +77,7 @@ struct PaywallView: View {
                 Text(verbatim: "Pro").font(.headline).foregroundStyle(Brand.blue.mix(with: .white, by: 0.4))
             }
             Divider().gridCellUnsizedAxes(.horizontal)
-            row("Play time", icon: "timer", free: Text("10 min per session"), pro: Text("Unlimited"))
+            row("Play time", icon: "timer", free: Text("10 min per day"), pro: Text("Unlimited"))
             row("Resolution", icon: "sparkles.tv", free: Text(verbatim: "720p"), pro: Text(verbatim: "1080p"))
             row("Bitrate", icon: "dial.medium", free: Text(verbatim: "10–20 Mbps"), pro: Text("Auto, 5–50 Mbps"))
             row("HDR (10-bit)", icon: "sun.max.fill", free: nil, pro: nil)

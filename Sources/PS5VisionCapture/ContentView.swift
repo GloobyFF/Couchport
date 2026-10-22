@@ -148,7 +148,7 @@ private struct PlayerView: View {
             Button("Keep Playing", role: .cancel) {}
             Button("Unlock Pro") { PurchaseManager.shared.requestPaywall(.browse) }
         } message: {
-            Text("Free sessions last 10 minutes. Unlock Pro to keep playing without a limit.")
+            Text("You get 10 minutes of free play each day. Unlock Pro to keep playing without a limit.")
         }
         .alert("Console Passcode", isPresented: pinBinding) {
             SecureField("Passcode", text: $passcode)

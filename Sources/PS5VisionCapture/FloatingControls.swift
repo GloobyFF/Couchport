@@ -51,13 +51,15 @@ struct FloatingPlayerControls: View {
 
     private var floatingButton: some View {
         ZStack(alignment: .topTrailing) {
-            Image(systemName: "gamecontroller.fill")
-                .font(.system(size: 22, weight: .semibold))
-                .foregroundStyle(.white)
+            // Our own round app mark.
+            Image("AppMark")
+                .resizable()
+                .interpolation(.high)
+                .scaledToFit()
                 .frame(width: buttonSize, height: buttonSize)
-                .background(.ultraThinMaterial, in: Circle())
-                .overlay(Circle().strokeBorder(.white.opacity(0.25), lineWidth: 1))
-                .shadow(color: .black.opacity(0.35), radius: 8, y: 3)
+                .clipShape(Circle())
+                .overlay(Circle().strokeBorder(.white.opacity(0.3), lineWidth: 1))
+                .shadow(color: .black.opacity(0.4), radius: 8, y: 3)
 
             if let left = app.freeSecondsLeft {
                 Text(FreeTimeChip.format(left))
@@ -185,7 +187,11 @@ struct FloatingPlayerControls: View {
             .tint(.red)
         }
         .padding(18)
-        .brandPanel(in: RoundedRectangle(cornerRadius: 26, style: .continuous))
+        // Plain system glass inside the card's outline: no pattern.
+        .modifier(SystemGlassCard(cornerRadius: 26))
+        .overlay(RoundedRectangle(cornerRadius: 26, style: .continuous)
+            .strokeBorder(.white.opacity(0.18), lineWidth: 1))
+        .environment(\.colorScheme, .dark)
         .padding(12)
     }
 
@@ -229,6 +235,15 @@ struct FloatingPlayerControls: View {
         }
         .buttonStyle(.plain)
         .accessibilityValue(Text(isOn ? "On" : "Off"))
+    }
+}
+/// System Liquid Glass (deployment target is iOS 26).
+private struct SystemGlassCard: ViewModifier {
+    let cornerRadius: CGFloat
+
+    func body(content: Content) -> some View {
+        let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+        content.glassEffect(.regular, in: shape)
     }
 }
 #endif

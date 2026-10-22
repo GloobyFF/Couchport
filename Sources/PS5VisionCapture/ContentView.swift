@@ -77,6 +77,8 @@ private struct PlayerView: View {
     @ObservedObject var app: AppModel
     @ObservedObject var renderOptions: RenderOptions
     @State private var controlsVisible = true
+    /// iPhone Duo tabletop: the bar lives on the lower half instead.
+    @State private var tabletop = false
     @State private var hideTask: Task<Void, Never>?
     @State private var passcode = ""
     /// Panels are sheets owned by the player, not popovers on the ornament:
@@ -91,12 +93,16 @@ private struct PlayerView: View {
         // arranged for the current width, height and fold.
         PhonePlayerStage(settings: app.remote.settings, gamepad: app.remote.gamepad,
                          isRemote: app.activeSource == .remote,
-                         renderer: app.capture.metalRenderer) {
+                         renderer: app.capture.metalRenderer,
+                         tabletop: $tabletop) {
             MetalVideoView(renderer: app.capture.metalRenderer)
         } videoOverlay: {
             if app.showsIdleOverlay {
                 StatusOverlay(title: app.overlayTitle, message: app.statusMessage)
             }
+        } dockedBar: {
+            PlayerControlBar(app: app, renderOptions: renderOptions,
+                             onInteraction: {}, onOpen: { open($0) }, docked: true)
         }
         #else
         ZStack {
@@ -132,7 +138,7 @@ private struct PlayerView: View {
         // safe area (clear of the camera and the status column), so it never
         // covers the on-screen controller at the bottom.
         .overlay(alignment: .top) {
-            if controlsVisible {
+            if controlsVisible && !tabletop {
                 PlayerControlBar(app: app, renderOptions: renderOptions,
                                  onInteraction: { showControls(true) },
                                  onOpen: { open($0) })
@@ -231,10 +237,13 @@ private struct PlayerControlBar: View {
     @ObservedObject var renderOptions: RenderOptions
     let onInteraction: () -> Void
     let onOpen: (PlayerPanel) -> Void
+    /// iPhone Duo tabletop: a quiet strip on the lower half, always shown,
+    /// instead of the floating panel at the top.
+    var docked = false
     @State private var width: CGFloat = 1000
 
     /// Narrow screens (iPhone, iPhone Duo folded): icons only, no stats text.
-    private var compact: Bool { !Platform.isVision && width < 700 }
+    private var compact: Bool { docked || (!Platform.isVision && width < 700) }
 
     var body: some View {
         ViewThatFits(in: .horizontal) {
@@ -249,7 +258,8 @@ private struct PlayerControlBar: View {
         HStack(spacing: compact ? 10 : 14) {
             VStack(alignment: .leading, spacing: 3) {
                 Label(app.sourceTitle, systemImage: app.sourceIcon)
-                    .font(.headline)
+                    .font(docked ? .footnote.weight(.semibold) : .headline)
+                    .labelStyle(.titleAndIcon)
                     .lineLimit(1)
                 HStack(spacing: 12) {
                     if let left = app.freeSecondsLeft {
@@ -268,7 +278,7 @@ private struct PlayerControlBar: View {
             .frame(minWidth: compact ? 0 : 260, alignment: .leading)
             .frame(maxWidth: compact ? 150 : nil, alignment: .leading)
 
-            Divider().frame(height: 36)
+            if docked { Spacer(minLength: 8) } else { Divider().frame(height: 36) }
 
             if Platform.supportsTheater {
                 Button {
@@ -360,19 +370,26 @@ private struct PlayerControlBar: View {
                 Label("More", systemImage: "ellipsis")
             }
 
-            Button {
-                app.stopAndGoHome()
-            } label: {
-                Label("Stop", systemImage: "stop.fill")
-                    .foregroundStyle(.white)
+            if docked {
+                Button {
+                    app.stopAndGoHome()
+                } label: {
+                    Label("Stop", systemImage: "stop.circle.fill")
+                        .foregroundStyle(.red.opacity(0.9))
+                }
+            } else {
+                Button {
+                    app.stopAndGoHome()
+                } label: {
+                    Label("Stop", systemImage: "stop.fill")
+                        .foregroundStyle(.white)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(.red)
             }
-            .buttonStyle(.borderedProminent)
-            .tint(.red)
         }
         .labelStyle(AdaptiveLabelStyle(iconOnly: compact))
-        .padding(.horizontal, compact ? 14 : 20)
-        .padding(.vertical, compact ? 10 : 14)
-        .brandPanel(in: Capsule())
+        .modifier(PlayerBarChrome(docked: docked, compact: compact))
     }
 }
 
@@ -447,6 +464,35 @@ private struct TheaterControlPanel: View {
 }
 
 /// Title and icon on wide screens, icon only on narrow ones.
+/// The floating bar's panel, or (docked) just a hairline over the water:
+/// no fill, small white icons, so the reflection stays the picture.
+private struct PlayerBarChrome: ViewModifier {
+    let docked: Bool
+    let compact: Bool
+
+    func body(content: Content) -> some View {
+        if docked {
+            content
+                .font(.body)
+                .imageScale(.medium)
+                .buttonStyle(.borderless)
+                .tint(.white.opacity(0.8))
+                .foregroundStyle(.white.opacity(0.8))
+                .padding(.horizontal, 18)
+                .padding(.vertical, 8)
+                .overlay(alignment: .bottom) {
+                    Rectangle().fill(.white.opacity(0.12)).frame(height: 0.5)
+                        .padding(.horizontal, 18)
+                }
+        } else {
+            content
+                .padding(.horizontal, compact ? 14 : 20)
+                .padding(.vertical, compact ? 10 : 14)
+                .brandPanel(in: Capsule())
+        }
+    }
+}
+
 private struct AdaptiveLabelStyle: LabelStyle {
     let iconOnly: Bool
     func makeBody(configuration: Configuration) -> some View {

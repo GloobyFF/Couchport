@@ -438,6 +438,19 @@ struct RemoteSettingsSections: View {
             Text("On-Screen Controller")
         } footer: {
             Text("Automatic shows the touch controller only when no game controller is connected. In portrait, and on iPhone Duo in tabletop pose, it sits under the picture; in landscape it floats over it. Double-tap a stick for L3 or R3. Drag on the touchpad strip to swipe, tap it to click.")
+                + Text(verbatim: " ")
+                + Text("With a controller that has no touchpad, Automatic shows just a touchpad.")
+        }
+
+        Section {
+            Toggle("Picture in Picture", isOn: $settings.pictureInPicture)
+            Toggle("Phone Motion (Gyro)", isOn: $settings.phoneMotion)
+                .disabled(!settings.motion)
+            Toggle("Tabletop Reflection", isOn: $settings.tabletopReflection)
+        } header: {
+            Text("iPhone & iPad")
+        } footer: {
+            Text("Picture in Picture keeps the game in a small window when you leave the app. Phone Motion uses the phone's gyro for aiming when your controller has none. On iPhone Duo in tabletop pose, the lower half mirrors the picture like a glossy table, with the controller or a large touchpad on top.")
         }
         #endif
     }

@@ -39,10 +39,11 @@
 | 合上，外屏横着用 | 全屏视频，半透明手柄浮在上面 |
 | 展开，内屏横着用（默认姿势，951×669 pt） | 全屏视频，半透明手柄浮在上面 |
 | 展开，内屏竖着用（669×951 pt） | 视频在上，手柄面板在下 |
-| 半折，折痕横向（桌面 / 笔记本姿态） | 视频在折痕上方，手柄面板在折痕下方，折痕区域本身不放任何控件 |
+| 半折，折痕横向（桌面 / 笔记本姿态） | 视频贴着折痕放在上半屏；下半屏显示画面倒影，上面叠加手柄（没有实体手柄时）或大触摸板（连着实体手柄时）；折痕区域本身不放任何控件 |
 | 半折，折痕竖向（像书一样拿） | 全屏视频，手柄分成左右两半各在一侧；中间列（触摸板、PS 等）移到肩键下方，避开折痕 |
 | 分屏（两个 App 并排） | 按实际宽高，规则同上 |
-| 已连接实体手柄（自动模式） | 只显示视频，居中 |
+| 已连接 DualSense（自动模式，非桌面姿态） | 只显示视频，居中 |
+| 已连接没有触摸板的手柄（自动模式） | 竖屏时下方显示大触摸板；横屏时底部显示一条触摸板 |
 
 - 控制栏在 iOS 上移到顶部，不会挡住下方的手柄。
 - 播放时屏幕不会自动锁定。
@@ -52,3 +53,13 @@
 - Stream Settings › Controller 新增两项：“Swap ✕ and ○ (Confirm / Cancel)”、“Swap □ and △”。
 - 只作用于实体手柄（`GamepadBridge.output` 中交换 bit 0/1、2/3），切换后立即生效；屏幕手柄不会交换，保证屏幕上显示的按键就是实际发送的按键。
 - 自己实现，未复制 Pylux 代码。
+
+## 画中画、手机陀螺仪、仅触摸板、桌面倒影（2026-10-22 晚）
+- **画中画**（`PictureInPicture.swift`）：在 Metal 视图下方放一个 `AVSampleBufferDisplayLayer`，解码后的每一帧会同时包装后送进去（不复制像素）。离开 App 时自动进入画中画，也可以从“More”菜单手动打开。App 进入后台后，Metal 视图暂停呈现（`presentationEnabled`），避免 `nextDrawable` 阻塞。Info.plist 新增 `UIBackgroundModes = audio`，这是画中画的必要条件。
+  - 需要在真机上确认：后台时 VideoToolbox 硬解是否会被系统中断。如果出现 -12903（`kVTInvalidSessionErr`），需要让解码器重建会话。
+- **手机陀螺仪**：手柄没有陀螺仪，或者没连手柄只用屏幕手柄时，改用 `CMMotionManager` 的数据（100 Hz）。坐标按当前界面方向换算到 PlayStation 坐标系：屏幕右方 = +X，屏幕法线 = +Y，屏幕上方 = −Z。只在串流期间运行。
+- **仅触摸板**：触控模式新增“Touchpad Only”。在“自动”模式下，如果连的手柄没有触摸板（比如 Xbox 手柄、8BitDo），会自动只显示触摸板。
+- **桌面倒影**（iPhone Duo）：系统没有提供这个效果的 API，是我们自己画的。渲染器新增第二路输出 `attachMirror`，每帧多一次 blit；画面上下翻转后，叠一层 `ultraThinMaterial` 模糊，再加渐隐遮罩。在 Xcode 27.1 下，倒影强度会随 `onHingeChange` 报告的折叠角度变化（约 120° 最强，接近 170° 时淡出）。铰链角度只用于这个效果，不参与布局判断。
+  - `onHingeChange` / `DeviceHingeContext.hinge.angle` 的写法参考的是第三方整理的资料，需要用 Xcode 27.1 编译确认。
+- 新增设置项：Stream Settings › iPhone & iPad › Picture in Picture、Phone Motion (Gyro)、Tabletop Reflection。
+- 以上都是自己实现，没有复制 Pylux 的代码。

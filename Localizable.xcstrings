@@ -13902,6 +13902,374 @@
           }
         }
       }
+    },
+    "Touchpad Only": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "仅触摸板"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "僅觸控板"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nur Touchpad"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Solo panel táctil"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pavé tactile seul"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "タッチパッドのみ"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "터치패드만"
+          }
+        }
+      }
+    },
+    "Touchpad": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "触摸板"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "觸控板"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Touchpad"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Panel táctil"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pavé tactile"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "タッチパッド"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "터치패드"
+          }
+        }
+      }
+    },
+    "Picture in Picture": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "画中画"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "子母畫面"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bild-in-Bild"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Imagen dentro de imagen"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Image dans l'image"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ピクチャ・イン・ピクチャ"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PIP"
+          }
+        }
+      }
+    },
+    "Phone Motion (Gyro)": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "手机陀螺仪"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "手機陀螺儀"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Telefon-Bewegung (Gyro)"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Movimiento del teléfono (giroscopio)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mouvement du téléphone (gyroscope)"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone のモーション（ジャイロ）"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "휴대폰 모션(자이로)"
+          }
+        }
+      }
+    },
+    "Tabletop Reflection": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "桌面倒影"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "桌面倒影"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tisch-Spiegelung"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reflejo en modo mesa"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reflet en position table"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "テーブルトップの反射"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "테이블탑 반사"
+          }
+        }
+      }
+    },
+    "iPhone & iPad": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone 与 iPad"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone 與 iPad"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone & iPad"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone y iPad"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone et iPad"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone と iPad"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone 및 iPad"
+          }
+        }
+      }
+    },
+    "With a controller that has no touchpad, Automatic shows just a touchpad.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "连接的手柄没有触摸板时，“自动”只显示一个触摸板。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "連接的控制器沒有觸控板時，「自動」只顯示一個觸控板。"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bei einem Controller ohne Touchpad zeigt „Automatisch“ nur ein Touchpad."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Con un mando sin panel táctil, «Automático» muestra solo un panel táctil."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avec une manette sans pavé tactile, « Automatique » n'affiche qu'un pavé tactile."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "タッチパッドのないコントローラでは、「自動」はタッチパッドだけを表示します。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "터치패드가 없는 컨트롤러에서는 '자동'이 터치패드만 표시합니다."
+          }
+        }
+      }
+    },
+    "Picture in Picture keeps the game in a small window when you leave the app. Phone Motion uses the phone's gyro for aiming when your controller has none. On iPhone Duo in tabletop pose, the lower half mirrors the picture like a glossy table, with the controller or a large touchpad on top.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "画中画会在你离开 App 后把游戏保留在小窗口里。手柄没有陀螺仪时，“手机陀螺仪”会用手机的陀螺仪来瞄准。iPhone Duo 处于桌面姿态时，下半屏会像光亮的桌面一样映出画面倒影，上面叠加手柄或大触摸板。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "子母畫面會在你離開 App 後把遊戲保留在小視窗裡。控制器沒有陀螺儀時，「手機陀螺儀」會用手機的陀螺儀來瞄準。iPhone Duo 處於桌面姿態時，下半螢幕會像光亮的桌面一樣映出畫面倒影，上面疊加手把或大觸控板。"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bild-in-Bild zeigt das Spiel in einem kleinen Fenster, wenn du die App verlässt. Telefon-Bewegung nutzt das Gyroskop des iPhone zum Zielen, wenn dein Controller keines hat. Beim iPhone Duo in Tischhaltung spiegelt die untere Hälfte das Bild wie ein glänzender Tisch, darüber der Controller oder ein großes Touchpad."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Imagen dentro de imagen mantiene el juego en una ventana pequeña al salir de la app. Movimiento del teléfono usa el giroscopio del iPhone para apuntar si tu mando no tiene. En el iPhone Duo en modo mesa, la mitad inferior refleja la imagen como una mesa brillante, con el mando o un gran panel táctil encima."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Image dans l'image garde le jeu dans une petite fenêtre quand vous quittez l'app. Mouvement du téléphone utilise le gyroscope de l'iPhone pour viser si votre manette n'en a pas. Sur iPhone Duo en position table, la moitié inférieure reflète l'image comme une table brillante, avec la manette ou un grand pavé tactile par-dessus."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ピクチャ・イン・ピクチャは、App を離れてもゲームを小さなウインドウで表示します。iPhone のモーションは、コントローラにジャイロがないとき iPhone のジャイロで照準します。iPhone Duo のテーブルトップ姿勢では、下半分が光沢のあるテーブルのように映像を映し、その上にコントローラか大きなタッチパッドを表示します。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PIP는 앱을 떠나도 게임을 작은 창에 계속 보여 줍니다. 휴대폰 모션은 컨트롤러에 자이로가 없을 때 휴대폰 자이로로 조준합니다. iPhone Duo 테이블탑 자세에서는 아래쪽 절반이 광택 있는 테이블처럼 화면을 비추고, 그 위에 컨트롤러나 큰 터치패드가 표시됩니다."
+          }
+        }
+      }
     }
   },
   "version": "1.2"

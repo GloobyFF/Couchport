@@ -23,6 +23,11 @@ final class MetalVideoRenderer: NSObject, AVCaptureVideoDataOutputSampleBufferDe
     private let texturePool: MetalTexturePool
 
     private weak var layer: CAMetalLayer?
+    /// Second output for the iPhone Duo tabletop reflection (iOS only).
+    private weak var mirrorLayer: CAMetalLayer?
+    /// False while the app is in the background (Picture in Picture shows
+    /// the picture then): `nextDrawable()` on a hidden layer can block.
+    let presentationEnabled = Locked<Bool>(true)
 
     // Reused intermediate textures, managed by the texture pool.
     private var rgbTexture: MTLTexture?      // converted, native resolution
@@ -191,6 +196,22 @@ final class MetalVideoRenderer: NSObject, AVCaptureVideoDataOutputSampleBufferDe
         layer.colorspace = CGColorSpace(name: CGColorSpace.sRGB)
         layer.framebufferOnly = false
         self.layer = layer
+    }
+
+    /// Adds or removes the reflection output. Pass nil to remove it.
+    func attachMirror(_ layer: CAMetalLayer?) {
+        if let layer {
+            layer.device = device
+            layer.pixelFormat = .bgra8Unorm
+            layer.colorspace = CGColorSpace(name: CGColorSpace.sRGB)
+            layer.framebufferOnly = false
+        }
+        mirrorLayer = layer
+    }
+
+    /// Removes the reflection output if it is still `layer`.
+    func detachMirror(_ layer: CAMetalLayer) {
+        if mirrorLayer === layer { mirrorLayer = nil }
     }
 
     /// Called from the main actor whenever the user changes options.
@@ -380,6 +401,13 @@ private extension MetalVideoRenderer {
 
         // Present to the CAMetalLayer if we have one (window mode). In theater
         // mode the window may be dismissed, so just commit.
+        guard presentationEnabled.value else {
+            commandBuffer.commit()
+            return
+        }
+        if let mirror = mirrorLayer {
+            encodeBlit(processed, to: mirror, commandBuffer: commandBuffer)
+        }
         if let layer {
             present(processed, to: layer, commandBuffer: commandBuffer)
         } else {
@@ -420,6 +448,24 @@ private extension MetalVideoRenderer {
     /// The latest processed frame for the theater, plus a generation counter so
     /// the reader can skip redundant work. Returns nil until the first frame.
     /// Marked internal via a nonisolated wrapper below.
+    /// Copies the frame into one more layer and schedules its present,
+    /// without committing (the main `present` commits).
+    func encodeBlit(_ texture: MTLTexture, to layer: CAMetalLayer, commandBuffer: MTLCommandBuffer) {
+        let size = CGSize(width: texture.width, height: texture.height)
+        if layer.drawableSize != size { layer.drawableSize = size }
+        guard let drawable = layer.nextDrawable(),
+              let blit = commandBuffer.makeBlitCommandEncoder() else { return }
+        let w = min(texture.width, drawable.texture.width)
+        let h = min(texture.height, drawable.texture.height)
+        blit.copy(from: texture, sourceSlice: 0, sourceLevel: 0,
+                  sourceOrigin: MTLOrigin(x: 0, y: 0, z: 0),
+                  sourceSize: MTLSize(width: w, height: h, depth: 1),
+                  to: drawable.texture, destinationSlice: 0, destinationLevel: 0,
+                  destinationOrigin: MTLOrigin(x: 0, y: 0, z: 0))
+        blit.endEncoding()
+        commandBuffer.present(drawable)
+    }
+
     func present(_ texture: MTLTexture, to layer: CAMetalLayer, commandBuffer: MTLCommandBuffer) {
         let size = CGSize(width: texture.width, height: texture.height)
         if layer.drawableSize != size {

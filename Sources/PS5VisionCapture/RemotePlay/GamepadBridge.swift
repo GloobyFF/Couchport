@@ -1,6 +1,10 @@
 import CoreHaptics
 import Foundation
 import GameController
+#if os(iOS)
+import CoreMotion
+import UIKit
+#endif
 
 /// Reads the connected controller (DualSense, DualShock 4, Xbox, MFi) via
 /// GameController and forwards PlayStation-mapped state to the session:
@@ -20,6 +24,15 @@ final class GamepadBridge: ObservableObject {
 
     /// Send gyro/accelerometer to the console (motion aiming).
     var motionEnabled = true { didSet { configureMotion() } }
+
+    #if os(iOS)
+    /// Use the phone's own gyro when the controller has none (or there is
+    /// no controller and the on-screen one is used).
+    var phoneMotionEnabled = true { didSet { updatePhoneMotion() } }
+    private let motionManager = CMMotionManager()
+    private var phoneMotionRunning = false
+    private var interfaceOrientation: UIInterfaceOrientation = .landscapeRight
+    #endif
 
     /// Swap ✕/○ (confirm / cancel) and □/△ on the hardware controller.
     /// For controllers with a Nintendo-style layout, or games that use ○ to
@@ -58,9 +71,15 @@ final class GamepadBridge: ObservableObject {
         }
         RunLoop.main.add(timer, forMode: .common)
         heartbeat = timer
+        #if os(iOS)
+        updatePhoneMotion()
+        #endif
     }
 
     func stop() {
+        #if os(iOS)
+        stopPhoneMotion()
+        #endif
         for o in observers { NotificationCenter.default.removeObserver(o) }
         observers.removeAll()
         heartbeat?.invalidate()
@@ -87,6 +106,9 @@ final class GamepadBridge: ObservableObject {
         controllerName = next?.vendorName
         isDualSense = next?.extendedGamepad is GCDualSenseGamepad
         feedback.attach(next)
+        #if os(iOS)
+        updatePhoneMotion()
+        #endif
         guard let pad = next?.extendedGamepad else { return }
         pad.valueChangedHandler = { [weak self] gamepad, _ in
             let snapshot = Self.snapshot(of: gamepad)
@@ -147,6 +169,9 @@ final class GamepadBridge: ObservableObject {
     }
 
     private func configureMotion() {
+        #if os(iOS)
+        updatePhoneMotion()
+        #endif
         guard let motion = current?.motion else { return }
         guard motionEnabled else {
             motion.valueChangedHandler = nil
@@ -161,6 +186,78 @@ final class GamepadBridge: ObservableObject {
             Task { @MainActor in self?.applyMotion(sample) }
         }
     }
+
+    #if os(iOS)
+    // MARK: - Phone motion
+
+    /// Runs only during a stream (between start and stop), with motion on,
+    /// and when the attached controller has no motion sensors of its own.
+    private func updatePhoneMotion() {
+        let want = heartbeat != nil && motionEnabled && phoneMotionEnabled
+            && current?.motion == nil && motionManager.isDeviceMotionAvailable
+        if want, !phoneMotionRunning {
+            phoneMotionRunning = true
+            refreshInterfaceOrientation()
+            observers.append(NotificationCenter.default.addObserver(
+                forName: UIDevice.orientationDidChangeNotification, object: nil, queue: .main) { [weak self] _ in
+                    Task { @MainActor in self?.refreshInterfaceOrientation() }
+                })
+            motionManager.deviceMotionUpdateInterval = 1.0 / 100.0
+            motionManager.startDeviceMotionUpdates(to: .main) { [weak self] m, _ in
+                guard let m else { return }
+                MainActor.assumeIsolated {
+                    guard let self, self.phoneMotionRunning else { return }
+                    self.applyMotion(Self.phoneMotionSample(m, orientation: self.interfaceOrientation))
+                }
+            }
+        } else if !want, phoneMotionRunning {
+            stopPhoneMotion()
+        }
+    }
+
+    private func stopPhoneMotion() {
+        guard phoneMotionRunning else { return }
+        phoneMotionRunning = false
+        motionManager.stopDeviceMotionUpdates()
+        if current?.motion == nil {
+            last.gyro = nil
+            last.accel = nil
+        }
+    }
+
+    private func refreshInterfaceOrientation() {
+        let scene = UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .first { $0.activationState == .foregroundActive }
+        if let o = scene?.effectiveGeometry.interfaceOrientation, o != .unknown {
+            interfaceOrientation = o
+        }
+    }
+
+    /// The phone is held like a controller: screen facing the player.
+    /// PlayStation frame: +X = screen right, +Y = out of the screen (the
+    /// controller's top face), +Z = toward the player, i.e. against the
+    /// screen's "up". Device axes are mapped per interface orientation.
+    /// Accelerometer: the console expects the reaction force (+Y at rest).
+    nonisolated static func phoneMotionSample(_ m: CMDeviceMotion,
+                                              orientation: UIInterfaceOrientation) -> (gyro: SIMD3<Float>, accel: SIMD3<Float>) {
+        func frame(_ v: SIMD3<Double>) -> SIMD3<Float> {
+            let right, up: Double
+            switch orientation {
+            case .landscapeRight: right = -v.y; up = v.x      // home indicator on the right
+            case .landscapeLeft: right = v.y; up = -v.x
+            case .portraitUpsideDown: right = -v.x; up = -v.y
+            default: right = v.x; up = v.y
+            }
+            return SIMD3(Float(right), Float(v.z), Float(-up))
+        }
+        let r = m.rotationRate
+        let g = m.gravity, a = m.userAcceleration
+        let gyro = frame(SIMD3(r.x, r.y, r.z))
+        let accel = frame(SIMD3(-(g.x + a.x), -(g.y + a.y), -(g.z + a.z)))
+        return (gyro, accel)
+    }
+    #endif
 
     /// Motion arrives at up to ~250 Hz; the console samples at ~100 Hz.
     private func applyMotion(_ sample: (gyro: SIMD3<Float>, accel: SIMD3<Float>)) {

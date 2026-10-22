@@ -85,6 +85,12 @@ enum TouchControllerStyle {
     /// Its own area under the video (portrait, iPhone Duo folded or in
     /// tabletop pose with the controls on the lower half).
     case panel
+    /// A large touchpad filling its area, with Create / PS / Options above
+    /// it (iPhone Duo lower half, or portrait with a controller connected).
+    case touchpad
+    /// A touchpad strip over the bottom of the video (landscape, with a
+    /// controller that has no touchpad).
+    case touchpadStrip
 }
 
 /// The full on-screen DualSense-style controller. Sizes come from the space
@@ -106,11 +112,13 @@ struct TouchControllerView: View {
                 switch style {
                 case .overlay: overlayLayout(size: size, u: u)
                 case .panel: panelLayout(size: size, u: u)
+                case .touchpad: touchpadLayout(size: size, u: u)
+                case .touchpadStrip: stripLayout(size: size, u: u)
                 }
             }
             .frame(width: size.width, height: size.height)
         }
-        .opacity(style == .overlay ? opacity : 1)
+        .opacity(style == .overlay || style == .touchpadStrip ? opacity : 1)
         .onDisappear { pad.releaseAll() }
         .accessibilityElement(children: .contain)
         .accessibilityLabel(Text("On-Screen Controller"))
@@ -120,8 +128,8 @@ struct TouchControllerView: View {
     private func unit(for size: CGSize) -> CGFloat {
         let short = min(size.width, size.height)
         switch style {
-        case .overlay: return max(40, min(64, short / 6.2))
-        case .panel: return max(40, min(70, min(size.width / 8.5, size.height / 5.2)))
+        case .overlay, .touchpadStrip: return max(40, min(64, short / 6.2))
+        case .panel, .touchpad: return max(40, min(70, min(size.width / 8.5, size.height / 5.2)))
         }
     }
 
@@ -232,6 +240,42 @@ struct TouchControllerView: View {
                 PadButton(pad: pad, button: .ps, label: .text("PS"), u: u * 0.8, shape: .circle)
                 PadButton(pad: pad, button: .options, label: .symbol("line.3.horizontal"), u: u * 0.75, shape: .capsule)
             }
+        }
+    }
+
+    // Big touchpad: the whole area is the console's touchpad, so a finger's
+    // position maps 1:1 (left edge = left edge of the pad).
+    private func touchpadLayout(size: CGSize, u: CGFloat) -> some View {
+        VStack(spacing: u * 0.3) {
+            HStack {
+                PadButton(pad: pad, button: .create, label: .symbol("square.and.arrow.up"), u: u * 0.75, shape: .capsule)
+                Spacer()
+                PadButton(pad: pad, button: .ps, label: .text("PS"), u: u * 0.8, shape: .circle)
+                Spacer()
+                PadButton(pad: pad, button: .options, label: .symbol("line.3.horizontal"), u: u * 0.75, shape: .capsule)
+            }
+            TouchpadControl(pad: pad, large: true)
+                .aspectRatio(2.4, contentMode: .fit)        // close to the real touchpad
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+        .padding(.horizontal, u * 0.4)
+        .padding(.vertical, u * 0.3)
+    }
+
+    // Strip along the bottom centre, PS beside it; the rest stays clear.
+    private func stripLayout(size: CGSize, u: CGFloat) -> some View {
+        VStack {
+            Spacer()
+            HStack(spacing: u * 0.4) {
+                PadButton(pad: pad, button: .create, label: .symbol("square.and.arrow.up"), u: u * 0.7, shape: .capsule)
+                TouchpadControl(pad: pad)
+                    .frame(width: min(size.width * 0.4, u * 6), height: u * 1.5)
+                VStack(spacing: u * 0.2) {
+                    PadButton(pad: pad, button: .options, label: .symbol("line.3.horizontal"), u: u * 0.7, shape: .capsule)
+                    PadButton(pad: pad, button: .ps, label: .text("PS"), u: u * 0.7, shape: .circle)
+                }
+            }
+            .padding(.bottom, u * 0.35)
         }
     }
 
@@ -464,6 +508,7 @@ private struct StickControl: View {
 /// click it.
 private struct TouchpadControl: View {
     @ObservedObject var pad: VirtualPad
+    var large = false
     @State private var start: Date?
     @State private var moved = false
 
@@ -473,7 +518,14 @@ private struct TouchpadControl: View {
                 .fill(Color.white.opacity(start == nil ? 0.10 : 0.25))
                 .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .strokeBorder(.white.opacity(0.3), lineWidth: 1))
-                .overlay(Image(systemName: "hand.point.up.left")
+                .overlay(
+                    VStack(spacing: 6) {
+                        Image(systemName: "hand.point.up.left")
+                        if large {
+                            Text("Touchpad")
+                                .font(.caption.weight(.semibold))
+                        }
+                    }
                     .foregroundStyle(.white.opacity(0.5))
                     .allowsHitTesting(false))
                 .contentShape(Rectangle())

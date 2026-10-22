@@ -90,7 +90,8 @@ private struct PlayerView: View {
         // iPhone / iPhone Duo / iPad: video plus the on-screen controller,
         // arranged for the current width, height and fold.
         PhonePlayerStage(settings: app.remote.settings, gamepad: app.remote.gamepad,
-                         isRemote: app.activeSource == .remote) {
+                         isRemote: app.activeSource == .remote,
+                         renderer: app.capture.metalRenderer) {
             MetalVideoView(renderer: app.capture.metalRenderer)
         } videoOverlay: {
             if app.showsIdleOverlay {
@@ -328,6 +329,13 @@ private struct PlayerControlBar: View {
                     }
                 } else {
                     #if os(iOS)
+                    if app.remote.settings.pictureInPicture {
+                        Button {
+                            NotificationCenter.default.post(name: .couchportStartPictureInPicture, object: nil)
+                        } label: {
+                            Label("Picture in Picture", systemImage: "pip.enter")
+                        }
+                    }
                     Picker(selection: touchModeBinding) {
                         ForEach(TouchControlsMode.allCases) { mode in
                             Text(LocalizedStringKey(mode.rawValue)).tag(mode)

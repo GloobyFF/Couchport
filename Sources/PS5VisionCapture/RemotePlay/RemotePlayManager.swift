@@ -5,6 +5,9 @@ import Foundation
 enum TouchControlsMode: String, CaseIterable, Identifiable {
     case automatic = "Automatic"
     case on = "Always On"
+    /// Only the touchpad (and Create / PS / Options): for a controller
+    /// without a touchpad, or the iPhone Duo's lower half.
+    case touchpad = "Touchpad Only"
     case off = "Off"
     var id: String { rawValue }
 }
@@ -29,6 +32,9 @@ final class RemotePlaySettings: ObservableObject {
     @Published var touchControls: TouchControlsMode { didSet { save() } }
     @Published var touchOpacity: Double { didSet { save() } }        // 0.2...1
     @Published var touchHaptics: Bool { didSet { save() } }          // tap feedback on the phone
+    @Published var phoneMotion: Bool { didSet { save() } }           // phone gyro when the pad has none
+    @Published var pictureInPicture: Bool { didSet { save() } }      // iPhone / iPad
+    @Published var tabletopReflection: Bool { didSet { save() } }    // iPhone Duo lower half
 
     private let d = UserDefaults.standard
 
@@ -48,6 +54,9 @@ final class RemotePlaySettings: ObservableObject {
         touchControls = TouchControlsMode(rawValue: d.string(forKey: "rp.touchControls") ?? "") ?? .automatic
         touchOpacity = d.object(forKey: "rp.touchOpacity") as? Double ?? 0.6
         touchHaptics = d.object(forKey: "rp.touchHaptics") as? Bool ?? true
+        phoneMotion = d.object(forKey: "rp.phoneMotion") as? Bool ?? true
+        pictureInPicture = d.object(forKey: "rp.pip") as? Bool ?? true
+        tabletopReflection = d.object(forKey: "rp.reflection") as? Bool ?? true
     }
 
     private func save() {
@@ -66,6 +75,9 @@ final class RemotePlaySettings: ObservableObject {
         d.set(touchControls.rawValue, forKey: "rp.touchControls")
         d.set(touchOpacity, forKey: "rp.touchOpacity")
         d.set(touchHaptics, forKey: "rp.touchHaptics")
+        d.set(phoneMotion, forKey: "rp.phoneMotion")
+        d.set(pictureInPicture, forKey: "rp.pip")
+        d.set(tabletopReflection, forKey: "rp.reflection")
     }
 }
 
@@ -147,6 +159,9 @@ final class RemotePlayManager: ObservableObject {
             settings.$swapConfirmCancel.sink { [gamepad] in gamepad.swapConfirmCancel = $0 },
             settings.$swapSquareTriangle.sink { [gamepad] in gamepad.swapSquareTriangle = $0 }
         ]
+        #if os(iOS)
+        feedbackCancellables.append(settings.$phoneMotion.sink { [gamepad] in gamepad.phoneMotionEnabled = $0 })
+        #endif
     }
 
     var isAvailable: Bool { RemotePlayLibrary.isAvailable }
@@ -282,6 +297,9 @@ final class RemotePlayManager: ObservableObject {
         decoder.onFrame = { pixelBuffer in
             lastFrameAt.value = Self.now()
             renderer.enqueue(pixelBuffer: pixelBuffer)
+            #if os(iOS)
+            PiPFrameSink.shared.enqueue(pixelBuffer)
+            #endif
         }
         self.decoder = decoder
 

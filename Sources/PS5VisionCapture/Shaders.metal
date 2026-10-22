@@ -262,11 +262,14 @@ kernel void waterReflection(texture2d<float, access::sample> inTex  [[texture(0)
     for (int i = 0; i < count; i++) {
         float4 d = p.drops[i];
         float age = t - d.z;
-        if (age < 0.0 || age > 3.0) continue;
+        if (age < 0.0 || age > 1.6) continue;
         float2 delta = (uv - d.xy) * float2(aspect, 1.0);
         float dist = length(delta);
-        float front = age * 0.32;
-        float envelope = exp(-abs(dist - front) * 14.0) * exp(-age * 1.4) * d.w;
+        // Local ring: travels slowly and dies out within ~0.12 of the touch,
+        // so only the area around the pressed button ripples.
+        float front = age * 0.1;
+        float envelope = exp(-abs(dist - front) * 22.0) * exp(-age * 2.4) * d.w
+                       * saturate(1.0 - dist / 0.12);
         float ring = sin((dist - front) * 70.0) * envelope;
         float2 dir = dist > 1e-4 ? delta / dist : float2(0.0);
         offset += dir * ring * 0.018 * float2(1.0 / aspect, 1.0);

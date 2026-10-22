@@ -128,7 +128,7 @@ struct TouchControllerView: View {
     private func unit(for size: CGSize) -> CGFloat {
         let short = min(size.width, size.height)
         switch style {
-        case .overlay, .touchpadStrip: return max(40, min(64, short / 6.2))
+        case .overlay, .touchpadStrip: return max(30, min(64, short / 7.6))
         // The panel stacks shoulders, D-pad/face buttons and sticks: about
         // 7.5 units tall, so it fits the Duo's lower half without the
         // shoulder row being cut off under the fold.

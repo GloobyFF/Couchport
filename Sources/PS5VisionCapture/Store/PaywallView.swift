@@ -70,7 +70,7 @@ struct PaywallView: View {
     }
 
     private var comparison: some View {
-        Grid(alignment: .leading, horizontalSpacing: 24, verticalSpacing: 14) {
+        Grid(alignment: .leading, horizontalSpacing: Platform.isVision ? 24 : 12, verticalSpacing: 14) {
             GridRow {
                 Text(verbatim: "")
                 Text("Free").font(.headline).foregroundStyle(.secondary)
@@ -82,9 +82,13 @@ struct PaywallView: View {
             row("Bitrate", icon: "dial.medium", free: Text(verbatim: "10–20 Mbps"), pro: Text("Auto, 5–50 Mbps"))
             row("HDR (10-bit)", icon: "sun.max.fill", free: nil, pro: nil)
             row("Picture Enhancement", icon: "wand.and.stars", free: nil, pro: nil)
-            row("Capture Card (Developer Strap)", icon: "cable.connector.horizontal", free: nil, pro: nil)
+            // The capture card is an Apple Vision Pro feature; the iPhone and
+            // iPad app does not offer it, so the row is not shown there.
+            if Platform.supportsCapture {
+                row("Capture Card (Vision Pro only)", icon: "cable.connector.horizontal", free: nil, pro: nil)
+            }
         }
-        .padding(24)
+        .padding(Platform.isVision ? 24 : 16)
         .brandPanel(in: RoundedRectangle(cornerRadius: 28, style: .continuous))
     }
 
@@ -125,7 +129,7 @@ struct PaywallView: View {
                         }
                     }
                     .font(.title3.weight(.semibold))
-                    .frame(minWidth: 320)
+                    .frame(minWidth: Platform.isVision ? 320 : 0, maxWidth: Platform.isVision ? nil : .infinity)
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(Brand.blue)
@@ -145,7 +149,7 @@ struct PaywallView: View {
                     .multilineTextAlignment(.center)
             }
 
-            Text("A one-time purchase. Family Sharing and restore work with the same Apple Account.")
+            Text("A one-time purchase that unlocks Pro on iPhone, iPad and Apple Vision Pro. Family Sharing and restore work with the same Apple Account.")
                 .font(.footnote)
                 .foregroundStyle(.tertiary)
                 .multilineTextAlignment(.center)

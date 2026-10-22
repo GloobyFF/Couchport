@@ -38,7 +38,7 @@ struct HomeView: View {
         .background { HomeBackground() }
         .sheet(isPresented: $showAbout) { AboutView() }
         .task {
-            await capture.prepare()
+            if Platform.supportsCapture { await capture.prepare() }
             remote.startWatchingConsoles()
         }
         .onDisappear { remote.stopWatchingConsoles() }
@@ -391,8 +391,6 @@ struct HomeView: View {
 
             HStack(spacing: 0) {
                 // Shown whole (fit), on the art's own background colour.
-                // The art shows the Developer Strap, so visionOS only.
-                if Platform.isVision {
                 Image("StrapSetup")
                     .resizable()
                     .aspectRatio(contentMode: .fit)
@@ -402,7 +400,6 @@ struct HomeView: View {
                     .allowsHitTesting(false)
                     .accessibilityElement()
                     .accessibilityLabel(Text("Vision Pro with the Developer Strap, a capture card and a game console"))
-                }
 
                 VStack(alignment: .leading, spacing: 14) {
                     HStack(spacing: 12) {
@@ -418,15 +415,9 @@ struct HomeView: View {
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
 
-                    if Platform.isVision {
-                        Label("Requires the Apple Vision Pro Developer Strap", systemImage: "exclamationmark.circle.fill")
-                            .font(.callout.weight(.semibold))
-                            .foregroundStyle(.yellow)
-                    } else {
-                        Label("Plug the capture card into the iPad's USB-C port", systemImage: "cable.connector")
-                            .font(.callout.weight(.semibold))
-                            .foregroundStyle(.yellow)
-                    }
+                    Label("Requires the Apple Vision Pro Developer Strap", systemImage: "exclamationmark.circle.fill")
+                        .font(.callout.weight(.semibold))
+                        .foregroundStyle(.yellow)
 
                     HStack(spacing: 8) {
                         Circle().fill(capture.hasDevice ? Color.green : Color.secondary).frame(width: 9, height: 9)

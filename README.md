@@ -2,7 +2,7 @@
 
 **Sit back. Step in.** 窝进沙发，一步入战。
 
-PS5 / PS4 遥控游玩（Remote Play）客户端，支持 **Apple Vision Pro**、**iPhone**（包括折叠屏 iPhone Duo）和 **iPad**；Vision Pro 和 iPad 还可以通过 UVC 采集卡接入任意 HDMI 设备。
+PS5 / PS4 遥控游玩（Remote Play）客户端，支持 **Apple Vision Pro**、**iPhone**（包括折叠屏 iPhone Duo）和 **iPad**。Vision Pro 版还可以通过开发者头带加 UVC 采集卡，接入任意 HDMI 设备。
 
 > Couchport 以 **GNU AGPL-3.0** 开源（见 `LICENSE`、`NOTICE.md`、`Docs/Licensing.md`）。它是独立 App，与 Sony Interactive Entertainment、Microsoft、Apple 均无关联。
 
@@ -11,9 +11,9 @@ PS5 / PS4 遥控游玩（Remote Play）客户端，支持 **Apple Vision Pro**�
 | 平台 | Target | 遥控游玩 | 采集卡 | 沉浸式影院 |
 |---|---|---|---|---|
 | visionOS 26+ | `PS5VisionCapture` | ✓ | ✓（Developer Strap） | ✓ |
-| iOS / iPadOS 26+ | `Couchport-iOS` | ✓ | 仅 iPad（USB-C） | — |
+| iOS / iPadOS 26+ | `Couchport-iOS` | ✓（含屏幕手柄） | — | — |
 
-iPhone Duo：布局按窗口实际宽度切换，不按机型判断。所以折叠和展开、旋转、分屏都会实时切换布局，串流不中断。窄屏（折叠状态、普通 iPhone）用单列布局，控制栏只显示图标；宽屏（展开状态、iPad）用双栏布局。
+iPhone Duo：布局按窗口实际尺寸和系统报告的折痕位置来定，不按机型判断。折叠、展开、旋转、半折和分屏时都会实时切换，串流不中断。各种状态下的具体排布见 `Docs/Changes-2026-10-22-ios-oss.md`。需要用 Xcode 27.1（iOS 27.1 SDK）构建，才能读到折痕位置。
 
 ## 构建
 

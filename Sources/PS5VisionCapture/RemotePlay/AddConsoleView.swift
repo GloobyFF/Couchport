@@ -414,5 +414,27 @@ struct RemoteSettingsSections: View {
         } footer: {
             Text("DualSense haptics, adaptive triggers and the light bar follow the game. The touchpad is sent as touch input. Haptics and HDR apply on the next connection.")
         }
+
+        #if os(iOS)
+        Section {
+            Picker("Show", selection: $settings.touchControls) {
+                ForEach(TouchControlsMode.allCases) { mode in
+                    Text(LocalizedStringKey(mode.rawValue)).tag(mode)
+                }
+            }
+            HStack {
+                Text("Opacity")
+                Slider(value: $settings.touchOpacity, in: 0.2...1)
+                Text(verbatim: "\(Int((settings.touchOpacity * 100).rounded()))%")
+                    .font(.caption.monospacedDigit())
+                    .frame(width: 52, alignment: .trailing)
+            }
+            Toggle("Vibrate on Press", isOn: $settings.touchHaptics)
+        } header: {
+            Text("On-Screen Controller")
+        } footer: {
+            Text("Automatic shows the touch controller only when no game controller is connected. In portrait, and on iPhone Duo in tabletop pose, it sits under the picture; in landscape it floats over it. Double-tap a stick for L3 or R3. Drag on the touchpad strip to swipe, tap it to click.")
+        }
+        #endif
     }
 }

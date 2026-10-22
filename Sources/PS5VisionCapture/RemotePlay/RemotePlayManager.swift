@@ -2,6 +2,13 @@ import Combine
 import CoreVideo
 import Foundation
 
+enum TouchControlsMode: String, CaseIterable, Identifiable {
+    case automatic = "Automatic"
+    case on = "Always On"
+    case off = "Off"
+    var id: String { rawValue }
+}
+
 /// User-tunable stream settings, persisted.
 @MainActor
 final class RemotePlaySettings: ObservableObject {
@@ -15,6 +22,11 @@ final class RemotePlaySettings: ObservableObject {
     @Published var hapticsStrength: Float { didSet { save() } }      // 0...1.5
     @Published var adaptiveTriggers: Bool { didSet { save() } }
     @Published var motion: Bool { didSet { save() } }                // gyro aiming
+    /// On-screen controller (iPhone / iPad): automatic = only when no
+    /// hardware controller is connected.
+    @Published var touchControls: TouchControlsMode { didSet { save() } }
+    @Published var touchOpacity: Double { didSet { save() } }        // 0.2...1
+    @Published var touchHaptics: Bool { didSet { save() } }          // tap feedback on the phone
 
     private let d = UserDefaults.standard
 
@@ -29,6 +41,9 @@ final class RemotePlaySettings: ObservableObject {
         hapticsStrength = d.object(forKey: "rp.hapticsStrength") as? Float ?? 1
         adaptiveTriggers = d.object(forKey: "rp.triggers") as? Bool ?? true
         motion = d.object(forKey: "rp.motion") as? Bool ?? true
+        touchControls = TouchControlsMode(rawValue: d.string(forKey: "rp.touchControls") ?? "") ?? .automatic
+        touchOpacity = d.object(forKey: "rp.touchOpacity") as? Double ?? 0.6
+        touchHaptics = d.object(forKey: "rp.touchHaptics") as? Bool ?? true
     }
 
     private func save() {
@@ -42,6 +57,9 @@ final class RemotePlaySettings: ObservableObject {
         d.set(hapticsStrength, forKey: "rp.hapticsStrength")
         d.set(adaptiveTriggers, forKey: "rp.triggers")
         d.set(motion, forKey: "rp.motion")
+        d.set(touchControls.rawValue, forKey: "rp.touchControls")
+        d.set(touchOpacity, forKey: "rp.touchOpacity")
+        d.set(touchHaptics, forKey: "rp.touchHaptics")
     }
 }
 

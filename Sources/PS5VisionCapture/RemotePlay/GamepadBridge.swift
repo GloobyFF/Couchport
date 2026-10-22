@@ -11,6 +11,9 @@ import GameController
 final class GamepadBridge: ObservableObject {
     @Published private(set) var controllerName: String?
     @Published private(set) var isDualSense = false
+    /// A hardware controller is attached. The on-screen controller shows
+    /// itself automatically when this is false (iPhone / iPad).
+    @Published private(set) var hasPhysicalController = false
 
     /// Called with every state change.
     var onState: ((GamepadSnapshot) -> Void)?
@@ -22,7 +25,8 @@ final class GamepadBridge: ObservableObject {
 
     private var observers: [NSObjectProtocol] = []
     private var current: GCController?
-    private var last = GamepadSnapshot()
+    private var last = GamepadSnapshot()          // hardware controller
+    private var virtualPad = GamepadSnapshot()    // on-screen controller
     private var heartbeat: Timer?
     private var lastMotionSend: TimeInterval = 0
 
@@ -42,7 +46,7 @@ final class GamepadBridge: ObservableObject {
         let timer = Timer(timeInterval: 1.0 / 30.0, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 guard let self else { return }
-                self.onState?(self.last)
+                self.onState?(self.output)
             }
         }
         RunLoop.main.add(timer, forMode: .common)
@@ -58,7 +62,9 @@ final class GamepadBridge: ObservableObject {
         detach(current)
         current = nil
         feedback.attach(nil)
+        hasPhysicalController = false
         last = GamepadSnapshot()
+        virtualPad = GamepadSnapshot()
         onState?(last)
     }
 
@@ -70,6 +76,7 @@ final class GamepadBridge: ObservableObject {
         guard next !== current else { return }
         detach(current)
         current = next
+        hasPhysicalController = next != nil
         controllerName = next?.vendorName
         isDualSense = next?.extendedGamepad is GCDualSenseGamepad
         feedback.attach(next)
@@ -79,6 +86,31 @@ final class GamepadBridge: ObservableObject {
             Task { @MainActor in self?.merge(snapshot) }
         }
         configureMotion()
+    }
+
+    // MARK: - On-screen controller
+
+    /// State from the touch controller. Merged with the hardware controller,
+    /// so both can be used at once.
+    func setVirtual(_ snapshot: GamepadSnapshot) {
+        guard snapshot != virtualPad else { return }
+        virtualPad = snapshot
+        onState?(output)
+    }
+
+    /// Hardware OR touch: buttons are OR-ed, triggers take the larger value,
+    /// a stick or touchpad finger from the touch controller wins while held.
+    private var output: GamepadSnapshot {
+        var s = last
+        let v = virtualPad
+        s.buttons |= v.buttons
+        s.l2 = max(s.l2, v.l2)
+        s.r2 = max(s.r2, v.r2)
+        if v.leftX != 0 || v.leftY != 0 { s.leftX = v.leftX; s.leftY = v.leftY }
+        if v.rightX != 0 || v.rightY != 0 { s.rightX = v.rightX; s.rightY = v.rightY }
+        if let t = v.touch0 { s.touch0 = t }
+        if let t = v.touch1 { s.touch1 = t }
+        return s
     }
 
     private func detach(_ controller: GCController?) {
@@ -96,7 +128,7 @@ final class GamepadBridge: ObservableObject {
         next.accel = last.accel
         guard next != last else { return }
         last = next
-        onState?(next)
+        onState?(output)
     }
 
     private func configureMotion() {
@@ -122,7 +154,7 @@ final class GamepadBridge: ObservableObject {
         let now = ProcessInfo.processInfo.systemUptime
         guard now - lastMotionSend >= 1.0 / 120.0 else { return }
         lastMotionSend = now
-        onState?(last)
+        onState?(output)
     }
 
     /// GameController's controller frame is Z-up; PlayStation's is Y-up with

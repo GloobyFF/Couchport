@@ -66,3 +66,14 @@ targets:
       base:
         TARGETED_DEVICE_FAMILY: "1,2"
         SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: NO
+        # iPhone Duo fold APIs (reservedRegions) exist only in the iOS 27.1+
+        # SDK (Xcode 27.1). DUO_SDK turns them on; with an older Xcode the app
+        # still builds and lays out by width/height alone.
+        "SWIFT_ACTIVE_COMPILATION_CONDITIONS[sdk=iphoneos27.1*]": "$(inherited) DUO_SDK"
+        "SWIFT_ACTIVE_COMPILATION_CONDITIONS[sdk=iphonesimulator27.1*]": "$(inherited) DUO_SDK"
+        "SWIFT_ACTIVE_COMPILATION_CONDITIONS[sdk=iphoneos27.2*]": "$(inherited) DUO_SDK"
+        "SWIFT_ACTIVE_COMPILATION_CONDITIONS[sdk=iphonesimulator27.2*]": "$(inherited) DUO_SDK"
+        "SWIFT_ACTIVE_COMPILATION_CONDITIONS[sdk=iphoneos27.3*]": "$(inherited) DUO_SDK"
+        "SWIFT_ACTIVE_COMPILATION_CONDITIONS[sdk=iphonesimulator27.3*]": "$(inherited) DUO_SDK"
+        "SWIFT_ACTIVE_COMPILATION_CONDITIONS[sdk=iphoneos27.4*]": "$(inherited) DUO_SDK"
+        "SWIFT_ACTIVE_COMPILATION_CONDITIONS[sdk=iphonesimulator27.4*]": "$(inherited) DUO_SDK"

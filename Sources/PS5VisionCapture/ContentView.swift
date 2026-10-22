@@ -84,7 +84,20 @@ private struct PlayerView: View {
     /// ornament hides, its binding stays true, and the button stops working.
     @State private var panel: PlayerPanel?
 
-    var body: some View {
+    @ViewBuilder
+    private var playerSurface: some View {
+        #if os(iOS)
+        // iPhone / iPhone Duo / iPad: video plus the on-screen controller,
+        // arranged for the current width, height and fold.
+        PhonePlayerStage(settings: app.remote.settings, gamepad: app.remote.gamepad,
+                         isRemote: app.activeSource == .remote) {
+            MetalVideoView(renderer: app.capture.metalRenderer)
+        } videoOverlay: {
+            if app.showsIdleOverlay {
+                StatusOverlay(title: app.overlayTitle, message: app.statusMessage)
+            }
+        }
+        #else
         ZStack {
             Color.black.ignoresSafeArea()
 
@@ -96,6 +109,11 @@ private struct PlayerView: View {
                     }
                 }
         }
+        #endif
+    }
+
+    var body: some View {
+        playerSurface
         .contentShape(Rectangle())
         .onTapGesture { showControls(!controlsVisible) }
         #if os(visionOS)
@@ -109,16 +127,17 @@ private struct PlayerView: View {
                 .streamOwnsGamepad(app)
         }
         #else
-        // iPhone / iPhone Duo / iPad: the bar floats over the video, inside
-        // the safe area so it never sits under the camera or home indicator.
-        .overlay(alignment: .bottom) {
+        // iPhone / iPhone Duo / iPad: the bar floats at the top, inside the
+        // safe area (clear of the camera and the status column), so it never
+        // covers the on-screen controller at the bottom.
+        .overlay(alignment: .top) {
             if controlsVisible {
                 PlayerControlBar(app: app, renderOptions: renderOptions,
                                  onInteraction: { showControls(true) },
                                  onOpen: { open($0) })
                     .padding(.horizontal, 12)
-                    .padding(.bottom, 12)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                    .padding(.top, 8)
+                    .transition(.move(edge: .top).combined(with: .opacity))
             }
         }
         .immersivePlayerChrome()
@@ -308,6 +327,15 @@ private struct PlayerControlBar: View {
                               systemImage: "speaker.wave.2")
                     }
                 } else {
+                    #if os(iOS)
+                    Picker(selection: touchModeBinding) {
+                        ForEach(TouchControlsMode.allCases) { mode in
+                            Text(LocalizedStringKey(mode.rawValue)).tag(mode)
+                        }
+                    } label: {
+                        Label("On-Screen Controller", systemImage: "gamecontroller")
+                    }
+                    #endif
                     Button(role: .destructive) {
                         app.remote.putConsoleToSleep()
                     } label: {
@@ -333,6 +361,15 @@ private struct PlayerControlBar: View {
         .brandPanel(in: Capsule())
     }
 }
+
+#if os(iOS)
+private extension PlayerControlBar {
+    var touchModeBinding: Binding<TouchControlsMode> {
+        Binding(get: { app.remote.settings.touchControls },
+                set: { app.remote.settings.touchControls = $0 })
+    }
+}
+#endif
 
 enum PlayerPanel: String, Identifiable {
     case enhance, resolution, stream, stats

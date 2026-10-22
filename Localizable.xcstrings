@@ -11143,52 +11143,6 @@
         }
       }
     },
-    "A one-time purchase. Family Sharing and restore work with the same Apple Account.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "一次性购买。使用同一 Apple 账户即可恢复购买并通过家人共享使用。"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "一次性購買。使用同一 Apple 帳號即可回復購買並透過家人共享使用。"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Einmaliger Kauf. Familienfreigabe und Wiederherstellen funktionieren mit demselben Apple Account."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Compra única. En Compartir en familia y al restaurar se usa la misma cuenta de Apple."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Achat unique. Le partage familial et la restauration fonctionnent avec le même compte Apple."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "買い切りです。同じ Apple アカウントで復元とファミリー共有ができます。"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "한 번만 구매하면 됩니다. 같은 Apple 계정으로 복원 및 가족 공유가 가능합니다."
-          }
-        }
-      }
-    },
     "Auto, 5–50 Mbps": {
       "localizations": {
         "zh-Hans": {
@@ -11231,52 +11185,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "자동, 5–50 Mbps"
-          }
-        }
-      }
-    },
-    "Capture Card (Developer Strap)": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "采集卡（开发者头带）"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "擷取卡（開發者頭帶）"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Capture-Karte (Developer Strap)"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Capturadora (Developer Strap)"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Carte de capture (Developer Strap)"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "キャプチャカード（Developer Strap）"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "캡처 카드(Developer Strap)"
           }
         }
       }
@@ -12983,52 +12891,6 @@
         }
       }
     },
-    "Plug the capture card into the iPad's USB-C port": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "把采集卡接到 iPad 的 USB-C 接口"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "將擷取卡接到 iPad 的 USB-C 連接埠"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Schließe die Capture-Karte an den USB-C-Anschluss des iPad an"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Conecta la capturadora al puerto USB-C del iPad"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Branchez la carte d'acquisition sur le port USB-C de l'iPad"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "キャプチャカードを iPad の USB-C ポートに接続してください"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "캡처 카드를 iPad의 USB-C 포트에 연결하세요"
-          }
-        }
-      }
-    },
     "Remote Play is built on chiaki and its forks chiaki-ng and Pylux. Their copyright holders' notices are kept in the source repository and in the license texts above.": {
       "localizations": {
         "zh-Hans": {
@@ -13485,6 +13347,420 @@
           "stringUnit": {
             "state": "translated",
             "value": "PS5는 유선, 이 기기는 5GHz 또는 6GHz Wi‑Fi에 연결하는 것이 좋습니다."
+          }
+        }
+      }
+    },
+    "A one-time purchase that unlocks Pro on iPhone, iPad and Apple Vision Pro. Family Sharing and restore work with the same Apple Account.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一次购买，即可在 iPhone、iPad 和 Apple Vision Pro 上解锁 Pro。家人共享和恢复购买需使用同一 Apple 账户。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一次購買，即可在 iPhone、iPad 和 Apple Vision Pro 上解鎖 Pro。家人共享和回復購買需使用同一 Apple 帳號。"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ein einmaliger Kauf schaltet Pro auf iPhone, iPad und Apple Vision Pro frei. Familienfreigabe und Wiederherstellen funktionieren mit demselben Apple Account."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Una sola compra desbloquea Pro en iPhone, iPad y Apple Vision Pro. En Familia y la restauración funcionan con la misma cuenta de Apple."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un achat unique débloque Pro sur iPhone, iPad et Apple Vision Pro. Le partage familial et la restauration fonctionnent avec le même compte Apple."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 回の購入で iPhone・iPad・Apple Vision Pro の Pro を利用できます。ファミリー共有と購入の復元は同じ Apple アカウントで使えます。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "한 번 구입하면 iPhone, iPad, Apple Vision Pro에서 Pro를 사용할 수 있습니다. 가족 공유와 복원은 같은 Apple 계정으로 가능합니다."
+          }
+        }
+      }
+    },
+    "Always On": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "始终显示"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "永遠顯示"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Immer an"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siempre activado"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toujours activé"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "常に表示"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "항상 켬"
+          }
+        }
+      }
+    },
+    "Automatic shows the touch controller only when no game controller is connected. In portrait, and on iPhone Duo in tabletop pose, it sits under the picture; in landscape it floats over it. Double-tap a stick for L3 or R3. Drag on the touchpad strip to swipe, tap it to click.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“自动”仅在未连接游戏手柄时显示屏幕手柄。竖屏时以及 iPhone Duo 桌面姿态下，手柄位于画面下方；横屏时浮在画面上。双击摇杆即为 L3 或 R3。在触摸板条上拖动可滑动，轻点可按下。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「自動」僅在未連接遊戲控制器時顯示螢幕手把。直向時以及 iPhone Duo 桌面姿態下，手把位於畫面下方；橫向時浮在畫面上。點兩下搖桿即為 L3 或 R3。在觸控板條上拖移可滑動，輕點可按下。"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "„Automatisch“ zeigt den Touch-Controller nur, wenn kein Gamecontroller verbunden ist. Im Hochformat und beim iPhone Duo in Tischhaltung liegt er unter dem Bild, im Querformat schwebt er darüber. Doppeltippe auf einen Stick für L3 oder R3. Ziehe auf dem Touchpad-Streifen zum Wischen, tippe zum Klicken."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "«Automático» muestra el mando táctil solo si no hay un mando conectado. En vertical, y en el iPhone Duo en postura de mesa, aparece bajo la imagen; en horizontal flota sobre ella. Toca dos veces un joystick para L3 o R3. Arrastra en la franja del panel táctil para deslizar y tócala para pulsar."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "« Automatique » affiche la manette tactile seulement si aucune manette n'est connectée. En portrait, et sur iPhone Duo en position table, elle se place sous l'image ; en paysage, elle flotte par-dessus. Touchez deux fois un stick pour L3 ou R3. Faites glisser sur la bande du pavé tactile pour balayer, touchez-la pour cliquer."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「自動」はゲームコントローラが未接続のときだけタッチコントローラを表示します。縦向きと iPhone Duo のテーブルトップ姿勢では映像の下に、横向きでは映像の上に重ねて表示します。スティックをダブルタップで L3/R3。タッチパッド帯をドラッグでスワイプ、タップでクリックします。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "'자동'은 게임 컨트롤러가 연결되지 않았을 때만 터치 컨트롤러를 표시합니다. 세로 모드와 iPhone Duo 테이블탑 자세에서는 화면 아래에, 가로 모드에서는 화면 위에 표시됩니다. 스틱을 두 번 탭하면 L3 또는 R3입니다. 터치패드 띠를 드래그하면 스와이프, 탭하면 클릭입니다."
+          }
+        }
+      }
+    },
+    "Capture Card (Vision Pro only)": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "采集卡（仅 Vision Pro）"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "擷取卡（僅 Vision Pro）"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Capture-Karte (nur Vision Pro)"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Capturadora (solo Vision Pro)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Carte d'acquisition (Vision Pro uniquement)"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "キャプチャカード（Vision Pro のみ）"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "캡처 카드(Vision Pro 전용)"
+          }
+        }
+      }
+    },
+    "Off": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "关闭"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "關閉"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aus"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Desactivado"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Désactivé"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "オフ"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "끔"
+          }
+        }
+      }
+    },
+    "On-Screen Controller": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "屏幕手柄"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "螢幕手把"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bildschirm-Controller"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mando en pantalla"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Manette à l'écran"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "画面上のコントローラ"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "화면 컨트롤러"
+          }
+        }
+      }
+    },
+    "Opacity": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "不透明度"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "不透明度"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deckkraft"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opacidad"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opacité"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "不透明度"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "불투명도"
+          }
+        }
+      }
+    },
+    "Show": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "显示"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "顯示"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anzeigen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mostrar"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afficher"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "表示"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "표시"
+          }
+        }
+      }
+    },
+    "Vibrate on Press": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按下时振动"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按下時震動"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Beim Drücken vibrieren"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vibrar al pulsar"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vibrer à l'appui"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "押したときに振動"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "누를 때 진동"
           }
         }
       }

@@ -28,10 +28,9 @@ enum Platform {
     /// The immersive curved-screen theater exists only on visionOS.
     static var supportsTheater: Bool { isVision }
 
-    /// UVC capture cards: visionOS (Developer Strap) and iPad (USB-C).
-    /// iPhone does not expose external UVC cameras to apps.
-    @MainActor
-    static var supportsCapture: Bool { isVision || isPad }
+    /// UVC capture cards (Developer Strap) are a Vision Pro feature only.
+    /// The iPhone and iPad app is Remote Play only.
+    static var supportsCapture: Bool { isVision }
 
     /// Home hero headline for this device.
     @MainActor

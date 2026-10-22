@@ -13489,52 +13489,6 @@
         }
       }
     },
-    "Capture Card (Vision Pro only)": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "采集卡（仅 Vision Pro）"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "擷取卡（僅 Vision Pro）"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Capture-Karte (nur Vision Pro)"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Capturadora (solo Vision Pro)"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Carte d'acquisition (Vision Pro uniquement)"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "キャプチャカード（Vision Pro のみ）"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "캡처 카드(Vision Pro 전용)"
-          }
-        }
-      }
-    },
     "Off": {
       "localizations": {
         "zh-Hans": {
@@ -13761,6 +13715,52 @@
           "stringUnit": {
             "state": "translated",
             "value": "누를 때 진동"
+          }
+        }
+      }
+    },
+    "Developer Strap Capture Card (Vision Pro only)": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "开发者头带采集卡（仅 Vision Pro）"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "開發者頭帶擷取卡（僅 Vision Pro）"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Capture-Karte über Developer Strap (nur Vision Pro)"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Capturadora con Developer Strap (solo Vision Pro)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Carte d'acquisition via Developer Strap (Vision Pro uniquement)"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Developer Strap キャプチャカード（Vision Pro のみ）"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Developer Strap 캡처 카드(Vision Pro 전용)"
           }
         }
       }

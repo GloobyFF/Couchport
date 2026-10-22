@@ -7,7 +7,7 @@
 - `ImmersiveTheaterView.swift`、`TheaterScene.swift`：整个文件放在 `#if os(visionOS)` 里。
 - `ContentView.swift`：iOS 上没有 ornament，控制栏改为浮在视频上方，在安全区内；窄屏只显示图标，并隐藏码率等文字；放不下时可以横向滚动；隐藏“影院”按钮；播放时隐藏状态栏和系统叠加层。
 - `HomeView.swift`：窄屏的 hero 改为上图下文，chips 自动换行（`FlowLayout`），主机网格最小宽度改为 260；文案按平台变化（“streamed to iPhone/iPad”）。
-- iOS / iPadOS 完全不含采集卡和开发者头带：Home 不显示该区块，启动时不申请相机权限；购买页的采集卡一行改为“Capture Card (Vision Pro only)”，并且只在 visionOS 上显示；购买说明里写明一次购买即可在 iPhone、iPad 和 Vision Pro 上解锁。
+- iOS / iPadOS 完全不含采集卡和开发者头带：Home 不显示该区块，启动时不申请相机权限；购买页在所有平台都列出“Developer Strap Capture Card (Vision Pro only)”（Pro 是全平台通用的一次购买）；购买说明里写明一次购买即可在 iPhone、iPad 和 Vision Pro 上解锁。
 - `Info.plist`：支持全部方向，`UIRequiresFullScreen = NO`（支持分屏）；版本号改由 `MARKETING_VERSION` / `CURRENT_PROJECT_VERSION` 提供；新增 `CouchportSourceURL`。
 - `Tools/build_libchiaki_visionos.sh`：新增 iOS 真机（OS64）和 iOS 模拟器（SIMULATORARM64）两个切片；可以用 `VP_SKIP_IOS=1` 只构建 visionOS。
 

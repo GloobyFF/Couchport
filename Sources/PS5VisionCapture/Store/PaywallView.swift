@@ -82,11 +82,9 @@ struct PaywallView: View {
             row("Bitrate", icon: "dial.medium", free: Text(verbatim: "10–20 Mbps"), pro: Text("Auto, 5–50 Mbps"))
             row("HDR (10-bit)", icon: "sun.max.fill", free: nil, pro: nil)
             row("Picture Enhancement", icon: "wand.and.stars", free: nil, pro: nil)
-            // The capture card is an Apple Vision Pro feature; the iPhone and
-            // iPad app does not offer it, so the row is not shown there.
-            if Platform.supportsCapture {
-                row("Capture Card (Vision Pro only)", icon: "cable.connector.horizontal", free: nil, pro: nil)
-            }
+            // Listed on every platform: Pro is one universal purchase, and the
+            // Developer Strap capture mode is part of it on Apple Vision Pro.
+            row("Developer Strap Capture Card (Vision Pro only)", icon: "cable.connector.horizontal", free: nil, pro: nil)
         }
         .padding(Platform.isVision ? 24 : 16)
         .brandPanel(in: RoundedRectangle(cornerRadius: 28, style: .continuous))

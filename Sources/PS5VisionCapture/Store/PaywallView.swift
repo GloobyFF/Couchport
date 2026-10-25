@@ -13,6 +13,7 @@ struct PaywallView: View {
             ScrollView {
                 VStack(spacing: 26) {
                     header
+                    platforms
                     comparison
                     actions
                 }
@@ -57,6 +58,46 @@ struct PaywallView: View {
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
         }
+    }
+
+    /// "One purchase. Every device." Product names are shown as plain text
+    /// (descriptive use, no device artwork or Apple product symbols).
+    private var platforms: some View {
+        VStack(spacing: 12) {
+            Text("One purchase. Every device.")
+                .font(.title2.weight(.bold))
+                .multilineTextAlignment(.center)
+            FlowLayout(spacing: 10) {
+                platformChip("Apple Vision Pro", available: true)
+                platformChip("iPhone Duo", available: true)
+                platformChip("iPhone", available: true)
+                platformChip("iPad", available: true)
+                platformChip("Apple TV", available: false)
+            }
+            .frame(maxWidth: .infinity)
+        }
+        .padding(Platform.isVision ? 22 : 16)
+        .brandPanel(in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+    }
+
+    private func platformChip(_ name: String, available: Bool) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: available ? "checkmark.circle.fill" : "clock")
+                .foregroundStyle(available ? Color.green : Color.secondary)
+            Text(verbatim: name)
+                .font(.headline)
+            if !available {
+                Text("Coming later")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 8)
+        .background(available ? Brand.blue.opacity(0.28) : Color.white.opacity(0.08), in: Capsule())
+        .overlay(Capsule().strokeBorder(available ? Brand.blue.opacity(0.7) : Color.white.opacity(0.2), lineWidth: 1))
+        .opacity(available ? 1 : 0.7)
+        .accessibilityElement(children: .combine)
     }
 
     private var headline: LocalizedStringKey {
@@ -147,7 +188,7 @@ struct PaywallView: View {
                     .multilineTextAlignment(.center)
             }
 
-            Text("A one-time purchase that unlocks Pro on iPhone, iPad and Apple Vision Pro. Family Sharing and restore work with the same Apple Account.")
+            Text("A one-time purchase that unlocks Pro on Apple Vision Pro, iPhone Duo, iPhone and iPad. Family Sharing and restore work with the same Apple Account.")
                 .font(.footnote)
                 .foregroundStyle(.tertiary)
                 .multilineTextAlignment(.center)

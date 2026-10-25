@@ -13213,52 +13213,6 @@
         }
       }
     },
-    "A one-time purchase that unlocks Pro on iPhone, iPad and Apple Vision Pro. Family Sharing and restore work with the same Apple Account.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "一次购买，即可在 iPhone、iPad 和 Apple Vision Pro 上解锁 Pro。家人共享和恢复购买需使用同一 Apple 账户。"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "一次購買，即可在 iPhone、iPad 和 Apple Vision Pro 上解鎖 Pro。家人共享和回復購買需使用同一 Apple 帳號。"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ein einmaliger Kauf schaltet Pro auf iPhone, iPad und Apple Vision Pro frei. Familienfreigabe und Wiederherstellen funktionieren mit demselben Apple Account."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Una sola compra desbloquea Pro en iPhone, iPad y Apple Vision Pro. En Familia y la restauración funcionan con la misma cuenta de Apple."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Un achat unique débloque Pro sur iPhone, iPad et Apple Vision Pro. Le partage familial et la restauration fonctionnent avec le même compte Apple."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "1 回の購入で iPhone・iPad・Apple Vision Pro の Pro を利用できます。ファミリー共有と購入の復元は同じ Apple アカウントで使えます。"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "한 번 구입하면 iPhone, iPad, Apple Vision Pro에서 Pro를 사용할 수 있습니다. 가족 공유와 복원은 같은 Apple 계정으로 가능합니다."
-          }
-        }
-      }
-    },
     "Always On": {
       "localizations": {
         "zh-Hans": {
@@ -14497,6 +14451,144 @@
           "stringUnit": {
             "state": "translated",
             "value": "하루 10분"
+          }
+        }
+      }
+    },
+    "A one-time purchase that unlocks Pro on Apple Vision Pro, iPhone Duo, iPhone and iPad. Family Sharing and restore work with the same Apple Account.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ein einmaliger Kauf schaltet Pro auf Apple Vision Pro, iPhone Duo, iPhone und iPad frei. Familienfreigabe und Wiederherstellen funktionieren mit demselben Apple Account."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Una compra única desbloquea Pro en Apple Vision Pro, iPhone Duo, iPhone y iPad. En Familia y la restauración funcionan con la misma cuenta de Apple."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un achat unique débloque Pro sur Apple Vision Pro, iPhone Duo, iPhone et iPad. Le partage familial et la restauration fonctionnent avec le même compte Apple."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一度の購入で Apple Vision Pro、iPhone Duo、iPhone、iPad の Pro が解除されます。ファミリー共有と復元は同じ Apple アカウントで利用できます。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "한 번 구매로 Apple Vision Pro, iPhone Duo, iPhone, iPad에서 Pro가 잠금 해제됩니다. 가족 공유와 복원은 같은 Apple 계정으로 이용할 수 있습니다."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一次性购买，即可在 Apple Vision Pro、iPhone Duo、iPhone 和 iPad 上解锁 Pro。使用同一 Apple 账户即可家人共享和恢复购买。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一次性購買，即可在 Apple Vision Pro、iPhone Duo、iPhone 和 iPad 上解鎖 Pro。使用同一 Apple 帳號即可家人共享和回復購買。"
+          }
+        }
+      }
+    },
+    "Coming later": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Folgt später"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Próximamente"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bientôt"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "近日対応"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "출시 예정"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "即将推出"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "即將推出"
+          }
+        }
+      }
+    },
+    "One purchase. Every device.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Einmal kaufen. Auf allen Geräten."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Una compra. Todos tus dispositivos."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un seul achat. Tous vos appareils."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一度の購入で、すべてのデバイスに。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "한 번 구매로 모든 기기에서."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一次购买，全平台可用"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一次購買，全平台可用"
           }
         }
       }

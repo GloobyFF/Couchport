@@ -15,6 +15,7 @@ private struct RootView: View {
     @ObservedObject var app: AppModel
     @ObservedObject var renderOptions: RenderOptions
     @ObservedObject private var purchases = PurchaseManager.shared
+    @Environment(\.scenePhase) private var scenePhase
 
     #if os(visionOS)
     @Environment(\.openImmersiveSpace) private var openImmersiveSpace
@@ -41,6 +42,10 @@ private struct RootView: View {
         .streamOwnsGamepad(app)
         .onChange(of: renderOptions.displayMode) { _, mode in
             Task { await applyDisplayMode(mode) }
+        }
+        // Pick up consoles paired on the user's other devices (iCloud).
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { app.consoles.syncNow() }
         }
         // The Couchport Pro sheet, requested from anywhere in the app.
         .sheet(item: $purchases.paywallRequest) { reason in
@@ -83,6 +88,16 @@ private struct PlayerView: View {
     /// a popover anchored in an auto-hiding ornament is torn down when the
     /// ornament hides, its binding stays true, and the button stops working.
     @State private var panel: PlayerPanel?
+    #if os(tvOS)
+    /// Apple TV: the controls panel (Siri Remote Menu or Play/Pause).
+    @State private var tvControlsOpen = false
+    /// "Stop playing?" after Menu, Menu (panel closed, then Menu again).
+    @State private var tvStopPrompt = false
+    @State private var tvPanelClosedAt: Date?
+    /// The L3 + R3 hint is shown until the panel has been seen once.
+    @AppStorage("tv.psComboHintSeen") private var psComboHintSeen = false
+    @ObservedObject private var controllers = ControllerPresence.shared
+    #endif
 
     @ViewBuilder
     private var playerSurface: some View {
@@ -96,6 +111,33 @@ private struct PlayerView: View {
         } videoOverlay: {
             if app.showsIdleOverlay {
                 StatusOverlay(title: app.overlayTitle, message: app.statusMessage)
+            }
+        }
+        #elseif os(tvOS)
+        // Apple TV: full-screen video inside a GCEventViewController, so the
+        // controller drives the console, not the focus engine.
+        ZStack {
+            Color.black.ignoresSafeArea()
+
+            TVGameSurface(renderer: app.capture.metalRenderer,
+                          ownsController: tvStreamOwnsController,
+                          focusable: !tvControlsOpen,
+                          onMenu: { handleTVMenu() },
+                          onPlayPause: { tvControlsOpen ? closeTVControls() : openTVControls() })
+                .ignoresSafeArea()
+
+            if app.showsIdleOverlay {
+                StatusOverlay(title: app.overlayTitle, message: app.statusMessage)
+                    .allowsHitTesting(false)
+            }
+
+            if !controllers.isConnected && !tvControlsOpen {
+                VStack {
+                    Spacer()
+                    ConnectControllerPrompt(compact: true)
+                        .padding(60)
+                }
+                .allowsHitTesting(false)
             }
         }
         #else
@@ -115,9 +157,9 @@ private struct PlayerView: View {
 
     var body: some View {
         playerSurface
+        #if os(visionOS)
         .contentShape(Rectangle())
         .onTapGesture { showControls(!controlsVisible) }
-        #if os(visionOS)
         .ornament(visibility: controlsVisible ? .visible : .hidden,
                   attachmentAnchor: .scene(.bottom),
                   contentAlignment: .top) {
@@ -127,9 +169,22 @@ private struct PlayerView: View {
                 .padding(.top, 24)
                 .streamOwnsGamepad(app)
         }
+        #elseif os(tvOS)
+        // Apple TV: no floating button. Menu or Play/Pause opens the tile
+        // panel; Menu inside it closes it; Menu again right after offers Stop.
+        .overlay { tvControlsOverlay }
+        .immersivePlayerChrome()
+        .onExitCommand { tvControlsOpen ? closeTVControls(viaMenu: true) : handleTVMenu() }
+        .onPlayPauseCommand { tvControlsOpen ? closeTVControls() : openTVControls() }
+        .confirmationDialog("Stop playing?", isPresented: $tvStopPrompt, titleVisibility: .visible) {
+            Button("Stop", role: .destructive) { app.stopAndGoHome() }
+            Button("Keep Playing", role: .cancel) {}
+        }
         #else
         // iPhone / iPhone Duo / iPad: one draggable floating button in every
         // pose; its panel holds all the controls (no bar over the picture).
+        .contentShape(Rectangle())
+        .onTapGesture { showControls(!controlsVisible) }
         .overlay {
             FloatingPlayerControls(app: app, settings: app.remote.settings,
                                    onOpen: { open($0) })
@@ -143,7 +198,14 @@ private struct PlayerView: View {
             panelView(panel)
                 .streamOwnsGamepad(app)
         }
-        .onChange(of: app.freeTimeWarning) { _, warn in if warn { panel = nil } }
+        .onChange(of: app.freeTimeWarning) { _, warn in
+            if warn {
+                panel = nil
+                #if os(tvOS)
+                tvControlsOpen = false
+                #endif
+            }
+        }
         .alert("Free play ends in 1 minute", isPresented: $app.freeTimeWarning) {
             Button("Keep Playing", role: .cancel) {}
             Button("Unlock Pro") { PurchaseManager.shared.requestPaywall(.browse) }
@@ -169,6 +231,58 @@ private struct PlayerView: View {
         hideTask?.cancel()
         panel = value
     }
+
+    #if os(tvOS)
+    /// The console owns the controller only while video plays with no
+    /// panel, sheet, dialog or alert on screen.
+    private var tvStreamOwnsController: Bool {
+        app.activeSource == .remote && app.remote.state == .streaming
+            && !tvControlsOpen && panel == nil && !tvStopPrompt
+            && !app.freeTimeWarning && app.remote.pinRequest == nil
+    }
+
+    @ViewBuilder
+    private var tvControlsOverlay: some View {
+        if tvControlsOpen {
+            ZStack {
+                Color.black.opacity(0.45)
+                    .ignoresSafeArea()
+                    .allowsHitTesting(false)
+                PlayerControlsPanel(app: app, settings: app.remote.settings,
+                                    onOpen: { open($0) },
+                                    onClose: { closeTVControls() },
+                                    showPSComboHint: !psComboHintSeen)
+                    .frame(maxWidth: 1100)
+                    .focusSection()
+            }
+            .transition(.opacity)
+        }
+    }
+
+    private func openTVControls() {
+        hideTask?.cancel()
+        withAnimation(.easeInOut(duration: 0.2)) { tvControlsOpen = true }
+    }
+
+    /// `viaMenu`: closed with the Menu button, so a second Menu right after
+    /// offers Stop (tiles and Play/Pause do not arm that).
+    private func closeTVControls(viaMenu: Bool = false) {
+        withAnimation(.easeInOut(duration: 0.2)) { tvControlsOpen = false }
+        psComboHintSeen = true
+        tvPanelClosedAt = viaMenu ? Date() : nil
+    }
+
+    /// Menu with the panel closed: opens it, or, right after it was closed
+    /// with Menu, asks whether to stop.
+    private func handleTVMenu() {
+        if let closed = tvPanelClosedAt, Date().timeIntervalSince(closed) < 2 {
+            tvPanelClosedAt = nil
+            tvStopPrompt = true
+        } else {
+            openTVControls()
+        }
+    }
+    #endif
 
     @ViewBuilder
     private func panelView(_ panel: PlayerPanel) -> some View {
@@ -432,7 +546,7 @@ private struct TheaterControlPanel: View {
 
                 OptionSections(captureManager: app.capture, renderOptions: renderOptions)
             }
-            .scrollContentBackground(.hidden)
+            .formBackgroundHidden()
             .navigationTitle("Theater")
         }
         .brandWindowBackground()

@@ -1,6 +1,7 @@
-#if os(iOS)
+#if os(iOS) || os(tvOS)
 import SwiftUI
 
+#if os(iOS)
 /// iPhone / iPad / iPhone Duo player controls: one floating button the user
 /// can drag anywhere (it snaps to the nearest of the four edges and remembers its
 /// spot). Tapping it opens a panel of large, labelled actions. Same in every
@@ -31,7 +32,7 @@ struct FloatingPlayerControls: View {
                         .onTapGesture { close() }
                         .transition(.opacity)
 
-                    menu
+                    PlayerControlsPanel(app: app, settings: settings, onOpen: onOpen, onClose: close)
                         .frame(maxWidth: min(area.width - 24, 440))
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .transition(.scale(scale: 0.92).combined(with: .opacity))
@@ -115,42 +116,62 @@ struct FloatingPlayerControls: View {
     private func clamp(_ v: Double, _ lo: Double, _ hi: Double) -> Double { min(max(v, lo), max(lo, hi)) }
 
     private func close() { expanded = false }
+}
+#endif
+
+/// The player's controls as one panel of large, labelled tiles. iPhone / iPad
+/// open it from the floating button; Apple TV opens it with the Siri Remote's
+/// Menu or Play/Pause button, where every tile is a focusable card button.
+struct PlayerControlsPanel: View {
+    @ObservedObject var app: AppModel
+    @ObservedObject var settings: RemotePlaySettings
+    let onOpen: (PlayerPanel) -> Void
+    let onClose: () -> Void
+    /// Apple TV: show the L3 + R3 hint (shown until the panel was seen once).
+    var showPSComboHint = false
+
+    private var isTV: Bool { Platform.isTV }
+    private var tileHeight: CGFloat { isTV ? 150 : 84 }
+    private var iconSize: CGFloat { isTV ? 38 : 24 }
+    private var columns: Int { isTV ? 4 : 3 }
 
     private func run(_ action: () -> Void) {
         action()
-        close()
+        onClose()
     }
 
-    // MARK: Menu
-
-    private var menu: some View {
-        VStack(alignment: .leading, spacing: 14) {
+    var body: some View {
+        VStack(alignment: .leading, spacing: isTV ? 24 : 14) {
             HStack(spacing: 10) {
                 Label(app.sourceTitle, systemImage: app.sourceIcon)
-                    .font(.headline)
+                    .font(isTV ? .title3.weight(.semibold) : .headline)
                     .lineLimit(1)
                 Spacer(minLength: 8)
                 if let left = app.freeSecondsLeft { FreeTimeChip(secondsLeft: left) }
-                Button { close() } label: {
+                #if os(iOS)
+                Button { onClose() } label: {
                     Image(systemName: "xmark.circle.fill")
                         .font(.title2)
                         .symbolRenderingMode(.hierarchical)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(Text("Close"))
+                #endif
             }
             Text(verbatim: "\(app.formatText) · \(app.rateText)")
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
 
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 3), spacing: 10) {
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: isTV ? 24 : 10), count: columns),
+                      spacing: isTV ? 24 : 10) {
                 if app.activeSource == .remote {
                     tile("PS Button", "button.programmable") { run { app.remote.pressPSButton() } }
                     tile("Stream", "dial.medium") { run { onOpen(.stream) } }
                 }
                 tile("Enhance", "wand.and.stars") { run { onOpen(.enhance) } }
                 tile("Performance Stats", "chart.xyaxis.line") { run { onOpen(.stats) } }
+                #if os(iOS)
                 if app.activeSource == .remote && settings.pictureInPicture {
                     tile("Picture in Picture", "pip.enter") {
                         run { NotificationCenter.default.post(name: .couchportStartPictureInPicture, object: nil) }
@@ -165,10 +186,14 @@ struct FloatingPlayerControls: View {
                             settings.waterRipples.toggle()
                         }
                     }
+                }
+                #endif
+                if app.activeSource == .remote {
                     tile("Rest Mode", "moon.zzz") { run { app.remote.putConsoleToSleep() } }
                 }
             }
 
+            #if os(iOS)
             if app.activeSource == .remote {
                 VStack(alignment: .leading, spacing: 6) {
                     Label("On-Screen Controller", systemImage: "gamecontroller")
@@ -184,69 +209,77 @@ struct FloatingPlayerControls: View {
                         .foregroundStyle(.secondary)
                 }
             }
+            #else
+            VStack(alignment: .leading, spacing: 8) {
+                if showPSComboHint && app.activeSource == .remote {
+                    Label("Hold L3 + R3 for the PS button", systemImage: "button.programmable")
+                        .font(.callout.weight(.semibold))
+                }
+                Text("Detected controller: \(app.remote.gamepad.controllerName ?? String(localized: "None"))")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Text("Press Menu to return to the game.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            #endif
 
             Button(role: .destructive) {
                 run { app.stopAndGoHome() }
             } label: {
                 Label("Stop", systemImage: "stop.fill")
                     .font(.headline)
-                    .frame(maxWidth: .infinity, minHeight: 46)
+                    .frame(maxWidth: .infinity, minHeight: isTV ? 60 : 46)
             }
             .buttonStyle(.borderedProminent)
             .tint(.red)
         }
-        .padding(18)
+        .padding(isTV ? 40 : 18)
         // Plain system glass inside the card's outline: no pattern.
-        .modifier(SystemGlassCard(cornerRadius: 26))
-        .overlay(RoundedRectangle(cornerRadius: 26, style: .continuous)
-            .strokeBorder(.white.opacity(0.18), lineWidth: 1))
+        .modifier(SystemGlassCard(cornerRadius: isTV ? 40 : 26))
+        .overlay(RoundedRectangle(cornerRadius: isTV ? 40 : 26, style: .continuous)
+            .strokeBorder(.white.opacity(0.18), lineWidth: 1)
+            .allowsHitTesting(false))
         .environment(\.colorScheme, .dark)
         .padding(12)
     }
 
+    private func tileLabel(_ title: LocalizedStringKey, _ icon: String) -> some View {
+        VStack(spacing: 8) {
+            Image(systemName: icon)
+                .font(.system(size: iconSize, weight: .medium))
+                .frame(height: iconSize + 4)
+            Text(title)
+                .font(isTV ? .callout.weight(.medium) : .footnote.weight(.medium))
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+                .minimumScaleFactor(0.8)
+        }
+        .frame(maxWidth: .infinity, minHeight: tileHeight)
+        .padding(.horizontal, 4)
+    }
+
     private func tile(_ title: LocalizedStringKey, _ icon: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            VStack(spacing: 8) {
-                Image(systemName: icon)
-                    .font(.system(size: 24, weight: .medium))
-                    .frame(height: 28)
-                Text(title)
-                    .font(.footnote.weight(.medium))
-                    .multilineTextAlignment(.center)
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.8)
-            }
-            .frame(maxWidth: .infinity, minHeight: 84)
-            .padding(.horizontal, 4)
-            .background(.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            tileLabel(title, icon)
+                .background(.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         }
-        .buttonStyle(.plain)
+        .plainOrCardButtonStyle()
     }
 
     private func toggleTile(_ title: LocalizedStringKey, _ icon: String, isOn: Bool,
                             action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            VStack(spacing: 8) {
-                Image(systemName: icon)
-                    .font(.system(size: 24, weight: .medium))
-                    .frame(height: 28)
-                Text(title)
-                    .font(.footnote.weight(.medium))
-                    .multilineTextAlignment(.center)
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.8)
-            }
-            .frame(maxWidth: .infinity, minHeight: 84)
-            .padding(.horizontal, 4)
-            .foregroundStyle(isOn ? Color.white : Color.primary)
-            .background(isOn ? Brand.blue.opacity(0.85) : Color.white.opacity(0.08),
-                        in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            tileLabel(title, icon)
+                .foregroundStyle(isOn ? Color.white : Color.primary)
+                .background(isOn ? Brand.blue.opacity(0.85) : Color.white.opacity(0.08),
+                            in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         }
-        .buttonStyle(.plain)
+        .plainOrCardButtonStyle()
         .accessibilityValue(Text(isOn ? "On" : "Off"))
     }
 }
-/// System Liquid Glass (deployment target is iOS 26).
+/// System Liquid Glass (deployment target is iOS 26 / tvOS 26).
 private struct SystemGlassCard: ViewModifier {
     let cornerRadius: CGFloat
 

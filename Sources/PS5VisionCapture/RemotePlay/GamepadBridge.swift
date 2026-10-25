@@ -41,6 +41,14 @@ final class GamepadBridge: ObservableObject {
     var swapConfirmCancel = false { didSet { if swapConfirmCancel != oldValue { onState?(output) } } }
     var swapSquareTriangle = false { didSet { if swapSquareTriangle != oldValue { onState?(output) } } }
 
+    /// tvOS keeps the controller's Home (PS) button for the system, so on
+    /// Apple TV holding L3 + R3 together for `psComboHold` seconds sends the
+    /// PS button instead (L3/R3 are released to the console while it is held).
+    var psButtonComboEnabled = Platform.isTV
+    nonisolated static let psComboHold: Double = 0.5
+    private var psComboTask: Task<Void, Never>?
+    private var psComboActive = false
+
     let feedback = ControllerFeedback()
 
     private var observers: [NSObjectProtocol] = []
@@ -88,6 +96,9 @@ final class GamepadBridge: ObservableObject {
         detach(current)
         current = nil
         feedback.attach(nil)
+        psComboTask?.cancel()
+        psComboTask = nil
+        psComboActive = false
         hasPhysicalController = false
         last = GamepadSnapshot()
         virtualPad = GamepadSnapshot()
@@ -96,16 +107,21 @@ final class GamepadBridge: ObservableObject {
 
     // MARK: - Input
 
-    private func attachBestController() {
-        // Only real game controllers count. Anything a keyboard, mouse or
-        // remote exposes through GameController is ignored, so the
-        // on-screen controller isn't hidden by a non-controller device.
+    /// Only real game controllers count. Anything a keyboard, mouse or
+    /// remote (the Siri Remote included) exposes through GameController is
+    /// ignored, so the on-screen controller isn't hidden by a non-controller
+    /// device and the Siri Remote never drives the console.
+    static func gamepads() -> [GCController] {
         let ignored: Set<String> = [GCProductCategoryKeyboard, GCProductCategoryMouse,
                                     GCProductCategorySiriRemote1stGen, GCProductCategorySiriRemote2ndGen,
                                     GCProductCategoryUniversalElectronicsRemote, GCProductCategoryCoalescedRemote]
-        let pads = GCController.controllers().filter {
+        return GCController.controllers().filter {
             $0.extendedGamepad != nil && !ignored.contains($0.productCategory)
         }
+    }
+
+    private func attachBestController() {
+        let pads = Self.gamepads()
         let next = pads.first { $0.extendedGamepad is GCDualSenseGamepad } ?? pads.first
         guard next !== current else { return }
         detach(current)
@@ -139,6 +155,10 @@ final class GamepadBridge: ObservableObject {
     /// a stick or touchpad finger from the touch controller wins while held.
     private var output: GamepadSnapshot {
         var s = last
+        if psComboActive {
+            s.buttons &= ~Self.l3r3
+            s.buttons |= Self.psBit
+        }
         if swapConfirmCancel { s.buttons = Self.swapBits(s.buttons, 0, 1) }     // Cross ↔ Circle
         if swapSquareTriangle { s.buttons = Self.swapBits(s.buttons, 2, 3) }    // Square ↔ Triangle
         let v = virtualPad
@@ -171,9 +191,34 @@ final class GamepadBridge: ObservableObject {
         var next = snapshot
         next.gyro = last.gyro
         next.accel = last.accel
+        updatePSCombo(next.buttons)
         guard next != last else { return }
         last = next
         onState?(output)
+    }
+
+    // MARK: - PS button combo (tvOS)
+
+    nonisolated static let l3r3: UInt32 = (1 << 10) | (1 << 11)
+    nonisolated static let psBit: UInt32 = 1 << 15
+
+    /// Starts the hold timer when L3 and R3 are both down; releasing either
+    /// ends the PS press (the button change itself is sent by `merge`).
+    private func updatePSCombo(_ buttons: UInt32) {
+        guard psButtonComboEnabled, buttons & Self.l3r3 == Self.l3r3 else {
+            psComboTask?.cancel()
+            psComboTask = nil
+            psComboActive = false
+            return
+        }
+        guard psComboTask == nil, !psComboActive else { return }
+        psComboTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(Self.psComboHold))
+            guard !Task.isCancelled, let self else { return }
+            self.psComboTask = nil
+            self.psComboActive = true
+            self.onState?(self.output)
+        }
     }
 
     private func configureMotion() {
@@ -364,6 +409,31 @@ final class GamepadBridge: ObservableObject {
 
     func rumble(left: UInt8, right: UInt8) {
         feedback.rumble(left: left, right: right)
+    }
+}
+
+/// Whether a real game controller is connected, for the "Connect a game
+/// controller" prompt on Apple TV. Runs independently of a stream.
+@MainActor
+final class ControllerPresence: ObservableObject {
+    static let shared = ControllerPresence()
+    @Published private(set) var isConnected = false
+    @Published private(set) var name: String?
+    private var observers: [NSObjectProtocol] = []
+
+    private init() {
+        for name in [Notification.Name.GCControllerDidConnect, .GCControllerDidDisconnect] {
+            observers.append(NotificationCenter.default.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+                Task { @MainActor in self?.refresh() }
+            })
+        }
+        refresh()
+    }
+
+    func refresh() {
+        let pad = GamepadBridge.gamepads().first
+        isConnected = pad != nil
+        name = pad?.vendorName
     }
 }
 

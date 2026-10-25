@@ -14,7 +14,6 @@ struct HomeView: View {
     @State private var consoleToForget: PSConsole?
     @State private var consoleToRename: PSConsole?
     @State private var renameText = ""
-    @State private var showAbout = false
     @State private var layout = LayoutClass(width: 1000)
 
     var body: some View {
@@ -36,7 +35,6 @@ struct HomeView: View {
         .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { layout = LayoutClass(width: $0) }
         .environment(\.layoutClass, layout)
         .background { HomeBackground() }
-        .sheet(isPresented: $showAbout) { AboutView() }
         .task {
             if Platform.supportsCapture { await capture.prepare() }
             remote.startWatchingConsoles()
@@ -114,37 +112,19 @@ struct HomeView: View {
             .buttonBorderShape(.circle)
             .controlSize(.large)
             .help("Stream Settings")
-
-            Button {
-                showAbout = true
-            } label: {
-                Label("About", systemImage: "info.circle.fill")
-                    .font(.title3)
-                    .padding(6)
-            }
-            .labelStyle(.iconOnly)
-            .buttonBorderShape(.circle)
-            .controlSize(.large)
-            .help("About")
         }
     }
 
     // MARK: - Legal
 
-    /// Independent-app notice. Brand names are used only to describe compatibility.
+    /// One quiet line; the full notices live in Stream Settings › About.
     private var legalNotice: some View {
-        VStack(spacing: 8) {
-            Button("About Couchport, Licenses & Source Code") { showAbout = true }
-                .font(.footnote.weight(.semibold))
-                .buttonStyle(.borderless)
-        Text("Couchport is an independent app and is not affiliated with, endorsed by, or sponsored by Sony Interactive Entertainment, Microsoft, or Apple. PlayStation, PS5, and PS4 are trademarks of Sony Interactive Entertainment Inc. Other names are trademarks of their respective owners and are used only to describe compatibility.")
-            .font(.caption)
+        Text("Independent app, not affiliated with Sony Interactive Entertainment or Apple.")
+            .font(.caption2)
             .foregroundStyle(.tertiary)
-            .frame(maxWidth: .infinity, alignment: .center)
             .multilineTextAlignment(.center)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.top, 8)
+            .frame(maxWidth: .infinity)
+            .padding(.top, 8)
     }
 
     // MARK: - Remote Play hero

@@ -12339,144 +12339,6 @@
         }
       }
     },
-    "About Couchport Pro": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "关于 Couchport Pro"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "關於 Couchport Pro"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Über Couchport Pro"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Acerca de Couchport Pro"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "À propos de Couchport Pro"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Couchport Pro について"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Couchport Pro 정보"
-          }
-        }
-      }
-    },
-    "About Couchport, Licenses & Source Code": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "关于 Couchport、许可证与源代码"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "關於 Couchport、授權與原始碼"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Über Couchport, Lizenzen & Quellcode"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Acerca de Couchport, licencias y código fuente"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "À propos de Couchport, licences et code source"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Couchport について・ライセンスとソースコード"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Couchport 정보, 라이선스 및 소스 코드"
-          }
-        }
-      }
-    },
-    "Couchport Pro is an optional purchase that supports development. Because Couchport is open source, you are free to build it from source yourself.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Couchport Pro 是可选购买，用于支持开发。Couchport 是开源软件，你也可以自行从源代码构建。"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Couchport Pro 是選購項目，用於支持開發。Couchport 是開源軟體，你也可以自行從原始碼建置。"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Couchport Pro ist ein optionaler Kauf, der die Entwicklung unterstützt. Da Couchport Open Source ist, kannst du es auch selbst aus dem Quellcode bauen."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Couchport Pro es una compra opcional que apoya el desarrollo. Como Couchport es de código abierto, puedes compilarlo tú mismo desde el código fuente."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Couchport Pro est un achat facultatif qui soutient le développement. Couchport étant open source, vous êtes libre de le compiler vous-même à partir du code source."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Couchport Pro は開発を支援する任意の購入です。Couchport はオープンソースなので、ソースコードから自分でビルドすることもできます。"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Couchport Pro는 개발을 지원하는 선택 구매입니다. Couchport는 오픈 소스이므로 소스 코드로 직접 빌드할 수도 있습니다."
-          }
-        }
-      }
-    },
     "Couchport is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.": {
       "localizations": {
         "zh-Hans": {
@@ -14589,6 +14451,144 @@
           "stringUnit": {
             "state": "translated",
             "value": "一次購買，全平台可用"
+          }
+        }
+      }
+    },
+    "About Couchport": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "关于 Couchport"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "關於 Couchport"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Über Couchport"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Acerca de Couchport"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À propos de Couchport"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couchport について"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couchport 정보"
+          }
+        }
+      }
+    },
+    "Independent app, not affiliated with Sony Interactive Entertainment or Apple.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "独立应用，与 Sony Interactive Entertainment 及 Apple 无关联。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "獨立 App，與 Sony Interactive Entertainment 及 Apple 無關聯。"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unabhängige App, nicht mit Sony Interactive Entertainment oder Apple verbunden."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App independiente, sin relación con Sony Interactive Entertainment ni Apple."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App indépendante, non affiliée à Sony Interactive Entertainment ni à Apple."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "独立したアプリであり、Sony Interactive Entertainment および Apple とは関係ありません。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "독립 앱이며 Sony Interactive Entertainment 및 Apple과 관련이 없습니다."
+          }
+        }
+      }
+    },
+    "Open-source software under the GNU AGPL v3. Provided without any warranty.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "基于 GNU AGPL v3 的开源软件，不提供任何担保。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "以 GNU AGPL v3 授權的開源軟體，不提供任何擔保。"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open-Source-Software unter der GNU AGPL v3. Ohne jegliche Gewährleistung."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Software de código abierto bajo la GNU AGPL v3. Se ofrece sin ninguna garantía."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Logiciel open source sous licence GNU AGPL v3. Fourni sans aucune garantie."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GNU AGPL v3 に基づくオープンソースソフトウェアです。一切の保証はありません。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GNU AGPL v3 기반 오픈 소스 소프트웨어이며 어떠한 보증도 제공하지 않습니다."
           }
         }
       }

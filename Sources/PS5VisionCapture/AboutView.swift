@@ -21,20 +21,12 @@ struct AboutView: View {
                 }
                 .listRowBackground(Color.clear)
 
+                // The Appropriate Legal Notices (AGPL §0/§5d) in three short
+                // lines; the full texts sit one tap deeper.
                 Section {
-                    Text(verbatim: "Copyright © 2026 The Couchport Authors")
-                    Text("Couchport is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License, version 3, as published by the Free Software Foundation.")
-                    Text("Couchport is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.")
-                    NavigationLink("GNU Affero General Public License v3") {
-                        LicenseTextView(title: "AGPL-3.0", fileName: "AGPL-3.0")
-                    }
-                } header: {
-                    Text("License")
-                }
-
-                Section {
-                    LabeledContent("Version", value: AppInfo.versionString)
-                    LabeledContent("Source for this build", value: AppInfo.releaseTag)
+                    Text("Open-source software under the GNU AGPL v3. Provided without any warranty.")
+                    Text("Independent app, not affiliated with Sony Interactive Entertainment or Apple.")
+                        .foregroundStyle(.secondary)
                     if let url = AppInfo.sourceURLForThisBuild {
                         Button {
                             openURL(url)
@@ -42,56 +34,14 @@ struct AboutView: View {
                             Label("View Source Code", systemImage: "chevron.left.forwardslash.chevron.right")
                         }
                     }
-                    if let url = AppInfo.repositoryURL {
-                        Text(verbatim: url.absoluteString)
-                            .font(.footnote.monospaced())
-                            .foregroundStyle(.secondary)
-                            .textSelection(.enabled)
-                    }
-                } header: {
-                    Text("Source Code")
                 } footer: {
-                    Text("The complete source code of this exact version, including build scripts and the pinned versions of every library, is available at no charge under the AGPL. You may build, modify and share it. If you distribute a modified version, or let people use it over a network, you must offer them its source under the same license.")
+                    Text(verbatim: "Copyright © 2026 The Couchport Authors · \(AppInfo.releaseTag)")
                 }
 
                 Section {
-                    ForEach(ThirdPartyComponent.all) { component in
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text(verbatim: component.name)
-                                .font(.body.weight(.semibold))
-                            Text(verbatim: component.license)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            Text(verbatim: component.url)
-                                .font(.caption2.monospaced())
-                                .foregroundStyle(.tertiary)
-                                .textSelection(.enabled)
-                        }
-                        .padding(.vertical, 2)
-                    }
-                    if !LicenseTextView.bundledFiles.isEmpty {
-                        NavigationLink("Full License Texts") {
-                            LicenseListView()
-                        }
-                    }
-                } header: {
-                    Text("Open-Source Components")
-                } footer: {
-                    Text("Remote Play is built on chiaki and its forks chiaki-ng and Pylux. Their copyright holders' notices are kept in the source repository and in the license texts above.")
-                }
-
-                Section {
-                    Text("Couchport Pro is an optional purchase that supports development. Because Couchport is open source, you are free to build it from source yourself.")
-                } header: {
-                    Text("About Couchport Pro")
-                }
-
-                Section {
-                    Text("Couchport is an independent app and is not affiliated with, endorsed by, or sponsored by Sony Interactive Entertainment, Microsoft, or Apple. PlayStation, PS5, and PS4 are trademarks of Sony Interactive Entertainment Inc. Other names are trademarks of their respective owners and are used only to describe compatibility.")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                } header: {
-                    Text("Trademarks")
+                    NavigationLink("License") { LicenseDetailView() }
+                    NavigationLink("Open-Source Components") { ComponentsView() }
+                    NavigationLink("Trademarks") { TrademarksView() }
                 }
             }
             .scrollContentBackground(.hidden)
@@ -124,6 +74,82 @@ struct AboutView: View {
                     .foregroundStyle(.tertiary)
             }
         }
+    }
+}
+
+// MARK: - Detail pages (one tap deeper)
+
+private struct LicenseDetailView: View {
+    var body: some View {
+        Form {
+            Section {
+                Text("Couchport is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License, version 3, as published by the Free Software Foundation.")
+                Text("Couchport is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.")
+                NavigationLink("GNU Affero General Public License v3") {
+                    LicenseTextView(title: "AGPL-3.0", fileName: "AGPL-3.0")
+                }
+            }
+            Section {
+                LabeledContent("Version", value: AppInfo.versionString)
+                LabeledContent("Source for this build", value: AppInfo.releaseTag)
+                if let url = AppInfo.repositoryURL {
+                    Text(verbatim: url.absoluteString)
+                        .font(.footnote.monospaced())
+                        .foregroundStyle(.secondary)
+                        .textSelection(.enabled)
+                }
+            } header: {
+                Text("Source Code")
+            } footer: {
+                Text("The complete source code of this exact version, including build scripts and the pinned versions of every library, is available at no charge under the AGPL. You may build, modify and share it. If you distribute a modified version, or let people use it over a network, you must offer them its source under the same license.")
+            }
+        }
+        .scrollContentBackground(.hidden)
+        .navigationTitle("License")
+    }
+}
+
+private struct ComponentsView: View {
+    var body: some View {
+        Form {
+            Section {
+                ForEach(ThirdPartyComponent.all) { component in
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(verbatim: component.name)
+                            .font(.body.weight(.semibold))
+                        Text(verbatim: component.license)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Text(verbatim: component.url)
+                            .font(.caption2.monospaced())
+                            .foregroundStyle(.tertiary)
+                            .textSelection(.enabled)
+                    }
+                    .padding(.vertical, 2)
+                }
+                if !LicenseTextView.bundledFiles.isEmpty {
+                    NavigationLink("Full License Texts") {
+                        LicenseListView()
+                    }
+                }
+            } footer: {
+                Text("Remote Play is built on chiaki and its forks chiaki-ng and Pylux. Their copyright holders' notices are kept in the source repository and in the license texts above.")
+            }
+        }
+        .scrollContentBackground(.hidden)
+        .navigationTitle("Open-Source Components")
+    }
+}
+
+private struct TrademarksView: View {
+    var body: some View {
+        Form {
+            Section {
+                Text("Couchport is an independent app and is not affiliated with, endorsed by, or sponsored by Sony Interactive Entertainment, Microsoft, or Apple. PlayStation, PS5, and PS4 are trademarks of Sony Interactive Entertainment Inc. Other names are trademarks of their respective owners and are used only to describe compatibility.")
+            }
+        }
+        .scrollContentBackground(.hidden)
+        .navigationTitle("Trademarks")
     }
 }
 

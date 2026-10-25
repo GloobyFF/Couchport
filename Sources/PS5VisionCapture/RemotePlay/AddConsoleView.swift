@@ -306,11 +306,25 @@ struct RemoteSettingsView: View {
     /// Opens the paywall. Inside a sheet, pass a closure that closes the
     /// sheet first; nil asks the main window directly.
     var onUpgrade: (() -> Void)? = nil
+    @State private var showAbout = false
 
     var body: some View {
         Form {
             RemoteSettingsSections(settings: settings, onApplyNow: onApplyNow, onUpgrade: onUpgrade)
+
+            // The app's only entry to licenses and source code (AGPL notices):
+            // a menu item, like the About row of any settings screen.
+            Section {
+                Button {
+                    showAbout = true
+                } label: {
+                    LabeledContent("About Couchport", value: AppInfo.versionString)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
         }
+        .sheet(isPresented: $showAbout) { AboutView() }
     }
 }
 

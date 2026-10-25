@@ -103,3 +103,9 @@
 ## 2026-10-25 Paywall platforms
 - PaywallView: new "One purchase. Every device." panel with chips for Apple Vision Pro, iPhone Duo, iPhone, iPad (✓) and Apple TV (Coming later). Text only, no device artwork. Footnote now lists all four platforms. 7 locales, audit 0 missing of 273.
 - Open: making the About/legal page smaller (advice given, not implemented yet).
+
+## 2026-10-25 Quieter About / AGPL page
+- Entry: removed the Home info button and the "About Couchport, Licenses & Source Code" footer link. The only entry is now the last row of Stream Settings ("About Couchport", with the version), a menu item that satisfies AGPL §0 "Appropriate Legal Notices".
+- Home footer shortened to one caption line: "Independent app, not affiliated with Sony Interactive Entertainment or Apple."
+- AboutView: header, then 2 short lines (AGPL v3, no warranty; independent app), a View Source Code button, and a copyright · tag footer. License (full notice, AGPL text, version/source tag), Open-Source Components, and Trademarks moved one tap deeper. The "build it yourself" Pro paragraph was removed.
+- l10n: 3 new keys, 3 stale keys removed; audit 0 missing of 273.

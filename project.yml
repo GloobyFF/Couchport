@@ -21,6 +21,8 @@ targetTemplates:
     type: application
     sources:
       - path: Sources/PS5VisionCapture
+        excludes:
+          - Info.plist
       - path: Media.xcassets
       - path: Localizable.xcstrings
       - path: Resources

@@ -14592,6 +14592,558 @@
           }
         }
       }
+    },
+    "Your PS5, streamed to Apple TV": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deine PS5, gestreamt aufs Apple TV"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tu PS5, en streaming en el Apple TV"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre PS5, diffusée sur Apple TV"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PS5 を Apple TV にストリーミング"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PS5를 Apple TV로 스트리밍"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "你的 PS5，串流到 Apple TV"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "你的 PS5，串流到 Apple TV"
+          }
+        }
+      }
+    },
+    "Best with the PS5 and Apple TV both on Ethernet, or Apple TV on 5 GHz or 6 GHz Wi-Fi.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Am besten mit PS5 und Apple TV per Ethernet oder dem Apple TV im 5‑GHz- oder 6‑GHz-WLAN."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Funciona mejor con la PS5 y el Apple TV por Ethernet, o el Apple TV en Wi‑Fi de 5 GHz o 6 GHz."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Idéal avec la PS5 et l’Apple TV en Ethernet, ou l’Apple TV en Wi‑Fi 5 GHz ou 6 GHz."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PS5 と Apple TV はどちらも有線 LAN、または Apple TV を 5 GHz か 6 GHz の Wi‑Fi に接続するのがおすすめです。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PS5와 Apple TV 모두 유선으로 연결하거나 Apple TV를 5GHz 또는 6GHz Wi‑Fi에 연결하는 것이 좋습니다."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "建议 PS5 和 Apple TV 都使用有线网络，或让 Apple TV 连接 5 GHz 或 6 GHz Wi‑Fi。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "建議 PS5 和 Apple TV 都使用有線網路，或讓 Apple TV 連接 5 GHz 或 6 GHz Wi‑Fi。"
+          }
+        }
+      }
+    },
+    "Decrease": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verringern"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Disminuir"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diminuer"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "下げる"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "줄이기"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "减小"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "減小"
+          }
+        }
+      }
+    },
+    "Increase": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erhöhen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aumentar"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Augmenter"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "上げる"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "늘리기"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "增大"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "增大"
+          }
+        }
+      }
+    },
+    "Consoles and the PSN account you paired on your iPhone, iPad or Apple Vision Pro appear here automatically through iCloud. Open Couchport there once, signed in to the same Apple Account.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Konsolen und das PSN-Konto, die du auf iPhone, iPad oder Apple Vision Pro gekoppelt hast, erscheinen hier automatisch über iCloud. Öffne Couchport dort einmal, mit demselben Apple Account angemeldet."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Las consolas y la cuenta de PSN que vinculaste en tu iPhone, iPad o Apple Vision Pro aparecen aquí automáticamente a través de iCloud. Abre Couchport allí una vez, con la misma cuenta de Apple."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les consoles et le compte PSN associés sur votre iPhone, iPad ou Apple Vision Pro apparaissent ici automatiquement via iCloud. Ouvrez Couchport une fois sur cet appareil, connecté au même compte Apple."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone、iPad、Apple Vision Pro で登録した本体と PSN アカウントは、iCloud 経由で自動的にここに表示されます。同じ Apple アカウントでサインインした状態で、そちらの Couchport を一度開いてください。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone, iPad 또는 Apple Vision Pro에서 등록한 본체와 PSN 계정이 iCloud를 통해 여기에 자동으로 나타납니다. 같은 Apple 계정으로 로그인한 상태에서 해당 기기의 Couchport를 한 번 여십시오."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在 iPhone、iPad 或 Apple Vision Pro 上配对的主机和 PSN 账号会通过 iCloud 自动出现在这里。请在那台设备上用同一 Apple 账户打开一次 Couchport。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在 iPhone、iPad 或 Apple Vision Pro 上配對的主機和 PSN 帳號會透過 iCloud 自動出現在這裡。請在那台裝置上以同一 Apple 帳號打開一次 Couchport。"
+          }
+        }
+      }
+    },
+    "The account ID is the 8-byte PSN user ID in base64 (12 characters ending in '='). chiaki-ng on a computer fills it in after you sign in to PSN in its settings.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die Konto-ID ist die 8 Byte lange PSN-Benutzer-ID in Base64 (12 Zeichen, endet auf „=“). chiaki-ng auf einem Computer trägt sie ein, nachdem du dich in den Einstellungen bei PSN angemeldet hast."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El ID de cuenta es el ID de usuario de PSN de 8 bytes en base64 (12 caracteres que terminan en «=»). chiaki-ng en un ordenador lo rellena cuando inicias sesión en PSN desde sus ajustes."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’identifiant de compte est l’identifiant utilisateur PSN de 8 octets en base64 (12 caractères se terminant par « = »). chiaki-ng sur un ordinateur le renseigne une fois connecté à PSN dans ses réglages."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アカウント ID は 8 バイトの PSN ユーザー ID を base64 にしたものです（12 文字、末尾は「=」）。パソコン版 chiaki-ng の設定で PSN にサインインすると入力されます。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "계정 ID는 8바이트 PSN 사용자 ID를 base64로 인코딩한 값입니다(12자, '='로 끝남). 컴퓨터의 chiaki-ng 설정에서 PSN에 로그인하면 자동으로 채워집니다."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "账号 ID 是 8 字节 PSN 用户 ID 的 base64 编码（12 个字符，以“=”结尾）。在电脑上的 chiaki-ng 设置中登录 PSN 后会自动填入。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "帳號 ID 是 8 位元組 PSN 使用者 ID 的 base64 編碼（12 個字元，以「=」結尾）。在電腦上的 chiaki-ng 設定中登入 PSN 後會自動填入。"
+          }
+        }
+      }
+    },
+    "Hold L3 + R3 for the PS button": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L3 + R3 gedrückt halten für die PS-Taste"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mantén L3 + R3 para el botón PS"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maintenez L3 + R3 pour la touche PS"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L3 + R3 を長押しで PS ボタン"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L3 + R3를 길게 누르면 PS 버튼"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "同时按住 L3 + R3 即为 PS 键"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "同時按住 L3 + R3 即為 PS 鍵"
+          }
+        }
+      }
+    },
+    "Press Menu to return to the game.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drücke Menü, um zum Spiel zurückzukehren."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pulsa Menú para volver al juego."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Appuyez sur Menu pour revenir au jeu."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "メニューを押すとゲームに戻ります。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "메뉴를 누르면 게임으로 돌아갑니다."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按菜单键返回游戏。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按選單鍵返回遊戲。"
+          }
+        }
+      }
+    },
+    "Stop playing?": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spielen beenden?"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Dejar de jugar?"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrêter de jouer ?"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "プレイを終了しますか？"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "플레이를 중지할까요?"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "停止游玩？"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "停止遊玩？"
+          }
+        }
+      }
+    },
+    "Connect a game controller": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verbinde einen Gamecontroller"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conecta un mando"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connectez une manette"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ゲームコントローラを接続してください"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "게임 컨트롤러를 연결하십시오"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请连接游戏手柄"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "請連接遊戲控制器"
+          }
+        }
+      }
+    },
+    "Apple TV needs a game controller to play. Pair one in Settings › Remotes and Devices › Bluetooth: hold the Create and PS buttons on a DualSense, or Share and PS on a DualShock 4, until the light flashes.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zum Spielen braucht Apple TV einen Gamecontroller. Kopple ihn unter Einstellungen › Fernbedienungen und Geräte › Bluetooth: Halte bei einem DualSense die Create- und PS-Taste, bei einem DualShock 4 Share und PS, bis das Licht blinkt."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El Apple TV necesita un mando para jugar. Vincúlalo en Ajustes › Mandos y dispositivos › Bluetooth: mantén pulsados Create y PS en un DualSense, o Share y PS en un DualShock 4, hasta que parpadee la luz."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’Apple TV a besoin d’une manette pour jouer. Associez-la dans Réglages › Télécommandes et appareils › Bluetooth : maintenez Create et PS sur une DualSense, ou Share et PS sur une DualShock 4, jusqu’à ce que le voyant clignote."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple TV でプレイするにはゲームコントローラが必要です。「設定」›「リモコンとデバイス」›「Bluetooth」でペアリングしてください。DualSense はクリエイトボタンと PS ボタン、DualShock 4 は SHARE ボタンと PS ボタンを、ライトが点滅するまで同時に押し続けます。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple TV에서 플레이하려면 게임 컨트롤러가 필요합니다. 설정 › 리모컨 및 기기 › Bluetooth에서 페어링하십시오. DualSense는 만들기 버튼과 PS 버튼, DualShock 4는 SHARE 버튼과 PS 버튼을 표시등이 깜박일 때까지 함께 누르고 있으십시오."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple TV 需要游戏手柄才能游玩。请在“设置”›“遥控器与设备”›“蓝牙”中配对：DualSense 同时按住“创建”键和 PS 键，DualShock 4 同时按住 SHARE 键和 PS 键，直到指示灯闪烁。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple TV 需要遊戲控制器才能遊玩。請在「設定」›「遙控器與裝置」›「藍牙」中配對：DualSense 同時按住「建立」鍵和 PS 鍵，DualShock 4 同時按住 SHARE 鍵和 PS 鍵，直到指示燈閃爍。"
+          }
+        }
+      }
+    },
+    "A one-time purchase that unlocks Pro on Apple Vision Pro, iPhone Duo, iPhone, iPad and Apple TV. Family Sharing and restore work with the same Apple Account.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ein einmaliger Kauf schaltet Pro auf Apple Vision Pro, iPhone Duo, iPhone, iPad und Apple TV frei. Familienfreigabe und Wiederherstellen funktionieren mit demselben Apple Account."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Una compra única desbloquea Pro en Apple Vision Pro, iPhone Duo, iPhone, iPad y Apple TV. En Familia y la restauración funcionan con la misma cuenta de Apple."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un achat unique débloque Pro sur Apple Vision Pro, iPhone Duo, iPhone, iPad et Apple TV. Le partage familial et la restauration fonctionnent avec le même compte Apple."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一度の購入で Apple Vision Pro、iPhone Duo、iPhone、iPad、Apple TV の Pro が解除されます。ファミリー共有と復元は同じ Apple アカウントで利用できます。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "한 번 구매로 Apple Vision Pro, iPhone Duo, iPhone, iPad, Apple TV에서 Pro가 잠금 해제됩니다. 가족 공유와 복원은 같은 Apple 계정으로 이용할 수 있습니다."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一次性购买，即可在 Apple Vision Pro、iPhone Duo、iPhone、iPad 和 Apple TV 上解锁 Pro。使用同一 Apple 账户即可家人共享和恢复购买。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一次性購買，即可在 Apple Vision Pro、iPhone Duo、iPhone、iPad 和 Apple TV 上解鎖 Pro。使用同一 Apple 帳號即可家人共享和回復購買。"
+          }
+        }
+      }
     }
   },
   "version": "1.2"

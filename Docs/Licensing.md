@@ -2,7 +2,7 @@
 
 Couchport 以 **AGPL-3.0** 发布，原因是 Remote Play 层链接了 Chiaki / chiaki-ng / Pylux（AGPL-3.0 + OpenSSL 例外）。
 
-## App 内（已实现：Home 右上角 ⓘ，以及 Home 底部的 “About Couchport, Licenses & Source Code”）
+## App 内（已实现：串流设置最底部一行「About Couchport」，2026-10-25 起为唯一入口；Home 底部仅保留一行独立应用声明）
 
 AGPL 第 5(d) 条要求交互式程序显示“适当的法律声明”，第 0 条定义了其内容：
 

@@ -12,16 +12,17 @@ PS5 / PS4 遥控游玩（Remote Play）客户端，支持 **Apple Vision Pro**�
 |---|---|---|---|---|
 | visionOS 26+ | `PS5VisionCapture` | ✓ | ✓（Developer Strap） | ✓ |
 | iOS / iPadOS 26+ | `Couchport-iOS` | ✓（含屏幕手柄） | — | — |
+| tvOS 26+（Apple TV 4K） | `Couchport-tvOS` | ✓（需要游戏手柄） | — | — |
 
-iPhone Duo：布局按窗口实际尺寸和系统报告的折痕位置来定，不按机型判断。折叠、展开、旋转、半折和分屏时都会实时切换，串流不中断。各种状态下的具体排布见 `Docs/Changes-2026-10-22-ios-oss.md`。需要用 Xcode 27.1（iOS 27.1 SDK）构建，才能读到折痕位置。
+iPhone Duo：布局按窗口实际尺寸和系统报告的折痕位置来定，不按机型判断。折叠、展开、旋转、半折和分屏时都会实时切换，串流不中断。各种状态下的具体排布见 `Docs/Changes-2026-10-22-ios-oss.md`。Apple TV 的说明见 `Docs/Changes-2026-10-25-tvos.md`。需要用 Xcode 27.1（iOS 27.1 SDK）构建，才能读到折痕位置。
 
 ## 构建
 
 ```bash
 brew install cmake ninja protobuf xcodegen
-./Tools/build_libchiaki_visionos.sh    # 构建 visionOS + iOS 的 VPChiaki.xcframework，并拷贝许可证
+./Tools/build_libchiaki_visionos.sh    # 构建 visionOS + iOS + tvOS 的 VPChiaki.xcframework，并拷贝许可证
 xcodegen generate
-open PS5VisionCapture.xcodeproj        # 选择 PS5VisionCapture（Vision Pro）或 Couchport-iOS scheme
+open PS5VisionCapture.xcodeproj        # 选择 PS5VisionCapture（Vision Pro）、Couchport-iOS 或 Couchport-tvOS scheme
 ```
 
 两个 Target 共用 Bundle ID `com.glooby.UVCTheater`（通用购买）和内购项目 `com.glooby.UVCTheater.pro`。

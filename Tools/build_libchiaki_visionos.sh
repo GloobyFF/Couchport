@@ -1,13 +1,20 @@
 #!/bin/bash
 # Builds chiaki (via the Pylux fork, which already has a lib-only Apple-mobile
 # CMake path with mbedTLS/opus/json-c/miniupnpc fetched from source) for
-# visionOS and iOS (device + simulator), compiles our ChiakiShim/vp_chiaki.c INSIDE the
+# visionOS, iOS and tvOS (device + simulator), compiles our ChiakiShim/vp_chiaki.c INSIDE the
 # library, and packages everything as Frameworks/VPChiaki.xcframework with a
 # Clang module named `VPChiaki` (Swift: `import VPChiaki`).
 #
-# Usage:   ./Tools/build_libchiaki_visionos.sh            # visionOS + iOS, device + simulator
+# Usage:   ./Tools/build_libchiaki_visionos.sh            # visionOS + iOS + tvOS, device + simulator
 #          VP_SKIP_SIM=1 ./Tools/build_libchiaki_visionos.sh   # devices only
-#          VP_SKIP_IOS=1 ./Tools/build_libchiaki_visionos.sh   # visionOS only
+#          VP_SKIP_IOS=1 ./Tools/build_libchiaki_visionos.sh   # no iOS slices
+#          VP_SKIP_TVOS=1 ./Tools/build_libchiaki_visionos.sh  # no tvOS slices
+#
+# Platforms use ios.toolchain.cmake's PLATFORM values: VISIONOS /
+# SIMULATOR_VISIONOS, OS64 / SIMULATORARM64 (iOS), TVOS / SIMULATORARM64_TVOS
+# (tvOS; the toolchain's SIMULATOR_TVOS is x86_64 only, so the arm64 one is
+# used to match the iOS simulator slice on Apple silicon Macs; set
+# VP_TVOS_SIM_PLATFORM=SIMULATOR_TVOS on an Intel Mac).
 # Needs:   Xcode 26+, Homebrew: cmake ninja protobuf python3
 #
 # LICENSE: the produced library is AGPL-3.0 (chiaki / chiaki-ng / Pylux), so
@@ -102,6 +109,11 @@ PLATFORMS=(VISIONOS)
 if [ "${VP_SKIP_IOS:-0}" != "1" ]; then
     PLATFORMS+=(OS64)
     [ "${VP_SKIP_SIM:-0}" = "1" ] || PLATFORMS+=(SIMULATORARM64)
+fi
+if [ "${VP_SKIP_TVOS:-0}" != "1" ]; then
+    PLATFORMS+=(TVOS)
+    # Intel Mac: VP_TVOS_SIM_PLATFORM=SIMULATOR_TVOS (x86_64).
+    [ "${VP_SKIP_SIM:-0}" = "1" ] || PLATFORMS+=("${VP_TVOS_SIM_PLATFORM:-SIMULATORARM64_TVOS}")
 fi
 for p in "${PLATFORMS[@]}"; do build_platform "$p"; done
 

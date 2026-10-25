@@ -4,6 +4,7 @@ options:
   deploymentTarget:
     visionOS: "26.0"
     iOS: "26.0"
+    tvOS: "26.0"
 settings:
   base:
     SWIFT_VERSION: "5.0"
@@ -11,8 +12,10 @@ settings:
     MARKETING_VERSION: "1.0"
     CURRENT_PROJECT_VERSION: "1"
 
-# Shared by both app targets: same sources, same bundle ID (one App Store
-# record, universal purchase), same Couchport Pro product.
+# Shared by every app target: same sources, same bundle ID (one App Store
+# record, universal purchase), same Couchport Pro product. Platform
+# differences live in Sources/PS5VisionCapture/Platform.swift and `#if os(...)`
+# guards (iOS-only files compile to nothing on tvOS and visionOS).
 targetTemplates:
   CouchportApp:
     type: application
@@ -24,14 +27,14 @@ targetTemplates:
         optional: true
     dependencies:
       # Remote Play protocol layer (chiaki-ng / Pylux, AGPL-3.0). Build it first:
-      #   ./Tools/build_libchiaki_visionos.sh        (visionOS + iOS slices)
+      #   ./Tools/build_libchiaki_visionos.sh        (visionOS + iOS + tvOS slices)
       # Without it the Swift code compiles a stub via `#if canImport(VPChiaki)`.
       - framework: Frameworks/VPChiaki.xcframework
         embed: false
       - sdk: VideoToolbox.framework
       - sdk: GameController.framework
       - sdk: CoreHaptics.framework
-      - sdk: WebKit.framework
+      # WebKit (PSN sign-in page) is added per target: tvOS has no WebKit.
       - sdk: StoreKit.framework
       - sdk: libz.tbd
       - sdk: libresolv.tbd
@@ -41,8 +44,11 @@ targetTemplates:
         INFOPLIST_FILE: Sources/PS5VisionCapture/Info.plist
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
-        # Optional, only after Apple grants it to your team:
-        # CODE_SIGN_ENTITLEMENTS: Config/Multicast.entitlements
+        # iCloud key-value storage: syncs the paired-console list between the
+        # user's devices (secrets go through iCloud Keychain, no entitlement).
+        # When Apple grants the multicast entitlement, add its key to this
+        # file (see Config/Multicast.entitlements).
+        CODE_SIGN_ENTITLEMENTS: Config/Couchport.entitlements
     # Use App Store sandbox product data by default; select the local
     # UVC Theater.storekit configuration manually for offline tests.
     scheme: {}
@@ -53,6 +59,8 @@ targets:
     templates: [CouchportApp]
     platform: visionOS
     deploymentTarget: "26.0"
+    dependencies:
+      - sdk: WebKit.framework
     settings:
       base:
         TARGETED_DEVICE_FAMILY: "7"
@@ -62,6 +70,8 @@ targets:
     templates: [CouchportApp]
     platform: iOS
     deploymentTarget: "26.0"
+    dependencies:
+      - sdk: WebKit.framework
     settings:
       base:
         TARGETED_DEVICE_FAMILY: "1,2"
@@ -78,3 +88,17 @@ targets:
         "SWIFT_ACTIVE_COMPILATION_CONDITIONS[sdk=iphonesimulator27.3*]": "$(inherited) DUO_SDK"
         "SWIFT_ACTIVE_COMPILATION_CONDITIONS[sdk=iphoneos27.4*]": "$(inherited) DUO_SDK"
         "SWIFT_ACTIVE_COMPILATION_CONDITIONS[sdk=iphonesimulator27.4*]": "$(inherited) DUO_SDK"
+
+  # Apple TV (Apple TV 4K). Same sources: iOS-only files (touch controller,
+  # Picture in Picture, phone player stage) are `#if os(iOS)`, the PSN web
+  # sign-in is `#if !os(tvOS)`, the immersive theater is visionOS-only. A game
+  # controller is required; the Siri Remote opens the player controls.
+  Couchport-tvOS:
+    templates: [CouchportApp]
+    platform: tvOS
+    deploymentTarget: "26.0"
+    settings:
+      base:
+        TARGETED_DEVICE_FAMILY: "3"
+        INFOPLIST_FILE: Config/Info-tvOS.plist
+        ASSETCATALOG_COMPILER_APPICON_NAME: "App Icon & Top Shelf Image"

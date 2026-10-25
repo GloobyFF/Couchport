@@ -99,3 +99,7 @@
 - 22:15 波纹整体加强：环境水波的幅度提高约 70%，起伏也更快；触摸水纹的扭曲幅度从 0.018 提高到 0.03，高光从 0.25 提高到 0.4，强度从 0.5 提高到 0.75，扩散半径从 0.12 加大到 0.16，持续时间从 1.6 秒延长到 2 秒。
 - 22:18 按用户要求，环境水波恢复到原来的幅度和速度，只保留触摸水纹的加强。
 - 22:20 修复 PiP 的 tearDown 在视图更新过程中直接改 @Published 属性的问题（警告：Publishing changes from within view updates）。现在改为延后到下一轮主线程再发布，并且只在值真的变化时才发布。
+
+## 2026-10-25 Paywall platforms
+- PaywallView: new "One purchase. Every device." panel with chips for Apple Vision Pro, iPhone Duo, iPhone, iPad (✓) and Apple TV (Coming later). Text only, no device artwork. Footnote now lists all four platforms. 7 locales, audit 0 missing of 273.
+- Open: making the About/legal page smaller (advice given, not implemented yet).

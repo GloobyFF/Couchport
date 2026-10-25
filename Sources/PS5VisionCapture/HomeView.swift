@@ -8,6 +8,9 @@ struct HomeView: View {
     @ObservedObject var remote: RemotePlayManager
     @ObservedObject var store: ConsoleStore
     @ObservedObject private var purchases = PurchaseManager.shared
+    #if os(tvOS)
+    @ObservedObject private var controllers = ControllerPresence.shared
+    #endif
 
     @State private var showAddConsole = false
     @State private var showRemoteSettings = false
@@ -20,6 +23,12 @@ struct HomeView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: layout.sectionSpacing) {
                 header
+                #if os(tvOS)
+                // Apple TV has no touch controls: a controller is required.
+                if !controllers.isConnected {
+                    ConnectControllerPrompt()
+                }
+                #endif
                 remoteHero
                 consolesSection
                 if Platform.supportsCapture {
@@ -28,7 +37,7 @@ struct HomeView: View {
                 legalNotice
             }
             .padding(.horizontal, layout.pagePadding)
-            .padding(.vertical, layout.isCompact ? 20 : 40)
+            .padding(.vertical, layout.isCompact ? 20 : (Platform.isTV ? 60 : 40))
             .frame(maxWidth: Platform.isVision ? nil : 1200)
             .frame(maxWidth: .infinity)
         }
@@ -577,7 +586,7 @@ private struct ConsoleTile: View {
                     Image(systemName: "ellipsis")
                         .frame(width: 36, height: 36)
                 }
-                .buttonStyle(.borderless)
+                .borderlessOrBorderedButtonStyle()
                 .help("More")
             }
 
@@ -649,13 +658,16 @@ private struct AddConsoleTile: View {
             .frame(maxWidth: .infinity, minHeight: 250)
             .contentShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
         }
-        .buttonStyle(.plain)
+        .plainOrCardButtonStyle()
         .background {
             RoundedRectangle(cornerRadius: 28, style: .continuous)
                 .strokeBorder(style: StrokeStyle(lineWidth: 2, dash: [10, 8]))
                 .foregroundStyle(.white.opacity(0.35))
+                .allowsHitTesting(false)
         }
-        .hoverEffect()
+        #if !os(tvOS)
+        .hoverEffect()   // tvOS: the card style is the focus effect
+        #endif
     }
 }
 

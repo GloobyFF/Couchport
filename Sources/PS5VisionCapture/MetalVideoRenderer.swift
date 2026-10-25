@@ -1,7 +1,9 @@
 @preconcurrency import AVFoundation
 import Metal
 import MetalKit
-#if !targetEnvironment(simulator)
+// MetalFX spatial scaling needs tvOS 27.1, above the tvOS 26 deployment
+// target, so Apple TV uses the Lanczos upscaler.
+#if !targetEnvironment(simulator) && !os(tvOS)
 import MetalFX
 #endif
 import MetalPerformanceShaders
@@ -51,7 +53,7 @@ final class MetalVideoRenderer: NSObject, AVCaptureVideoDataOutputSampleBufferDe
     private var sharpTexture: MTLTexture?    // after sharpen
 
     // Upscalers, lazily built for the current input/output sizes.
-    #if !targetEnvironment(simulator)
+    #if !targetEnvironment(simulator) && !os(tvOS)
     private var spatialScaler: MTLFXSpatialScaler?
     private var scalerInputSize = CGSize.zero
     private var scalerOutputSize = CGSize.zero
@@ -60,7 +62,7 @@ final class MetalVideoRenderer: NSObject, AVCaptureVideoDataOutputSampleBufferDe
     private var lanczosLastUsed: TimeInterval = 0
 
     private static let metalFXAvailable: Bool = {
-        #if targetEnvironment(simulator)
+        #if targetEnvironment(simulator) || os(tvOS)
         return false
         #else
         guard let device = MTLCreateSystemDefaultDevice() else { return false }
@@ -383,7 +385,7 @@ private extension MetalVideoRenderer {
             if let scaled = ensureTexture(&scaledTexture, width: outW, height: outH,
                                           usage: [.shaderRead, .shaderWrite, .renderTarget]) {
                 var encodedWithMetalFX = false
-                #if !targetEnvironment(simulator)
+                #if !targetEnvironment(simulator) && !os(tvOS)
                 if usingMetalFX,
                    let scaler = ensureSpatialScaler(inW: srcW, inH: srcH,
                                                     outW: outW, outH: outH) {
@@ -644,7 +646,7 @@ private extension MetalVideoRenderer {
         encoder.dispatchThreadgroups(groups, threadsPerThreadgroup: threadgroup)
     }
 
-    #if !targetEnvironment(simulator)
+    #if !targetEnvironment(simulator) && !os(tvOS)
     func ensureSpatialScaler(inW: Int, inH: Int, outW: Int,
                              outH: Int) -> MTLFXSpatialScaler? {
         let inSize = CGSize(width: inW, height: inH)

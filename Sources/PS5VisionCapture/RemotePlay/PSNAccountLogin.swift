@@ -1,5 +1,7 @@
 import SwiftUI
+#if canImport(WebKit) && !os(tvOS)
 import WebKit
+#endif
 
 /// Gets the PSN account ID (8 bytes, base64) the console needs for pairing.
 ///
@@ -68,6 +70,10 @@ enum PSNAccountService {
         return withUnsafeBytes(of: &le) { Data($0) }.base64EncodedString()
     }
 }
+
+#if canImport(WebKit) && !os(tvOS)
+// Sony's sign-in page runs in a WKWebView. tvOS has no WebKit, so Apple TV
+// gets the account ID from iCloud (ConsoleSync) or by manual entry instead.
 
 /// Sheet with Sony's sign-in page. Calls `onAccountID` with the base64 ID.
 struct PSNLoginSheet: View {
@@ -150,3 +156,4 @@ private struct PSNWebView: UIViewRepresentable {
         }
     }
 }
+#endif

@@ -49,7 +49,8 @@ extension View {
     }
 
     /// Full-window brand background for sheets and window content. Forms
-    /// inside need `.scrollContentBackground(.hidden)` to show it.
+    /// inside need `.formBackgroundHidden()` (= `.scrollContentBackground(.hidden)`)
+    /// to show it.
     func brandWindowBackground() -> some View {
         self.background { BrandBackdrop().ignoresSafeArea() }
     }
@@ -64,7 +65,7 @@ struct PanelSheet<Content: View>: View {
     var body: some View {
         NavigationStack {
             content
-                .scrollContentBackground(.hidden)
+                .formBackgroundHidden()
                 .navigationTitle(title)
                 .toolbar {
                     ToolbarItem(placement: .confirmationAction) {

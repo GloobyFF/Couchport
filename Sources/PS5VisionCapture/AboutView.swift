@@ -28,10 +28,18 @@ struct AboutView: View {
                     Text("Independent app, not affiliated with Sony Interactive Entertainment or Apple.")
                         .foregroundStyle(.secondary)
                     if let url = AppInfo.sourceURLForThisBuild {
-                        Button {
-                            openURL(url)
-                        } label: {
-                            Label("View Source Code", systemImage: "chevron.left.forwardslash.chevron.right")
+                        if Platform.isTV {
+                            // No web browser on Apple TV: show the address.
+                            LabeledContent("Source Code") {
+                                Text(verbatim: url.absoluteString)
+                                    .font(.caption.monospaced())
+                            }
+                        } else {
+                            Button {
+                                openURL(url)
+                            } label: {
+                                Label("View Source Code", systemImage: "chevron.left.forwardslash.chevron.right")
+                            }
                         }
                     }
                 } footer: {
@@ -44,7 +52,7 @@ struct AboutView: View {
                     NavigationLink("Trademarks") { TrademarksView() }
                 }
             }
-            .scrollContentBackground(.hidden)
+            .formBackgroundHidden()
             .navigationTitle("About")
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
@@ -96,7 +104,7 @@ private struct LicenseDetailView: View {
                     Text(verbatim: url.absoluteString)
                         .font(.footnote.monospaced())
                         .foregroundStyle(.secondary)
-                        .textSelection(.enabled)
+                        .selectableText()
                 }
             } header: {
                 Text("Source Code")
@@ -104,7 +112,7 @@ private struct LicenseDetailView: View {
                 Text("The complete source code of this exact version, including build scripts and the pinned versions of every library, is available at no charge under the AGPL. You may build, modify and share it. If you distribute a modified version, or let people use it over a network, you must offer them its source under the same license.")
             }
         }
-        .scrollContentBackground(.hidden)
+        .formBackgroundHidden()
         .navigationTitle("License")
     }
 }
@@ -123,7 +131,7 @@ private struct ComponentsView: View {
                         Text(verbatim: component.url)
                             .font(.caption2.monospaced())
                             .foregroundStyle(.tertiary)
-                            .textSelection(.enabled)
+                            .selectableText()
                     }
                     .padding(.vertical, 2)
                 }
@@ -136,7 +144,7 @@ private struct ComponentsView: View {
                 Text("Remote Play is built on chiaki and its forks chiaki-ng and Pylux. Their copyright holders' notices are kept in the source repository and in the license texts above.")
             }
         }
-        .scrollContentBackground(.hidden)
+        .formBackgroundHidden()
         .navigationTitle("Open-Source Components")
     }
 }
@@ -148,7 +156,7 @@ private struct TrademarksView: View {
                 Text("Couchport is an independent app and is not affiliated with, endorsed by, or sponsored by Sony Interactive Entertainment, Microsoft, or Apple. PlayStation, PS5, and PS4 are trademarks of Sony Interactive Entertainment Inc. Other names are trademarks of their respective owners and are used only to describe compatibility.")
             }
         }
-        .scrollContentBackground(.hidden)
+        .formBackgroundHidden()
         .navigationTitle("Trademarks")
     }
 }
@@ -237,14 +245,35 @@ struct LicenseTextView: View {
 
     var body: some View {
         ScrollView {
+            #if os(tvOS)
+            // tvOS scrolls by moving focus, so each paragraph is focusable.
+            LazyVStack(alignment: .leading, spacing: 12) {
+                ForEach(Array(paragraphs.enumerated()), id: \.offset) { _, paragraph in
+                    Text(verbatim: paragraph)
+                        .font(.caption.monospaced())
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .focusable()
+                }
+            }
+            .padding()
+            #else
             Text(verbatim: text)
                 .font(.caption.monospaced())
-                .textSelection(.enabled)
+                .selectableText()
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding()
+            #endif
         }
         .navigationTitle(Text(verbatim: title))
     }
+
+    #if os(tvOS)
+    private var paragraphs: [String] {
+        text.components(separatedBy: "\n\n")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+    }
+    #endif
 }
 
 private struct LicenseListView: View {
@@ -254,7 +283,7 @@ private struct LicenseListView: View {
                 LicenseTextView(title: name, fileName: name)
             }
         }
-        .scrollContentBackground(.hidden)
+        .formBackgroundHidden()
         .navigationTitle("Full License Texts")
     }
 }

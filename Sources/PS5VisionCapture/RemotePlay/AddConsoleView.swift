@@ -50,7 +50,7 @@ struct AddConsoleView: View {
                     .controlSize(.extraLarge)
                     .disabled(!canPair)
                 }
-                .padding(32)
+                .padding(Platform.isTV ? 60 : 32)
             }
             .navigationTitle("Add Console")
             .toolbar {
@@ -61,11 +61,14 @@ struct AddConsoleView: View {
                     }
                 }
             }
+            #if !os(tvOS)
+            // Sony's sign-in page needs WebKit, which tvOS does not have.
             .sheet(isPresented: $showPSNLogin) {
                 PSNLoginSheet { id in
                     try? store.setAccountID(base64: id)
                 }
             }
+            #endif
             .onAppear {
                 if store.consoles.isEmpty && !scanning { toggleScan() }
             }
@@ -80,8 +83,81 @@ struct AddConsoleView: View {
 
     // MARK: - Pieces
 
-    /// One compact line: the PSN account, with sign-in / manual entry tucked away.
+    /// The PSN account. iPhone, iPad and Vision Pro sign in with Sony's web
+    /// page; Apple TV has no web view, so it gets the account from iCloud
+    /// (paired on another device) or by typing the base64 account ID.
+    @ViewBuilder
     private var accountRow: some View {
+        #if os(tvOS)
+        tvAccountRow
+        #else
+        webAccountRow
+        #endif
+    }
+
+    #if os(tvOS)
+    private var tvAccountRow: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(spacing: 18) {
+                Image(systemName: store.accountIDBase64 == nil ? "person.crop.circle.badge.exclamationmark" : "person.crop.circle.badge.checkmark")
+                    .font(.title2)
+                    .foregroundStyle(store.accountIDBase64 == nil ? Color.orange : Color.green)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("PSN Account").font(.headline)
+                    if let id = store.accountIDBase64 {
+                        Text(verbatim: String(id.prefix(4)) + "••••••••")
+                            .font(.caption.monospaced())
+                            .foregroundStyle(.secondary)
+                    } else {
+                        Text("Use the account signed in on the console.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                Spacer()
+                Button {
+                    showManualID.toggle()
+                } label: {
+                    Label("Enter account ID manually", systemImage: "keyboard")
+                }
+            }
+
+            Label("Consoles and the PSN account you paired on your iPhone, iPad or Apple Vision Pro appear here automatically through iCloud. Open Couchport there once, signed in to the same Apple Account.",
+                  systemImage: "icloud")
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            if showManualID || store.accountIDBase64 == nil {
+                HStack(spacing: 16) {
+                    TextField("Base64 account ID, e.g. AbCdEfGhIjk=", text: $manualAccountID)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                    Button("Save ID") {
+                        do {
+                            try store.setAccountID(base64: manualAccountID)
+                            errorText = nil
+                            showManualID = false
+                        } catch {
+                            errorText = error.localizedDescription
+                        }
+                    }
+                    .disabled(manualAccountID.isEmpty)
+                }
+                Text("The account ID is the 8-byte PSN user ID in base64 (12 characters ending in '='). chiaki-ng on a computer fills it in after you sign in to PSN in its settings.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(.horizontal, 28)
+        .padding(.vertical, 22)
+        .background(Brand.groupFill, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+    }
+    #endif
+
+    /// One compact line: the PSN account, with sign-in / manual entry tucked away.
+    private var webAccountRow: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 14) {
                 Image(systemName: store.accountIDBase64 == nil ? "person.crop.circle.badge.exclamationmark" : "person.crop.circle.badge.checkmark")
@@ -124,7 +200,7 @@ struct AddConsoleView: View {
                     Image(systemName: "ellipsis")
                         .frame(width: 32, height: 32)
                 }
-                .buttonStyle(.borderless)
+                .borderlessOrBorderedButtonStyle()
                 .help("More")
             }
 
@@ -133,7 +209,7 @@ struct AddConsoleView: View {
                     TextField("Base64 account ID, e.g. AbCdEfGhIjk=", text: $manualAccountID)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
-                        .textFieldStyle(.roundedBorder)
+                        .roundedFieldStyle()
                     Button("Save ID") {
                         do {
                             try store.setAccountID(base64: manualAccountID)
@@ -164,7 +240,7 @@ struct AddConsoleView: View {
                           systemImage: scanning ? "stop.circle" : "magnifyingglass")
                         .font(.callout)
                 }
-                .buttonStyle(.borderless)
+                .borderlessOrBorderedButtonStyle()
             }
 
             ForEach(found) { console in
@@ -182,8 +258,9 @@ struct AddConsoleView: View {
                         }
                     }
                     .padding(.vertical, 6)
+                    .padding(.horizontal, Platform.isTV ? 16 : 0)
                 }
-                .buttonStyle(.plain)
+                .plainOrCardButtonStyle()
             }
 
             HStack(spacing: 12) {
@@ -191,7 +268,7 @@ struct AddConsoleView: View {
                     .keyboardType(.numbersAndPunctuation)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
-                    .textFieldStyle(.roundedBorder)
+                    .roundedFieldStyle()
                 Picker("Console", selection: $isPS5) {
                     Text(verbatim: "PS5").tag(true)
                     Text(verbatim: "PS4").tag(false)
@@ -221,7 +298,7 @@ struct AddConsoleView: View {
                 .keyboardType(.numberPad)
                 .font(.title.monospacedDigit())
                 .multilineTextAlignment(.center)
-                .textFieldStyle(.roundedBorder)
+                .roundedFieldStyle()
                 .onChange(of: pin) { _, value in
                     pin = String(value.filter(\.isNumber).prefix(8))
                 }
@@ -321,7 +398,7 @@ struct RemoteSettingsView: View {
                     LabeledContent("About Couchport", value: AppInfo.versionString)
                         .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
+                .formRowButtonStyle()
             }
         }
         .sheet(isPresented: $showAbout) { AboutView() }
@@ -405,7 +482,8 @@ struct RemoteSettingsSections: View {
         Section("Audio") {
             HStack {
                 Image(systemName: "speaker.fill")
-                Slider(value: $settings.volume, in: 0...1)
+                AdaptiveSlider(value: $settings.volume, range: 0...1, step: 0.1,
+                               valueText: { "\(Int(($0 * 100).rounded()))%" })
                 Image(systemName: "speaker.wave.3.fill")
             }
         }
@@ -415,10 +493,13 @@ struct RemoteSettingsSections: View {
             if settings.haptics {
                 HStack {
                     Text("Strength")
-                    Slider(value: $settings.hapticsStrength, in: 0.2...1.5)
-                    Text(verbatim: "\(Int((settings.hapticsStrength * 100).rounded()))%")
-                        .font(.caption.monospacedDigit())
-                        .frame(width: 52, alignment: .trailing)
+                    AdaptiveSlider(value: $settings.hapticsStrength, range: 0.2...1.5, step: 0.1,
+                                   valueText: { "\(Int(($0 * 100).rounded()))%" })
+                    if !Platform.isTV {
+                        Text(verbatim: "\(Int((settings.hapticsStrength * 100).rounded()))%")
+                            .font(.caption.monospacedDigit())
+                            .frame(width: 52, alignment: .trailing)
+                    }
                 }
             }
             Toggle("Adaptive Triggers", isOn: $settings.adaptiveTriggers)

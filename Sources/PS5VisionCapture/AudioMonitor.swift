@@ -85,11 +85,13 @@ final class AudioMonitor: ObservableObject {
     /// Configures the shared audio session for low-latency I/O and returns the
     /// capture card's USB audio input if one is enumerated, else `nil`.
     private func locateUSBAudioInput(in session: AVAudioSession) throws -> AVAudioSessionPortDescription? {
-        try session.setCategory(
-            .playAndRecord,
-            mode: .default,
-            options: [.defaultToSpeaker, .allowBluetoothA2DP, .mixWithOthers]
-        )
+        #if os(tvOS)
+        // Capture is a Vision Pro feature; tvOS has no .defaultToSpeaker.
+        let options: AVAudioSession.CategoryOptions = [.allowBluetoothA2DP, .mixWithOthers]
+        #else
+        let options: AVAudioSession.CategoryOptions = [.defaultToSpeaker, .allowBluetoothA2DP, .mixWithOthers]
+        #endif
+        try session.setCategory(.playAndRecord, mode: .default, options: options)
         // Small buffer keeps monitoring latency low; ignore if the OS clamps it.
         try? session.setPreferredIOBufferDuration(0.005)
         // Activate briefly so availableInputs is populated with attached USB gear.

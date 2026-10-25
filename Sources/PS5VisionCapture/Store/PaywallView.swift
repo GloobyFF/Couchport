@@ -17,8 +17,8 @@ struct PaywallView: View {
                     comparison
                     actions
                 }
-                .padding(.horizontal, Platform.isVision ? 40 : 20)
-                .padding(.vertical, 28)
+                .padding(.horizontal, Platform.isVision ? 40 : (Platform.isTV ? 80 : 20))
+                .padding(.vertical, Platform.isTV ? 48 : 28)
             }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -72,7 +72,8 @@ struct PaywallView: View {
                 platformChip("iPhone Duo", available: true)
                 platformChip("iPhone", available: true)
                 platformChip("iPad", available: true)
-                platformChip("Apple TV", available: false)
+                // Available on the Apple TV app itself; "coming later" elsewhere.
+                platformChip("Apple TV", available: Platform.isTV)
             }
             .frame(maxWidth: .infinity)
         }
@@ -188,7 +189,9 @@ struct PaywallView: View {
                     .multilineTextAlignment(.center)
             }
 
-            Text("A one-time purchase that unlocks Pro on Apple Vision Pro, iPhone Duo, iPhone and iPad. Family Sharing and restore work with the same Apple Account.")
+            Text(Platform.isTV
+                 ? LocalizedStringKey("A one-time purchase that unlocks Pro on Apple Vision Pro, iPhone Duo, iPhone, iPad and Apple TV. Family Sharing and restore work with the same Apple Account.")
+                 : LocalizedStringKey("A one-time purchase that unlocks Pro on Apple Vision Pro, iPhone Duo, iPhone and iPad. Family Sharing and restore work with the same Apple Account."))
                 .font(.footnote)
                 .foregroundStyle(.tertiary)
                 .multilineTextAlignment(.center)
@@ -229,7 +232,7 @@ struct ProUpsellRow: View {
             }
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .formRowButtonStyle()
     }
 }
 

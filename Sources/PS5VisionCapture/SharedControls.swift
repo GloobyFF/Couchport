@@ -41,7 +41,7 @@ struct OptionSections: View {
                         }
                         .contentShape(Rectangle())
                     }
-                    .buttonStyle(.plain)
+                    .formRowButtonStyle()
                     .disabled(mode == .metalFX && !captureManager.metalFXSupported)
                 }
                 Toggle("Sharpen", isOn: $renderOptions.sharpenEnabled)
@@ -94,11 +94,15 @@ struct OptionSections: View {
                               range: ClosedRange<Float>) -> some View {
         HStack {
             Text(LocalizedStringKey(title))
-                .frame(width: 150, alignment: .leading)
-            Slider(value: value, in: range)
-            Text(String(format: "%.2f", value.wrappedValue))
-                .font(.caption.monospacedDigit())
-                .frame(width: 58, alignment: .trailing)
+                .frame(width: Platform.isTV ? 260 : 150, alignment: .leading)
+            AdaptiveSlider(value: value, range: range,
+                           step: (range.upperBound - range.lowerBound) / 20)
+            // tvOS: the − value + control already shows the number.
+            if !Platform.isTV {
+                Text(String(format: "%.2f", value.wrappedValue))
+                    .font(.caption.monospacedDigit())
+                    .frame(width: 58, alignment: .trailing)
+            }
         }
     }
 }
@@ -169,7 +173,8 @@ struct TheaterScreenSection: View {
                         _ range: ClosedRange<Float>, _ unit: String) -> some View {
         HStack {
             Text(LocalizedStringKey(title)).frame(width: 120, alignment: .leading)
-            Slider(value: value, in: range)
+            AdaptiveSlider(value: value, range: range,
+                           step: (range.upperBound - range.lowerBound) / 20)
                 .frame(maxWidth: 480)
             Spacer(minLength: 8)
             Text(formatted(value.wrappedValue, unit: unit))
@@ -251,7 +256,7 @@ struct DebugStatsPanel: View {
             Form {
                 StatsSections(statistics: statistics)
             }
-            .scrollContentBackground(.hidden)
+            .formBackgroundHidden()
             .navigationTitle("Performance Stats")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

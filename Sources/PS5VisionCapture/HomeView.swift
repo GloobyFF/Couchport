@@ -50,10 +50,10 @@ struct HomeView: View {
         }
         .onDisappear { remote.stopWatchingConsoles() }
         .onChange(of: store.consoles.count) { _, _ in remote.startWatchingConsoles() }
-        .sheet(isPresented: $showAddConsole) {
+        .adaptiveSheet(isPresented: $showAddConsole) {
             AddConsoleView(remote: remote, store: store)
         }
-        .sheet(isPresented: $showRemoteSettings) {
+        .adaptiveSheet(isPresented: $showRemoteSettings) {
             PanelSheet(title: "Stream Settings") {
                 RemoteSettingsView(settings: remote.settings, onUpgrade: {
                     showRemoteSettings = false
@@ -485,7 +485,7 @@ private extension RemotePlayManager.ConsoleStatus {
     }
 }
 
-private struct HomeBackground: View {
+struct HomeBackground: View {
     var body: some View {
         BrandBackdrop(patternOpacity: 0.9)
             .ignoresSafeArea()

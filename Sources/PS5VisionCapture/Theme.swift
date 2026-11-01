@@ -63,6 +63,11 @@ struct PanelSheet<Content: View>: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
+        #if os(tvOS)
+        // Apple TV: the content is a full-screen TV page with its own title
+        // and Back button (adaptiveSheet presents it full screen).
+        content
+        #else
         NavigationStack {
             content
                 .formBackgroundHidden()
@@ -75,5 +80,6 @@ struct PanelSheet<Content: View>: View {
         }
         .brandWindowBackground()
         .visionMinFrame(width: 480, height: 560)
+        #endif
     }
 }

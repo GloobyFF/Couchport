@@ -48,7 +48,7 @@ private struct RootView: View {
             if phase == .active { app.consoles.syncNow() }
         }
         // The Couchport Pro sheet, requested from anywhere in the app.
-        .sheet(item: $purchases.paywallRequest) { reason in
+        .adaptiveSheet(item: $purchases.paywallRequest) { reason in
             PaywallView(reason: reason)
         }
     }

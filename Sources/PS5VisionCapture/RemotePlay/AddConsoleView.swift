@@ -401,7 +401,7 @@ struct RemoteSettingsView: View {
                 .formRowButtonStyle()
             }
         }
-        .sheet(isPresented: $showAbout) { AboutView() }
+        .adaptiveSheet(isPresented: $showAbout) { AboutView() }
     }
 }
 

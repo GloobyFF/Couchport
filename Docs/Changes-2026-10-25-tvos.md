@@ -117,3 +117,46 @@ open PS5VisionCapture.xcodeproj       # 选择 Couchport-tvOS scheme，目标选
 - iCloud 同步：忘记主机不会删除其它设备上已有的副本；主机改了 IP 不会同步到已经导入它的设备。同一组配对密钥可以在多台设备上使用，但同一时间只能有一个串流。键值存储的同步有延迟（通常几秒到几分钟）。
 - 性能统计、画质增强、串流设置在 tvOS 上是全屏 sheet；手柄在 sheet 打开时用于操作界面。
 - 源码地址在 Apple TV 上只能显示，不能打开。
+
+---
+
+## Stage 2: TV landscape layout (2026-11-01)
+
+The user tested on a real Apple TV: Home was a portrait single column clipped at the top, Add Console was a phone-width sheet, and "Enter account ID manually" was squeezed down to one character per line. All of this has been reworked for a 1920×1080 landscape screen.
+
+**Foundation (TVLayout.swift)**
+- `adaptiveSheet(isPresented:)` / `(item:)`: a sheet on visionOS and iOS, a full-screen page (fullScreenCover) on tvOS. Every sheet now goes through it.
+- `TVPage`: title at top left plus a Back button, then left and right columns, each its own focusSection. Menu returns.
+- Also `TVCard`, `TVStep`, `TVQRCode` (CoreImage; replaces links, since Apple TV has no browser) and `TVMetrics` (type sizes and spacing for 10-foot viewing).
+- `PanelSheet` passes its content straight through on tvOS.
+
+**Screens** (each view's body switches to its TV version on tvOS; visionOS and iOS unchanged)
+| Screen | File | Layout |
+|---|---|---|
+| Home | TVHomeView.swift | Left: logo, headline, network tip, Pair a Console, controller prompt. Right: Pro / Stream Settings buttons at top, then a horizontal shelf of console cards (long-press for a context menu: Wake / Rename / Forget), plus an Add Console card. Footer: one line of legal text. |
+| Add Console | RemotePlay/TVAddConsoleView.swift | Left: 3 steps plus the full iCloud note. Right: PSN account card (full-width manual entry button) → found consoles → IP + PS5/PS4 → PIN → Pair. |
+| Stream Settings | RemotePlay/TVSettingsView.swift | Like the tvOS Settings app: sections on the left (Video, Audio, Controller, About), the selected section's settings on the right. A locked HDR row is a focusable button that opens the paywall. |
+| Purchase | Store/TVPaywallView.swift | Left: Free/Pro comparison plus platform chips (Apple TV available). Right: price, Buy (default focus), Restore, terms (QR). |
+| About / License | TVAboutView.swift | Left: AGPL notice, independent app, copyright. Right: source-code QR plus License / Components / Trademarks. Detail pages are split into focusable paragraphs so the remote can scroll them. |
+| Player | ContentView / FloatingControls / SharedControls / TVPlayer | Tile panel: 280×210 card tiles, centred, focus starts on the first. Stop, free-time and passcode prompts are centred cards with focus on Keep Playing (or the input field). Enhance and Stats are full-screen pages. |
+
+**Controller ownership fix:** the purchase page (opened by Unlock Pro in the free-time prompt) now also counts as UI being up, so the controller isn't sent to the console underneath it.
+
+**Focus audit**
+42 tvOS-compiled controls in the player and shared files, 8 of them fixed. The new TV pages were written to the focus spec: every control is a card, bordered or default button, with no onTapGesture, Link or plain buttons. Each column/shelf is a focusSection with a default focus. Details are in the table below.
+
+| Screen | Default focus | Focusable controls |
+|---|---|---|
+| Home | First console card (Pair if none) | Pro, Stream Settings, Pair, console cards (context menu), Add Console |
+| Add Console | Account button → first console once found | Back, Enter account ID, ID field / Save, console cards, Rescan, IP, PS5/PS4, PIN, Pair |
+| Stream Settings | Video | Back, 4 sections, Apply Now, Resolution / Frame Rate / HEVC / HDR / Bitrate, volume −/+, 5 controller toggles, strength −/+, About |
+| Purchase | Buy | Back, Buy, Restore, Terms (Privacy appears once it has a URL) |
+| About | License | Back, License, Components, Trademarks; paragraphs and links on detail pages |
+| Player panel | First tile | PS Button, Stream, Enhance, Stats, Rest Mode, Stop |
+| Prompts | Keep Playing / passcode field | Keep Playing, Stop / Unlock Pro, OK / Cancel |
+
+**To verify on device**
+- On the Enhance page, check that the − and + of each AdaptiveSlider row are separately focusable. If the whole row focuses as one unit, give the HStack `.focusSection()` and the buttons `.bordered`.
+- The paywall Terms button uses Apple's standard EULA; Privacy is hidden until `TVLegalLink.privacy` gets a URL.
+- The Video footer in Stream Settings still uses the headset copy ("tone-mapped for the headset"); it needs a TV version.
+- Not compiled yet.

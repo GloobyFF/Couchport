@@ -97,6 +97,10 @@ private struct PlayerView: View {
     /// The L3 + R3 hint is shown until the panel has been seen once.
     @AppStorage("tv.psComboHintSeen") private var psComboHintSeen = false
     @ObservedObject private var controllers = ControllerPresence.shared
+    /// The paywall is a full-screen cover too: the UI owns the controller then.
+    @ObservedObject private var purchases = PurchaseManager.shared
+    /// Default focus inside the Stop / free-time / passcode cards.
+    @FocusState private var tvPromptFocus: TVPromptFocus?
     #endif
 
     @ViewBuilder
@@ -121,9 +125,9 @@ private struct PlayerView: View {
 
             TVGameSurface(renderer: app.capture.metalRenderer,
                           ownsController: tvStreamOwnsController,
-                          focusable: !tvControlsOpen,
+                          focusable: !tvControlsOpen && tvPrompt == nil,
                           onMenu: { handleTVMenu() },
-                          onPlayPause: { tvControlsOpen ? closeTVControls() : openTVControls() })
+                          onPlayPause: { toggleTVControls() })
                 .ignoresSafeArea()
 
             if app.showsIdleOverlay {
@@ -131,7 +135,7 @@ private struct PlayerView: View {
                     .allowsHitTesting(false)
             }
 
-            if !controllers.isConnected && !tvControlsOpen {
+            if !controllers.isConnected && !tvControlsOpen && tvPrompt == nil {
                 VStack {
                     Spacer()
                     ConnectControllerPrompt(compact: true)
@@ -172,14 +176,23 @@ private struct PlayerView: View {
         #elseif os(tvOS)
         // Apple TV: no floating button. Menu or Play/Pause opens the tile
         // panel; Menu inside it closes it; Menu again right after offers Stop.
+        // Stop, free-time and passcode prompts are TV-sized cards over the
+        // picture (not system dialogs), so their default focus is the safe
+        // choice and Menu answers them.
         .overlay { tvControlsOverlay }
+        .overlay { tvPromptOverlay }
         .immersivePlayerChrome()
-        .onExitCommand { tvControlsOpen ? closeTVControls(viaMenu: true) : handleTVMenu() }
-        .onPlayPauseCommand { tvControlsOpen ? closeTVControls() : openTVControls() }
-        .confirmationDialog("Stop playing?", isPresented: $tvStopPrompt, titleVisibility: .visible) {
-            Button("Stop", role: .destructive) { app.stopAndGoHome() }
-            Button("Keep Playing", role: .cancel) {}
+        .onExitCommand {
+            if let prompt = tvPrompt {
+                cancelTVPrompt(prompt)
+            } else if tvControlsOpen {
+                closeTVControls(viaMenu: true)
+            } else {
+                handleTVMenu()
+            }
         }
+        .onPlayPauseCommand { toggleTVControls() }
+        .onChange(of: tvPrompt) { _, prompt in focusTVPrompt(prompt) }
         #else
         // iPhone / iPhone Duo / iPad: one draggable floating button in every
         // pose; its panel holds all the controls (no bar over the picture).
@@ -194,18 +207,28 @@ private struct PlayerView: View {
         .onAppear { showControls(true) }
         .onChange(of: app.isRunning) { _, running in if running { showControls(true) } }
         .onChange(of: panel) { _, value in if value == nil { showControls(true) } }
+        #if os(tvOS)
+        // Apple TV: panels are full-screen pages (Menu or Back closes them).
+        .adaptiveSheet(item: $panel) { panel in
+            panelView(panel)
+                .streamOwnsGamepad(app)
+        }
+        #else
         .sheet(item: $panel) { panel in
             panelView(panel)
                 .streamOwnsGamepad(app)
         }
+        #endif
         .onChange(of: app.freeTimeWarning) { _, warn in
             if warn {
                 panel = nil
                 #if os(tvOS)
                 tvControlsOpen = false
+                tvStopPrompt = false
                 #endif
             }
         }
+        #if !os(tvOS)
         .alert("Free play ends in 1 minute", isPresented: $app.freeTimeWarning) {
             Button("Keep Playing", role: .cancel) {}
             Button("Unlock Pro") { PurchaseManager.shared.requestPaywall(.browse) }
@@ -225,6 +248,7 @@ private struct PlayerView: View {
                  ? "Wrong passcode. Enter the 4-digit login passcode of the PS5 user."
                  : "This PS5 user has a login passcode. Enter it to continue.")
         }
+        #endif
     }
 
     private func open(_ value: PlayerPanel) {
@@ -234,11 +258,146 @@ private struct PlayerView: View {
 
     #if os(tvOS)
     /// The console owns the controller only while video plays with no
-    /// panel, sheet, dialog or alert on screen.
+    /// panel, full-screen page (player panels, the paywall), prompt card or
+    /// alert on screen.
     private var tvStreamOwnsController: Bool {
         app.activeSource == .remote && app.remote.state == .streaming
             && !tvControlsOpen && panel == nil && !tvStopPrompt
             && !app.freeTimeWarning && app.remote.pinRequest == nil
+            && purchases.paywallRequest == nil
+    }
+
+    /// The prompt card on screen, most urgent first (one at a time).
+    private enum TVPrompt: Equatable {
+        case passcode, freeTime, stop
+    }
+
+    private enum TVPromptFocus: Hashable {
+        case passcodeField, keepPlaying
+    }
+
+    private var tvPrompt: TVPrompt? {
+        if app.remote.pinRequest != nil { return .passcode }
+        if app.freeTimeWarning { return .freeTime }
+        if tvStopPrompt { return .stop }
+        return nil
+    }
+
+    private func tvDefaultFocus(for prompt: TVPrompt?) -> TVPromptFocus? {
+        switch prompt {
+        case .passcode: return .passcodeField
+        case .freeTime, .stop: return .keepPlaying
+        case nil: return nil
+        }
+    }
+
+    private func focusTVPrompt(_ prompt: TVPrompt?) {
+        guard prompt != nil else { return }
+        // After the card is in the hierarchy, so the focus engine can land on it.
+        Task { @MainActor in tvPromptFocus = tvDefaultFocus(for: prompt) }
+    }
+
+    /// Menu on a prompt: the same as its Cancel / Keep Playing button.
+    private func cancelTVPrompt(_ prompt: TVPrompt) {
+        switch prompt {
+        case .passcode:
+            passcode = ""
+            app.remote.pinRequest = nil
+            app.stopAndGoHome()
+        case .freeTime:
+            app.freeTimeWarning = false
+        case .stop:
+            tvStopPrompt = false
+        }
+    }
+
+    private func submitTVPasscode() {
+        app.remote.submitLoginPin(passcode)
+        passcode = ""
+    }
+
+    @ViewBuilder
+    private var tvPromptOverlay: some View {
+        if let prompt = tvPrompt {
+            ZStack {
+                Color.black.opacity(0.6)
+                    .ignoresSafeArea()
+                    .allowsHitTesting(false)
+                tvPromptCard(prompt)
+            }
+            .defaultFocus($tvPromptFocus, tvDefaultFocus(for: prompt))
+            .transition(.opacity)
+        }
+    }
+
+    @ViewBuilder
+    private func tvPromptCard(_ prompt: TVPrompt) -> some View {
+        switch prompt {
+        case .stop:
+            TVPromptCard(icon: "stop.circle", title: Text("Stop playing?"),
+                         message: Text("The stream ends and you go back to Home.")) {
+                Button {
+                    tvStopPrompt = false
+                } label: {
+                    TVPromptButtonLabel(title: "Keep Playing")
+                }
+                .focused($tvPromptFocus, equals: .keepPlaying)
+                Button(role: .destructive) {
+                    tvStopPrompt = false
+                    app.stopAndGoHome()
+                } label: {
+                    TVPromptButtonLabel(title: "Stop")
+                }
+                .tint(.red)
+            }
+        case .freeTime:
+            TVPromptCard(icon: "hourglass", title: Text("Free play ends in 1 minute"),
+                         message: Text("You get 10 minutes of free play each day. Unlock Pro to keep playing without a limit.")) {
+                Button {
+                    app.freeTimeWarning = false
+                } label: {
+                    TVPromptButtonLabel(title: "Keep Playing")
+                }
+                .focused($tvPromptFocus, equals: .keepPlaying)
+                Button {
+                    app.freeTimeWarning = false
+                    PurchaseManager.shared.requestPaywall(.browse)
+                } label: {
+                    TVPromptButtonLabel(title: "Unlock Pro")
+                }
+            }
+        case .passcode:
+            TVPromptCard(icon: "lock.fill", title: Text("Console Passcode"),
+                         message: Text(app.remote.pinRequest?.incorrect == true
+                                       ? "Wrong passcode. Enter the 4-digit login passcode of the PS5 user."
+                                       : "This PS5 user has a login passcode. Enter it to continue."),
+                         field: {
+                             SecureField("Passcode", text: $passcode)
+                                 .keyboardType(.numberPad)
+                                 .font(TVMetrics.body)
+                                 .frame(width: 560)
+                                 .focused($tvPromptFocus, equals: .passcodeField)
+                                 .onSubmit { submitTVPasscode() }
+                         }) {
+                Button {
+                    submitTVPasscode()
+                } label: {
+                    TVPromptButtonLabel(title: "OK")
+                }
+                Button(role: .cancel) {
+                    cancelTVPrompt(.passcode)
+                } label: {
+                    TVPromptButtonLabel(title: "Cancel")
+                }
+            }
+        }
+    }
+
+    private func toggleTVControls() {
+        // A prompt card is answered first; Play/Pause does not open the
+        // panel over it.
+        guard tvPrompt == nil else { return }
+        tvControlsOpen ? closeTVControls() : openTVControls()
     }
 
     @ViewBuilder
@@ -252,7 +411,6 @@ private struct PlayerView: View {
                                     onOpen: { open($0) },
                                     onClose: { closeTVControls() },
                                     showPSComboHint: !psComboHintSeen)
-                    .frame(maxWidth: 1100)
                     .focusSection()
             }
             .transition(.opacity)
@@ -260,6 +418,7 @@ private struct PlayerView: View {
     }
 
     private func openTVControls() {
+        guard tvPrompt == nil else { return }
         hideTask?.cancel()
         withAnimation(.easeInOut(duration: 0.2)) { tvControlsOpen = true }
     }
@@ -284,6 +443,38 @@ private struct PlayerView: View {
     }
     #endif
 
+    #if os(tvOS)
+    /// Apple TV: each panel is a full-screen page with a title and a Back
+    /// button. Stream Settings is already a TV page (`RemoteSettingsView`).
+    @ViewBuilder
+    private func panelView(_ panel: PlayerPanel) -> some View {
+        switch panel {
+        case .enhance:
+            // The Pickers push their choices, so the page sits in a stack.
+            NavigationStack {
+                TVPanelPage(title: "Enhance", onClose: { self.panel = nil }) {
+                    Form {
+                        OptionSections(captureManager: app.capture, renderOptions: renderOptions,
+                                       onUpgrade: closePanelForPaywall)
+                    }
+                }
+            }
+        case .resolution:
+            TVPanelPage(title: "Resolution", onClose: { self.panel = nil }) {
+                ResolutionPicker(captureManager: app.capture)
+            }
+        case .stream:
+            PanelSheet(title: "Stream Settings") {
+                RemoteSettingsView(settings: app.remote.settings,
+                                   onApplyNow: app.remote.state == .streaming
+                                       ? { self.panel = nil; app.remote.reconnect() } : nil,
+                                   onUpgrade: closePanelForPaywall)
+            }
+        case .stats:
+            DebugStatsPanel(statistics: app.capture.statistics)
+        }
+    }
+    #else
     @ViewBuilder
     private func panelView(_ panel: PlayerPanel) -> some View {
         switch panel {
@@ -309,6 +500,7 @@ private struct PlayerView: View {
             DebugStatsPanel(statistics: app.capture.statistics)
         }
     }
+    #endif
 
     private func closePanelForPaywall() {
         panel = nil
@@ -564,3 +756,63 @@ private struct AdaptiveLabelStyle: LabelStyle {
         }
     }
 }
+
+#if os(tvOS)
+// MARK: - Apple TV prompt cards
+
+/// A centred, TV-sized card for a question over the picture: icon, title,
+/// message, an optional field, then a row of large focusable buttons.
+private struct TVPromptCard<Field: View, Actions: View>: View {
+    let icon: String
+    let title: Text
+    let message: Text
+    @ViewBuilder var field: Field
+    @ViewBuilder var actions: Actions
+
+    var body: some View {
+        VStack(spacing: 36) {
+            Image(systemName: icon)
+                .font(.system(size: 64, weight: .semibold))
+                .foregroundStyle(Brand.blue.mix(with: .white, by: 0.4))
+                .accessibilityHidden(true)
+            VStack(spacing: 16) {
+                title
+                    .font(TVMetrics.sectionTitle)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                message
+                    .font(TVMetrics.body)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            field
+            HStack(spacing: 40) { actions }
+                .focusSection()
+        }
+        .padding(56)
+        .frame(width: 1040)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 40, style: .continuous))
+        .environment(\.colorScheme, .dark)
+    }
+}
+
+extension TVPromptCard where Field == EmptyView {
+    init(icon: String, title: Text, message: Text, @ViewBuilder actions: () -> Actions) {
+        self.init(icon: icon, title: title, message: message, field: { EmptyView() }, actions: actions)
+    }
+}
+
+/// A prompt button's label: large type and a wide hit target.
+private struct TVPromptButtonLabel: View {
+    let title: LocalizedStringKey
+
+    var body: some View {
+        Text(title)
+            .font(TVMetrics.body.weight(.semibold))
+            .lineLimit(1)
+            .minimumScaleFactor(0.7)
+            .frame(minWidth: 300)
+    }
+}
+#endif

@@ -252,6 +252,13 @@ struct DebugStatsPanel: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
+        #if os(tvOS)
+        // Apple TV: plain rows in a Form cannot take focus, so a long list
+        // could not scroll. The stats are cards in columns that fit one screen.
+        TVPanelPage(title: "Performance Stats", contentWidth: .infinity) {
+            TVStatsGrid(statistics: statistics)
+        }
+        #else
         NavigationStack {
             Form {
                 StatsSections(statistics: statistics)
@@ -266,6 +273,7 @@ struct DebugStatsPanel: View {
         }
         .brandWindowBackground()
         .visionMinFrame(width: 400, height: 500)
+        #endif
     }
 }
 
@@ -323,3 +331,138 @@ struct StatsSections: View {
         }
     }
 }
+
+#if os(tvOS)
+// MARK: - Apple TV panel pages
+
+/// A full-screen Apple TV page for one player panel: title and Back at the
+/// top, then the content in a single centred column. Menu closes it.
+struct TVPanelPage<Content: View>: View {
+    let title: LocalizedStringKey
+    var contentWidth: CGFloat = 1400
+    var onClose: (() -> Void)? = nil
+    @ViewBuilder var content: Content
+    @Environment(\.dismiss) private var dismiss
+    @Namespace private var focusScope
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: TVMetrics.sectionSpacing) {
+            HStack(alignment: .firstTextBaseline) {
+                Text(title)
+                    .font(TVMetrics.pageTitle)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
+                Spacer(minLength: 40)
+                Button {
+                    close()
+                } label: {
+                    Label("Back", systemImage: "chevron.backward")
+                }
+            }
+            .focusSection()
+
+            content
+                .frame(maxWidth: contentWidth)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                .focusSection()
+                // Focus starts on the panel's first control, not on Back.
+                .prefersDefaultFocus(in: focusScope)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .focusScope(focusScope)
+        .onExitCommand { close() }
+    }
+
+    private func close() {
+        if let onClose { onClose() } else { dismiss() }
+    }
+}
+
+/// The performance stats as three columns of cards (same values as
+/// `StatsSections`), sized to fit one TV screen without scrolling.
+private struct TVStatsGrid: View {
+    @ObservedObject var statistics: RenderStatistics
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 40) {
+            if statistics.isStreamActive {
+                card("Remote Play Stream",
+                     footer: "High jitter or many lost frames point to Wi-Fi. Use 5 GHz or wire the console, or lower the bitrate.") {
+                    row("Bitrate", String(format: "%.1f Mbps", statistics.streamBitrateMbps))
+                    row("Round Trip", statistics.rttMs > 0 ? String(format: "%.0f ms", statistics.rttMs) : "—")
+                    row("Packet Loss", String(format: "%.1f%%", statistics.packetLoss * 100))
+                    row("Decode Time", String(format: "%.1f ms", statistics.averageDecodeTime))
+                    row("Frame Jitter", String(format: "%.1f ms", statistics.frameJitter))
+                    row("Frames Lost", "\(statistics.framesLost)")
+                    row("Decode Errors", "\(statistics.decodeErrors)")
+                    row("Keyframe Requests", "\(statistics.keyframeRequests)")
+                }
+            }
+
+            VStack(spacing: 32) {
+                card("GPU Performance") {
+                    row("Average Frame Time", String(format: "%.2f ms", statistics.averageGPUTime))
+                    row("Est. Max FPS", statistics.averageGPUTime > 0
+                        ? String(format: "%.0f", 1000.0 / statistics.averageGPUTime)
+                        : "—")
+                }
+                card("Frame Delivery") {
+                    row("Total Frames", "\(statistics.totalFrameCount)")
+                    row("Dropped Frames", "\(statistics.droppedFrameCount)")
+                    row("Drop Rate", String(format: "%.2f%%", statistics.droppedFrameRate))
+                }
+            }
+
+            VStack(alignment: .leading, spacing: 32) {
+                card("Upscaler State") {
+                    row("MetalFX Active", statistics.isMetalFXActive ? String(localized: "Yes") : String(localized: "No"))
+                    row("Lanczos Active", statistics.isLanczosActive ? String(localized: "Yes") : String(localized: "No"))
+                }
+                card("Memory") {
+                    row("App Memory", String(format: "%.0f MB", statistics.memoryFootprintMB))
+                    row("Video Textures", String(format: "%.1f MB", statistics.textureMemoryMB))
+                    row("Memory Warnings", "\(statistics.memoryWarnings)")
+                }
+                Button {
+                    statistics.reset()
+                } label: {
+                    Label("Reset Statistics", systemImage: "arrow.counterclockwise")
+                        .font(TVMetrics.body)
+                }
+            }
+        }
+    }
+
+    private func card<Rows: View>(_ title: LocalizedStringKey, footer: LocalizedStringKey? = nil,
+                                  @ViewBuilder rows: () -> Rows) -> some View {
+        TVCard(padding: 32) {
+            Text(title)
+                .font(TVMetrics.sectionTitle)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+            VStack(alignment: .leading, spacing: 10) { rows() }
+            if let footer {
+                Text(footer)
+                    .font(TVMetrics.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .top)
+    }
+
+    private func row(_ label: LocalizedStringKey, _ value: String) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 16) {
+            Text(label)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+            Spacer(minLength: 12)
+            Text(verbatim: value)
+                .monospacedDigit()
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+        }
+        .font(TVMetrics.body)
+    }
+}
+#endif

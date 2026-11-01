@@ -14,6 +14,15 @@ struct AboutView: View {
     @Environment(\.openURL) private var openURL
 
     var body: some View {
+        #if os(tvOS)
+        // Apple TV: full-screen landscape page built for the Siri Remote.
+        TVAboutView()
+        #else
+        regularBody
+        #endif
+    }
+
+    @ViewBuilder private var regularBody: some View {
         NavigationStack {
             Form {
                 Section {

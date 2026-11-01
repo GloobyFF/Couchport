@@ -22,6 +22,15 @@ struct AddConsoleView: View {
     @State private var scanning = false
 
     var body: some View {
+        #if os(tvOS)
+        // Apple TV: full-screen landscape page built for the Siri Remote.
+        TVAddConsoleView(remote: remote, store: store)
+        #else
+        regularBody
+        #endif
+    }
+
+    @ViewBuilder private var regularBody: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 22) {
@@ -386,6 +395,15 @@ struct RemoteSettingsView: View {
     @State private var showAbout = false
 
     var body: some View {
+        #if os(tvOS)
+        // Apple TV: full-screen landscape page built for the Siri Remote.
+        TVSettingsView(settings: settings, onApplyNow: onApplyNow, onUpgrade: onUpgrade)
+        #else
+        regularBody
+        #endif
+    }
+
+    @ViewBuilder private var regularBody: some View {
         Form {
             RemoteSettingsSections(settings: settings, onApplyNow: onApplyNow, onUpgrade: onUpgrade)
 

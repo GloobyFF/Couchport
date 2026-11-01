@@ -129,6 +129,10 @@ struct PlayerControlsPanel: View {
     let onClose: () -> Void
     /// Apple TV: show the L3 + R3 hint (shown until the panel was seen once).
     var showPSComboHint = false
+    #if os(tvOS)
+    /// Apple TV: the focused tile (focus starts on the first one).
+    @FocusState private var focusedTile: String?
+    #endif
 
     private var isTV: Bool { Platform.isTV }
     private var tileHeight: CGFloat { isTV ? 150 : 84 }
@@ -141,6 +145,9 @@ struct PlayerControlsPanel: View {
     }
 
     var body: some View {
+        #if os(tvOS)
+        tvBody
+        #else
         VStack(alignment: .leading, spacing: isTV ? 24 : 14) {
             HStack(spacing: 10) {
                 Label(app.sourceTitle, systemImage: app.sourceIcon)
@@ -242,6 +249,7 @@ struct PlayerControlsPanel: View {
             .allowsHitTesting(false))
         .environment(\.colorScheme, .dark)
         .padding(12)
+        #endif
     }
 
     private func tileLabel(_ title: LocalizedStringKey, _ icon: String) -> some View {
@@ -279,6 +287,132 @@ struct PlayerControlsPanel: View {
         .accessibilityValue(Text(isOn ? "On" : "Off"))
     }
 }
+#if os(tvOS)
+// MARK: - Apple TV layout
+
+/// One tile of the TV panel.
+private struct TVPanelTile: Identifiable {
+    let id: String
+    let title: LocalizedStringKey
+    let icon: String
+    let action: () -> Void
+}
+
+extension PlayerControlsPanel {
+    /// Large card tiles in a centred grid; focus starts on the first tile.
+    var tvBody: some View {
+        let tiles = tvTiles
+        let columnCount = min(max(tiles.count, 1), 5)
+        return VStack(spacing: 40) {
+            VStack(spacing: 10) {
+                HStack(spacing: 24) {
+                    Label(app.sourceTitle, systemImage: app.sourceIcon)
+                        .font(TVMetrics.sectionTitle)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                    if let left = app.freeSecondsLeft { FreeTimeChip(secondsLeft: left) }
+                }
+                Text(verbatim: "\(app.formatText) · \(app.rateText)")
+                    .font(TVMetrics.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+
+            LazyVGrid(columns: Array(repeating: GridItem(.fixed(TVPanelMetrics.tileWidth),
+                                                         spacing: TVPanelMetrics.spacing),
+                                     count: columnCount),
+                      spacing: TVPanelMetrics.spacing) {
+                ForEach(tiles) { tile in
+                    Button {
+                        run(tile.action)
+                    } label: {
+                        tvTileLabel(tile.title, tile.icon)
+                    }
+                    .buttonStyle(.card)
+                    .focused($focusedTile, equals: tile.id)
+                }
+            }
+            .focusSection()
+
+            VStack(spacing: 8) {
+                if showPSComboHint && app.activeSource == .remote {
+                    Label("Hold L3 + R3 for the PS button", systemImage: "button.programmable")
+                        .font(TVMetrics.body.weight(.semibold))
+                }
+                Text("Detected controller: \(app.remote.gamepad.controllerName ?? String(localized: "None"))")
+                    .font(TVMetrics.caption)
+                    .foregroundStyle(.secondary)
+                Text("Press Menu to return to the game.")
+                    .font(TVMetrics.caption)
+                    .foregroundStyle(.secondary)
+            }
+            .multilineTextAlignment(.center)
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: 1400)
+
+            Button(role: .destructive) {
+                run { app.stopAndGoHome() }
+            } label: {
+                Label("Stop", systemImage: "stop.fill")
+                    .font(TVMetrics.body.weight(.semibold))
+                    .frame(minWidth: 300)
+            }
+            .buttonStyle(.bordered)
+            .tint(.red)
+            .focusSection()
+        }
+        .padding(56)
+        .modifier(SystemGlassCard(cornerRadius: 48))
+        .overlay(RoundedRectangle(cornerRadius: 48, style: .continuous)
+            .strokeBorder(.white.opacity(0.18), lineWidth: 1)
+            .allowsHitTesting(false))
+        .environment(\.colorScheme, .dark)
+        .defaultFocus($focusedTile, tiles.first?.id)
+        .onAppear {
+            let first = tiles.first?.id
+            // Once the tiles are in the hierarchy, so the focus engine takes it.
+            Task { @MainActor in focusedTile = first }
+        }
+    }
+
+    private var tvTiles: [TVPanelTile] {
+        var tiles: [TVPanelTile] = []
+        if app.activeSource == .remote {
+            tiles.append(TVPanelTile(id: "ps", title: "PS Button", icon: "button.programmable") { app.remote.pressPSButton() })
+            tiles.append(TVPanelTile(id: "stream", title: "Stream", icon: "dial.medium") { onOpen(.stream) })
+        }
+        tiles.append(TVPanelTile(id: "enhance", title: "Enhance", icon: "wand.and.stars") { onOpen(.enhance) })
+        tiles.append(TVPanelTile(id: "stats", title: "Performance Stats", icon: "chart.xyaxis.line") { onOpen(.stats) })
+        if app.activeSource == .remote {
+            tiles.append(TVPanelTile(id: "rest", title: "Rest Mode", icon: "moon.zzz") { app.remote.putConsoleToSleep() })
+        }
+        return tiles
+    }
+
+    private func tvTileLabel(_ title: LocalizedStringKey, _ icon: String) -> some View {
+        VStack(spacing: 18) {
+            Image(systemName: icon)
+                .font(.system(size: 56, weight: .medium))
+                .frame(height: 64)
+            Text(title)
+                .font(TVMetrics.body.weight(.medium))
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+                .minimumScaleFactor(0.75)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(.horizontal, 16)
+        .frame(width: TVPanelMetrics.tileWidth, height: TVPanelMetrics.tileHeight)
+    }
+}
+
+private enum TVPanelMetrics {
+    static let tileWidth: CGFloat = 280
+    static let tileHeight: CGFloat = 210
+    static let spacing: CGFloat = 40
+}
+#endif
+
 /// System Liquid Glass (deployment target is iOS 26 / tvOS 26).
 private struct SystemGlassCard: ViewModifier {
     let cornerRadius: CGFloat

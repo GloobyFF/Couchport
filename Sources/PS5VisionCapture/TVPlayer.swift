@@ -170,26 +170,31 @@ final class SiriRemoteCommands {
 }
 
 /// Shown on Home and over the player when no game controller is connected.
+/// Information only (nothing to press), so it never takes focus; it is
+/// centred by its container and sized for reading from the couch.
 struct ConnectControllerPrompt: View {
     var compact = false
 
     var body: some View {
-        HStack(spacing: 18) {
+        HStack(alignment: .center, spacing: compact ? 24 : 32) {
             Image(systemName: "gamecontroller.fill")
-                .font(.system(size: compact ? 30 : 44, weight: .semibold))
+                .font(.system(size: compact ? 48 : 64, weight: .semibold))
                 .foregroundStyle(Brand.blue.mix(with: .white, by: 0.4))
-            VStack(alignment: .leading, spacing: 6) {
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 10) {
                 Text("Connect a game controller")
-                    .font(compact ? .headline : .title3.weight(.bold))
+                    .font(compact ? TVMetrics.body.weight(.bold) : TVMetrics.sectionTitle)
+                    .fixedSize(horizontal: false, vertical: true)
                 Text("Apple TV needs a game controller to play. Pair one in Settings › Remotes and Devices › Bluetooth: hold the Create and PS buttons on a DualSense, or Share and PS on a DualShock 4, until the light flashes.")
-                    .font(.callout)
+                    .font(compact ? TVMetrics.caption : TVMetrics.body)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .padding(compact ? 20 : 28)
-        .frame(maxWidth: 1100, alignment: .leading)
-        .adaptiveGlass(in: RoundedRectangle(cornerRadius: 28, style: .continuous))
+        .padding(compact ? 32 : 40)
+        .frame(maxWidth: compact ? 1300 : 1400, alignment: .leading)
+        .adaptiveGlass(in: RoundedRectangle(cornerRadius: 32, style: .continuous))
+        .accessibilityElement(children: .combine)
     }
 }
 #endif

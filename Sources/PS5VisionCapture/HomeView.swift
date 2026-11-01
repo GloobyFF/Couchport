@@ -8,9 +8,6 @@ struct HomeView: View {
     @ObservedObject var remote: RemotePlayManager
     @ObservedObject var store: ConsoleStore
     @ObservedObject private var purchases = PurchaseManager.shared
-    #if os(tvOS)
-    @ObservedObject private var controllers = ControllerPresence.shared
-    #endif
 
     @State private var showAddConsole = false
     @State private var showRemoteSettings = false
@@ -20,15 +17,13 @@ struct HomeView: View {
     @State private var layout = LayoutClass(width: 1000)
 
     var body: some View {
+        #if os(tvOS)
+        // Apple TV: a landscape 10-foot layout with its own presentations.
+        TVHomeView(app: app, capture: capture, remote: remote, store: store)
+        #else
         ScrollView {
             VStack(alignment: .leading, spacing: layout.sectionSpacing) {
                 header
-                #if os(tvOS)
-                // Apple TV has no touch controls: a controller is required.
-                if !controllers.isConnected {
-                    ConnectControllerPrompt()
-                }
-                #endif
                 remoteHero
                 consolesSection
                 if Platform.supportsCapture {
@@ -71,6 +66,7 @@ struct HomeView: View {
             Button("Save") { store.rename(console, to: renameText) }
             Button("Cancel", role: .cancel) {}
         }
+        #endif
     }
 
     private var forgetBinding: Binding<Bool> {
@@ -465,7 +461,7 @@ struct HomeView: View {
 
 // MARK: - Components
 
-private extension RemotePlayManager.ConsoleStatus {
+extension RemotePlayManager.ConsoleStatus {
     var label: LocalizedStringKey {
         switch self {
         case .ready: return "Ready"
@@ -494,7 +490,7 @@ struct HomeBackground: View {
 
 /// The four face-button shapes as a small brand mark.
 /// The Couchport app icon (flattened 3-layer stack), shown in the Home header.
-private struct ShapeMark: View {
+struct ShapeMark: View {
     var size: CGFloat = 76
     var body: some View {
         Image("AppMark")
@@ -525,7 +521,7 @@ private struct Chip: View {
     }
 }
 
-private struct StatusDot: View {
+struct StatusDot: View {
     let status: RemotePlayManager.ConsoleStatus
     var body: some View {
         Circle().fill(status.color).frame(width: 10, height: 10)

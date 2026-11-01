@@ -9,6 +9,15 @@ struct PaywallView: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
+        #if os(tvOS)
+        // Apple TV: full-screen landscape page built for the Siri Remote.
+        TVPaywallView(reason: reason)
+        #else
+        regularBody
+        #endif
+    }
+
+    @ViewBuilder private var regularBody: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 26) {

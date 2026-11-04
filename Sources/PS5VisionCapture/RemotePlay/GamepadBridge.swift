@@ -41,13 +41,15 @@ final class GamepadBridge: ObservableObject {
     var swapConfirmCancel = false { didSet { if swapConfirmCancel != oldValue { onState?(output) } } }
     var swapSquareTriangle = false { didSet { if swapSquareTriangle != oldValue { onState?(output) } } }
 
-    /// tvOS keeps the controller's Home (PS) button for the system, so on
-    /// Apple TV holding L3 + R3 together for `psComboHold` seconds sends the
+    /// The system can reserve Home (PS) on Apple TV and Vision Pro. Holding
+    /// L3 + R3 together for `psComboHold` seconds sends the
     /// PS button instead (L3/R3 are released to the console while it is held).
-    var psButtonComboEnabled = Platform.isTV
+    var psButtonComboEnabled = Platform.isTV || Platform.isVision
     nonisolated static let psComboHold: Double = 0.5
     private var psComboTask: Task<Void, Never>?
     private var psComboActive = false
+    private var psPressTask: Task<Void, Never>?
+    private var psPressActive = false
 
     let feedback = ControllerFeedback()
 
@@ -99,6 +101,9 @@ final class GamepadBridge: ObservableObject {
         psComboTask?.cancel()
         psComboTask = nil
         psComboActive = false
+        psPressTask?.cancel()
+        psPressTask = nil
+        psPressActive = false
         hasPhysicalController = false
         last = GamepadSnapshot()
         virtualPad = GamepadSnapshot()
@@ -151,6 +156,22 @@ final class GamepadBridge: ObservableObject {
         onState?(output)
     }
 
+    /// Merge a short PS press into every outgoing snapshot, including the
+    /// heartbeat, so hardware updates cannot release it prematurely.
+    func pressPSButton() {
+        guard onState != nil, psPressTask == nil else { return }
+        psPressActive = true
+        onState?(output)
+        psPressTask = Task { [weak self] in
+            do { try await Task.sleep(for: .milliseconds(200)) }
+            catch { return }
+            guard let self else { return }
+            self.psPressActive = false
+            self.psPressTask = nil
+            self.onState?(self.output)
+        }
+    }
+
     /// Hardware OR touch: buttons are OR-ed, triggers take the larger value,
     /// a stick or touchpad finger from the touch controller wins while held.
     private var output: GamepadSnapshot {
@@ -163,6 +184,7 @@ final class GamepadBridge: ObservableObject {
         if swapSquareTriangle { s.buttons = Self.swapBits(s.buttons, 2, 3) }    // Square ↔ Triangle
         let v = virtualPad
         s.buttons |= v.buttons
+        if psPressActive { s.buttons |= Self.psBit }
         s.l2 = max(s.l2, v.l2)
         s.r2 = max(s.r2, v.r2)
         if v.leftX != 0 || v.leftY != 0 { s.leftX = v.leftX; s.leftY = v.leftY }
@@ -197,7 +219,7 @@ final class GamepadBridge: ObservableObject {
         onState?(output)
     }
 
-    // MARK: - PS button combo (tvOS)
+    // MARK: - PS button combo
 
     nonisolated static let l3r3: UInt32 = (1 << 10) | (1 << 11)
     nonisolated static let psBit: UInt32 = 1 << 15

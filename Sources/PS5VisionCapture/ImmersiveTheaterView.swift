@@ -48,10 +48,11 @@ struct ImmersiveTheaterView: View {
                     defaultPosition: Self.defaultControlsPosition,
                     onExit: exitTheater
                 )
-                .handlesGameControllerEvents(matching: app.gamepadEventsForUI)
+                .gamepadInputOnly()
             }
         }
-        .handlesGameControllerEvents(matching: app.gamepadEventsForUI)
+        .gamepadInputOnly()
+        .upperLimbVisibility(app.theaterHideHands ? .hidden : .visible)
         .onAppear {
             captureManager.immersiveOpen = true
         }
@@ -169,35 +170,56 @@ private struct FloatingTheaterControls: View {
 
             expandedBar
         }
-        .frame(width: 1904, height: 900, alignment: .bottom)
+        .frame(width: 2064, height: 900, alignment: .bottom)
     }
 
     private var expandedBar: some View {
-        HStack(spacing: 18) {
+        HStack(spacing: 14) {
             statusSummary
 
             Spacer(minLength: 12)
 
             toolbarButton("Screen", icon: "rectangle.on.rectangle", panel: .screen,
-                          minWidth: 190)
+                          minWidth: 110)
+            Toggle(isOn: $app.theaterHideHands) {
+                Label("Hide Hands", systemImage: "hand.raised.slash")
+                    .lineLimit(1)
+                    .fixedSize(horizontal: true, vertical: false)
+            }
+            .toggleStyle(.button)
+            .help("Hiding hands uses full immersion and hides your surroundings. Turn this off to restore passthrough.")
+            .onChange(of: app.theaterHideHands) { _, _ in markInteraction() }
             toolbarButton("Enhance", icon: "wand.and.stars", panel: .enhance,
-                          minWidth: 210)
+                          minWidth: 130)
 
             if app.activeSource == .capture && !captureManager.availableFormats.isEmpty {
                 toolbarButton("Resolution", icon: "slider.horizontal.3", panel: .resolution,
-                              minWidth: 230)
+                              minWidth: 160)
             }
 
             if app.activeSource == .remote {
+                Button {
+                    markInteraction()
+                    app.remote.pressPSButton()
+                } label: {
+                    Label("PS", systemImage: "button.programmable")
+                        .fixedSize(horizontal: true, vertical: false)
+                        .frame(minWidth: 60)
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(app.remote.state != .streaming)
+                .accessibilityLabel(Text("PS Button"))
+                .help("Hold L3 + R3 for the PS button")
+
                 toolbarButton("Stream", icon: "dial.medium", panel: .stream,
-                              minWidth: 190)
+                              minWidth: 110)
             }
 
             toolbarButton("Stats", icon: "chart.xyaxis.line", panel: .stats,
-                          minWidth: 160)
+                          minWidth: 90)
 
             toolbarButton("More", icon: "ellipsis.circle", panel: .more,
-                          minWidth: 170)
+                          minWidth: 90)
 
             // Stop = end the stream and go Home. Exit Theater (right) keeps
             // the stream and returns to the window.
@@ -218,7 +240,7 @@ private struct FloatingTheaterControls: View {
                     .foregroundStyle(.white)
                     .lineLimit(1)
                     .fixedSize(horizontal: true, vertical: false)
-                    .frame(minWidth: 150)
+                    .frame(minWidth: 100)
             }
             .buttonStyle(.borderedProminent)
             .tint(app.isRunning ? .red : Brand.blue)
@@ -247,7 +269,7 @@ private struct FloatingTheaterControls: View {
         }
         .font(.title3)
         .controlSize(.large)
-        .frame(width: 1840, height: 168)
+        .frame(width: 2000, height: 168)
         .padding(.horizontal, 32)
         .brandPanel(in: RoundedRectangle(cornerRadius: 24, style: .continuous))
     }
@@ -270,7 +292,7 @@ private struct FloatingTheaterControls: View {
             .foregroundStyle(.secondary)
             .lineLimit(1)
         }
-        .frame(width: 360, alignment: .leading)
+        .frame(width: 240, alignment: .leading)
     }
 
     private func toolbarButton(_ title: String, icon: String, panel: TheaterPanel,
@@ -331,7 +353,7 @@ private struct FloatingTheaterControls: View {
         .buttonStyle(.plain)
         .help("Show Theater Controls")
         .brandPanel(in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-        .frame(width: 1904, height: 900, alignment: .bottom)
+        .frame(width: 2064, height: 900, alignment: .bottom)
     }
 
     @ViewBuilder
@@ -528,12 +550,6 @@ private struct MoreTheaterControls: View {
 
             Section {
                 if app.activeSource == .remote {
-                    Button {
-                        app.remote.pressPSButton()
-                        onInteraction()
-                    } label: {
-                        Label("PS Button", systemImage: "button.programmable")
-                    }
                     Button(role: .destructive) {
                         app.remote.putConsoleToSleep()
                         onInteraction()

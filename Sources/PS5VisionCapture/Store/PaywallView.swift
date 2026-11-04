@@ -81,8 +81,7 @@ struct PaywallView: View {
                 platformChip("iPhone Duo", available: true)
                 platformChip("iPhone", available: true)
                 platformChip("iPad", available: true)
-                // Available on the Apple TV app itself; "coming later" elsewhere.
-                platformChip("Apple TV", available: Platform.isTV)
+                platformChip("Apple TV", available: true)
             }
             .frame(maxWidth: .infinity)
         }
@@ -198,9 +197,7 @@ struct PaywallView: View {
                     .multilineTextAlignment(.center)
             }
 
-            Text(Platform.isTV
-                 ? LocalizedStringKey("A one-time purchase that unlocks Pro on Apple Vision Pro, iPhone Duo, iPhone, iPad and Apple TV. Family Sharing and restore work with the same Apple Account.")
-                 : LocalizedStringKey("A one-time purchase that unlocks Pro on Apple Vision Pro, iPhone Duo, iPhone and iPad. Family Sharing and restore work with the same Apple Account."))
+            Text("A one-time purchase that unlocks Pro on Apple Vision Pro, iPhone Duo, iPhone, iPad and Apple TV. Family Sharing and restore work with the same Apple Account.")
                 .font(.footnote)
                 .foregroundStyle(.tertiary)
                 .multilineTextAlignment(.center)

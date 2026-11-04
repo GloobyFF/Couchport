@@ -14,12 +14,19 @@ final class AppModel: ObservableObject {
     /// nil = Home screen.
     @Published var activeSource: Source?
 
-    /// Gamepad events that bypass UIKit focus. During Remote Play every
-    /// controller input goes to the console, never to our buttons.
     #if os(visionOS)
-    var gamepadEventsForUI: GCUIEventTypes {
-        activeSource == .remote ? .gamepad : []
+    /// One live setting shared by the scene and both theater control panels.
+    @Published var theaterHideHands = UserDefaults.standard.bool(forKey: "theaterHideHands") {
+        didSet {
+            UserDefaults.standard.set(theaterHideHands, forKey: "theaterHideHands")
+            theaterImmersionStyle = theaterHideHands ? .full : .mixed
+        }
     }
+    @Published var theaterImmersionStyle: any ImmersionStyle =
+        UserDefaults.standard.bool(forKey: "theaterHideHands") ? .full : .mixed
+
+    // Own system-gesture preferences for the app lifetime, not a stream.
+    private let gamepadUIPolicy = VisionGamepadUIPolicy()
     #endif
 
     let capture: CaptureManager

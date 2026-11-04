@@ -76,6 +76,7 @@ struct AddConsoleView: View {
                 PSNLoginSheet { id in
                     try? store.setAccountID(base64: id)
                 }
+                .gamepadInputOnly()
             }
             #endif
             .onAppear {

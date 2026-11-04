@@ -13,9 +13,7 @@ struct PS5VisionCaptureApp: App {
     var body: some Scene {
         #if os(visionOS)
         WindowGroup(id: "main") {
-            ContentView()
-                .environmentObject(app)
-                .environmentObject(app.capture)
+            VisionAppRoot(app: app)
         }
         .defaultSize(width: 1280, height: 760)
         .defaultLaunchBehavior(.presented)
@@ -26,7 +24,11 @@ struct PS5VisionCaptureApp: App {
                 .environmentObject(app)
                 .environmentObject(app.capture)
         }
-        .immersionStyle(selection: .constant(.mixed), in: .mixed, .progressive, .full)
+        // Hand hiding is supported in full immersion; mixed immersion keeps
+        // the user's real hands in passthrough. The toggle controls both.
+        .immersionStyle(selection: $app.theaterImmersionStyle,
+                        in: .mixed, .full)
+        .upperLimbVisibility(app.theaterHideHands ? .hidden : .visible)
         .restorationBehavior(.disabled)
         #else
         // iPhone, iPhone Duo and iPad: one window that follows size changes

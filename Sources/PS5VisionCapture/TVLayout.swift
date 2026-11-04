@@ -16,7 +16,7 @@ extension View {
             content().tvPageBackground()
         }
         #else
-        self.sheet(isPresented: isPresented, content: content)
+        self.sheet(isPresented: isPresented) { content().gamepadInputOnly() }
         #endif
     }
 
@@ -29,7 +29,7 @@ extension View {
             content(value).tvPageBackground()
         }
         #else
-        self.sheet(item: item, content: content)
+        self.sheet(item: item) { content($0).gamepadInputOnly() }
         #endif
     }
 

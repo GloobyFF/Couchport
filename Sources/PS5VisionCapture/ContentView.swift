@@ -36,10 +36,8 @@ private struct RootView: View {
             }
         }
         .animation(.easeInOut(duration: 0.25), value: app.activeSource)
-        // While streaming, the controller belongs to the PS5: route gamepad
-        // events to GameController only, so they never move focus or press
-        // buttons in our UI. Home and capture mode keep normal navigation.
-        .streamOwnsGamepad(app)
+        // On visionOS, use gaze and hands for UI from launch onward.
+        .gamepadInputOnly()
         .onChange(of: renderOptions.displayMode) { _, mode in
             Task { await applyDisplayMode(mode) }
         }
@@ -171,7 +169,7 @@ private struct PlayerView: View {
                              onInteraction: { showControls(true) },
                              onOpen: { open($0) })
                 .padding(.top, 24)
-                .streamOwnsGamepad(app)
+                .gamepadInputOnly()
         }
         #elseif os(tvOS)
         // Apple TV: no floating button. Menu or Play/Pause opens the tile
@@ -211,12 +209,12 @@ private struct PlayerView: View {
         // Apple TV: panels are full-screen pages (Menu or Back closes them).
         .adaptiveSheet(item: $panel) { panel in
             panelView(panel)
-                .streamOwnsGamepad(app)
+                .gamepadInputOnly()
         }
         #else
         .sheet(item: $panel) { panel in
             panelView(panel)
-                .streamOwnsGamepad(app)
+                .gamepadInputOnly()
         }
         #endif
         .onChange(of: app.freeTimeWarning) { _, warn in
@@ -750,9 +748,9 @@ private struct AdaptiveLabelStyle: LabelStyle {
     let iconOnly: Bool
     func makeBody(configuration: Configuration) -> some View {
         if iconOnly {
-            IconOnlyLabelStyle().makeBody(configuration: configuration)
+            Label(configuration).labelStyle(.iconOnly)
         } else {
-            TitleAndIconLabelStyle().makeBody(configuration: configuration)
+            Label(configuration).labelStyle(.titleAndIcon)
         }
     }
 }

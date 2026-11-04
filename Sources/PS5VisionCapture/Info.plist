@@ -48,8 +48,6 @@
 	</array>
 	<key>UILaunchScreen</key>
 	<dict/>
-	<key>UIRequiresFullScreen</key>
-	<false/>
 	<key>UIStatusBarStyle</key>
 	<string>UIStatusBarStyleLightContent</string>
 	<key>UISupportedInterfaceOrientations</key>

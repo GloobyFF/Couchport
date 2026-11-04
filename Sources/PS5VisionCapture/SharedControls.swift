@@ -125,6 +125,9 @@ struct EnhancePanel: View {
 /// Shared screen placement controls used by both theater control surfaces.
 struct TheaterScreenSection: View {
     @ObservedObject var renderOptions: RenderOptions
+    #if os(visionOS)
+    @EnvironmentObject private var app: AppModel
+    #endif
 
     var body: some View {
         Section("Theater Screen") {
@@ -135,6 +138,12 @@ struct TheaterScreenSection: View {
                 preset("IMAX", width: 12, distance: 8, height: 2.4, curve: 0.65)
             }
             slider("Room Dimming", $renderOptions.theaterDim, 0...1, "%")
+            #if os(visionOS)
+            Toggle("Hide Hands", isOn: $app.theaterHideHands)
+            Text("Hiding hands uses full immersion and hides your surroundings. Turn this off to restore passthrough.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            #endif
             slider("Size", $renderOptions.theaterWidth, 2...12, "m")
             slider("Distance", $renderOptions.theaterDistance, 1.5...10, "m")
             slider("Height", $renderOptions.theaterHeight, -1...3, "m")

@@ -1,6 +1,100 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "Hiding hands uses full immersion and hides your surroundings. Turn this off to restore passthrough.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Beim Ausblenden der Hände wird die vollständige Immersion aktiviert und die Umgebung ausgeblendet. Deaktiviere diese Option, um die Durchsicht wiederherzustellen."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ocultar las manos activa la inmersión completa y oculta tu entorno. Desactívalo para volver a ver tu entorno."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Masquer les mains active l’immersion complète et masque votre environnement. Désactivez cette option pour retrouver la vue de votre environnement."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "手を非表示にすると、完全没入モードになり、周囲の現実空間も非表示になります。オフにするとパススルー表示に戻ります。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "손을 숨기면 완전 몰입 모드로 전환되어 주변 환경도 보이지 않습니다. 패스스루로 돌아가려면 이 옵션을 끄세요."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "隐藏双手时会切换到全沉浸模式，同时隐藏现实环境。关闭此开关可恢复透视环境。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "隱藏雙手時會切換到全沉浸模式，同時隱藏現實環境。關閉此開關可恢復透視環境。"
+          }
+        }
+      }
+    },
+    "Hide Hands": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hände ausblenden"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ocultar manos"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Masquer les mains"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "手を非表示"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "손 숨기기"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "隐藏双手"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "隱藏雙手"
+          }
+        }
+      }
+    },
     "%@ · %@": {
       "extractionState": "stale",
       "localizations": {
@@ -373,7 +467,6 @@
       }
     },
     "Add Console": {
-      "extractionState": "stale",
       "localizations": {
         "de": {
           "stringUnit": {
@@ -1425,7 +1518,6 @@
       }
     },
     "Close": {
-      "extractionState": "stale",
       "localizations": {
         "de": {
           "stringUnit": {
@@ -1893,7 +1985,6 @@
       }
     },
     "Console Passcode": {
-      "extractionState": "stale",
       "localizations": {
         "de": {
           "stringUnit": {
@@ -3720,7 +3811,6 @@
       }
     },
     "HDR (10-bit)": {
-      "extractionState": "stale",
       "localizations": {
         "de": {
           "stringUnit": {
@@ -5966,7 +6056,6 @@
       }
     },
     "Pair Your First Console": {
-      "extractionState": "stale",
       "localizations": {
         "de": {
           "stringUnit": {
@@ -6577,7 +6666,6 @@
       }
     },
     "PS Button": {
-      "extractionState": "stale",
       "localizations": {
         "de": {
           "stringUnit": {
@@ -14318,6 +14406,7 @@
       }
     },
     "A one-time purchase that unlocks Pro on Apple Vision Pro, iPhone Duo, iPhone and iPad. Family Sharing and restore work with the same Apple Account.": {
+      "extractionState": "stale",
       "localizations": {
         "de": {
           "stringUnit": {

@@ -107,15 +107,14 @@ extension View {
         #endif
     }
 
-    /// While streaming, controller input belongs to the console, not our UI.
-    /// visionOS drives UI focus from a gamepad, so it is routed away there.
-    /// tvOS does the same with a `GCEventViewController` around the video
-    /// (`TVGameSurface`, controllerUserInteractionEnabled = false while
-    /// streaming), so this modifier has nothing to add there.
+    /// Vision Pro uses gaze and hands for all UI, including Home and sheets.
+    /// Gamepads are read only through GameController. Other platforms keep
+    /// their existing navigation policy.
     @ViewBuilder
-    func streamOwnsGamepad(_ app: AppModel) -> some View {
+    func gamepadInputOnly() -> some View {
         #if os(visionOS)
-        self.handlesGameControllerEvents(matching: app.gamepadEventsForUI)
+        self.handlesGameControllerEvents(matching: .gamepad,
+                                         withOptions: .receivesEventsInView(false))
         #else
         self
         #endif

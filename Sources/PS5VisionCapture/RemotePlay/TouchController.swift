@@ -294,6 +294,69 @@ struct TouchControllerView: View {
 private enum ButtonLabel {
     case text(String)
     case symbol(String)
+    case face(FaceGlyph)
+}
+
+/// Thin outline glyphs like the ones printed on a real controller's face
+/// buttons (the same four shapes Apple's GameController symbols use).
+private enum FaceGlyph { case triangle, circle, cross, square }
+
+private struct FaceGlyphShape: Shape {
+    let glyph: FaceGlyph
+    func path(in r: CGRect) -> Path {
+        var p = Path()
+        let s = min(r.width, r.height)
+        let c = CGPoint(x: r.midX, y: r.midY)
+        switch glyph {
+        case .circle:
+            p.addEllipse(in: CGRect(x: c.x - s * 0.45, y: c.y - s * 0.45, width: s * 0.9, height: s * 0.9))
+        case .square:
+            p.addRect(CGRect(x: c.x - s * 0.40, y: c.y - s * 0.40, width: s * 0.8, height: s * 0.8))
+        case .cross:
+            let d = s * 0.42
+            p.move(to: CGPoint(x: c.x - d, y: c.y - d)); p.addLine(to: CGPoint(x: c.x + d, y: c.y + d))
+            p.move(to: CGPoint(x: c.x + d, y: c.y - d)); p.addLine(to: CGPoint(x: c.x - d, y: c.y + d))
+        case .triangle:
+            let h = s * 0.84
+            p.move(to: CGPoint(x: c.x, y: c.y - h * 0.58))
+            p.addLine(to: CGPoint(x: c.x + h * 0.56, y: c.y + h * 0.42))
+            p.addLine(to: CGPoint(x: c.x - h * 0.56, y: c.y + h * 0.42))
+            p.closeSubpath()
+        }
+        return p
+    }
+}
+
+/// Shared look of every key: smoked translucent plastic with a soft top
+/// highlight and a hairline rim, brighter while pressed.
+private enum PadStyle {
+    static let glyph = Color(white: 0.88)
+    static let glyphDim = Color(white: 0.88).opacity(0.75)
+
+    static func fill(_ pressed: Bool) -> LinearGradient {
+        LinearGradient(colors: pressed
+                       ? [Color(white: 0.55).opacity(0.70), Color(white: 0.30).opacity(0.70)]
+                       : [Color(white: 0.22).opacity(0.62), Color(white: 0.04).opacity(0.62)],
+                       startPoint: .top, endPoint: .bottom)
+    }
+
+    static func rim(_ pressed: Bool) -> LinearGradient {
+        LinearGradient(colors: [.white.opacity(pressed ? 0.75 : 0.42), .white.opacity(0.08)],
+                       startPoint: .top, endPoint: .bottom)
+    }
+
+    static let highlight = LinearGradient(colors: [.white.opacity(0.22), .clear],
+                                          startPoint: .top, endPoint: .center)
+}
+
+private extension Shape {
+    /// Fill + highlight + rim in one call.
+    func padKey(pressed: Bool, lineWidth: CGFloat = 1) -> some View {
+        self.fill(PadStyle.fill(pressed))
+            .overlay(self.fill(PadStyle.highlight).padding(lineWidth))
+            .overlay(self.stroke(PadStyle.rim(pressed), lineWidth: lineWidth))
+            .shadow(color: .black.opacity(pressed ? 0.15 : 0.35), radius: pressed ? 1 : 3, y: pressed ? 0.5 : 1.5)
+    }
 }
 
 private enum ButtonShape { case circle, capsule }
@@ -310,12 +373,13 @@ private struct PadButton: View {
 
     var body: some View {
         content
-            .font(.system(size: u * 0.36, weight: .bold, design: .rounded))
-            .foregroundStyle(.white)
-            .frame(width: shape == .circle ? u : u * 1.45, height: shape == .circle ? u : u * 0.7)
+            .font(.system(size: u * 0.32, weight: .semibold, design: .rounded))
+            .foregroundStyle(PadStyle.glyph)
+            .frame(width: shape == .circle ? u : u * 1.45, height: shape == .circle ? u : u * 0.62)
             .background(background)
             .contentShape(Rectangle())
-            .scaleEffect(pressed ? 0.92 : 1)
+            .scaleEffect(pressed ? 0.93 : 1)
+            .animation(.easeOut(duration: 0.08), value: pressed)
             .gesture(DragGesture(minimumDistance: 0)
                 .onChanged { _ in
                     if !pressed { pressed = true; pad.set(button, true) }
@@ -330,17 +394,19 @@ private struct PadButton: View {
     @ViewBuilder private var content: some View {
         switch label {
         case .text(let s): Text(verbatim: s)
-        case .symbol(let name): Image(systemName: name)
+        case .symbol(let name): Image(systemName: name).font(.system(size: u * 0.28, weight: .semibold))
+        case .face(let glyph):
+            FaceGlyphShape(glyph: glyph)
+                .stroke(PadStyle.glyph, style: StrokeStyle(lineWidth: max(1.5, u * 0.06),
+                                                           lineCap: .round, lineJoin: .round))
+                .frame(width: u * 0.42, height: u * 0.42)
         }
     }
 
     @ViewBuilder private var background: some View {
-        let fill = Color.white.opacity(pressed ? 0.45 : 0.16)
         switch shape {
-        case .circle:
-            Circle().fill(fill).overlay(Circle().strokeBorder(.white.opacity(0.35), lineWidth: 1))
-        case .capsule:
-            Capsule().fill(fill).overlay(Capsule().strokeBorder(.white.opacity(0.35), lineWidth: 1))
+        case .circle: Circle().padKey(pressed: pressed)
+        case .capsule: Capsule().padKey(pressed: pressed)
         }
     }
 }
@@ -353,15 +419,20 @@ private struct TriggerButton: View {
     @State private var pressed = false
 
     var body: some View {
+        // Trigger silhouette: deep rounded top, tighter bottom corners.
+        let shape = UnevenRoundedRectangle(topLeadingRadius: u * (left ? 0.5 : 0.22),
+                                           bottomLeadingRadius: u * 0.14,
+                                           bottomTrailingRadius: u * 0.14,
+                                           topTrailingRadius: u * (left ? 0.22 : 0.5),
+                                           style: .continuous)
         Text(verbatim: left ? "L2" : "R2")
-            .font(.system(size: u * 0.34, weight: .bold, design: .rounded))
-            .foregroundStyle(.white)
-            .frame(width: u * 1.45, height: u * 0.8)
-            .background(RoundedRectangle(cornerRadius: u * 0.25, style: .continuous)
-                .fill(Color.white.opacity(pressed ? 0.45 : 0.16))
-                .overlay(RoundedRectangle(cornerRadius: u * 0.25, style: .continuous)
-                    .strokeBorder(.white.opacity(0.35), lineWidth: 1)))
+            .font(.system(size: u * 0.3, weight: .semibold, design: .rounded))
+            .foregroundStyle(PadStyle.glyph)
+            .frame(width: u * 1.45, height: u * 0.82)
+            .background(shape.padKey(pressed: pressed))
             .contentShape(Rectangle())
+            .scaleEffect(pressed ? 0.95 : 1, anchor: .bottom)
+            .animation(.easeOut(duration: 0.08), value: pressed)
             .gesture(DragGesture(minimumDistance: 0)
                 .onChanged { _ in
                     if !pressed { pressed = true; pad.setTrigger(left: left, pressed: true) }
@@ -373,7 +444,7 @@ private struct TriggerButton: View {
     }
 }
 
-/// The four face buttons in a diamond. Generic geometric glyphs only.
+/// The four face buttons in a diamond, with thin outline glyphs.
 private struct FaceButtons: View {
     @ObservedObject var pad: VirtualPad
     let u: CGFloat
@@ -381,12 +452,12 @@ private struct FaceButtons: View {
     var body: some View {
         let gap = u * 0.08
         VStack(spacing: gap) {
-            PadButton(pad: pad, button: .triangle, label: .symbol("triangle"), u: u)
+            PadButton(pad: pad, button: .triangle, label: .face(.triangle), u: u)
             HStack(spacing: u + gap * 2) {
-                PadButton(pad: pad, button: .square, label: .symbol("square"), u: u)
-                PadButton(pad: pad, button: .circle, label: .symbol("circle"), u: u)
+                PadButton(pad: pad, button: .square, label: .face(.square), u: u)
+                PadButton(pad: pad, button: .circle, label: .face(.circle), u: u)
             }
-            PadButton(pad: pad, button: .cross, label: .symbol("xmark"), u: u)
+            PadButton(pad: pad, button: .cross, label: .face(.cross), u: u)
         }
     }
 }
@@ -416,13 +487,20 @@ private struct DPad: View {
         let side = u * 2.9
         ZStack {
             ForEach(Self.arrows, id: \.button) { item in
-                Image(systemName: item.symbol)
-                    .font(.system(size: u * 0.34))
-                    .foregroundStyle(.white)
-                    .frame(width: u * 0.95, height: u * 0.95)
-                    .background(RoundedRectangle(cornerRadius: u * 0.18, style: .continuous)
-                        .fill(Color.white.opacity(active.contains(item.button) ? 0.45 : 0.16)))
-                    .offset(x: item.dx * u * 0.95, y: item.dy * u * 0.95)
+                let on = active.contains(item.button)
+                // Each key is drawn pointing up, then rotated into place.
+                ZStack {
+                    DPadKeyShape().padKey(pressed: on)
+                    Image(systemName: "arrowtriangle.up.fill")
+                        .font(.system(size: u * 0.22))
+                        .foregroundStyle(PadStyle.glyphDim)
+                        .offset(y: -u * 0.12)
+                }
+                .frame(width: u * 0.9, height: u * 1.12)
+                .scaleEffect(on ? 0.94 : 1)
+                .offset(y: -u * 0.72)
+                .rotationEffect(.degrees(Self.angle(item.dx, item.dy)))
+                .animation(.easeOut(duration: 0.08), value: on)
             }
         }
         .frame(width: side, height: side)
@@ -430,6 +508,13 @@ private struct DPad: View {
         .gesture(DragGesture(minimumDistance: 0)
             .onChanged { value in update(value.location, side: side) }
             .onEnded { _ in update(nil, side: side) })
+    }
+
+    private static func angle(_ dx: CGFloat, _ dy: CGFloat) -> Double {
+        if dy < 0 { return 0 }
+        if dx > 0 { return 90 }
+        if dy > 0 { return 180 }
+        return 270
     }
 
     private func update(_ point: CGPoint?, side: CGFloat) {
@@ -449,6 +534,28 @@ private struct DPad: View {
     }
 }
 
+/// One D-pad key pointing up: rounded outer end, sides that taper to a
+/// blunt point toward the centre, like a real controller's arrow keys.
+private struct DPadKeyShape: Shape {
+    func path(in r: CGRect) -> Path {
+        let w = r.width, h = r.height
+        let rad = w * 0.26
+        let shoulder = h * 0.62
+        var p = Path()
+        p.move(to: CGPoint(x: r.minX, y: r.minY + rad))
+        p.addQuadCurve(to: CGPoint(x: r.minX + rad, y: r.minY), control: CGPoint(x: r.minX, y: r.minY))
+        p.addLine(to: CGPoint(x: r.maxX - rad, y: r.minY))
+        p.addQuadCurve(to: CGPoint(x: r.maxX, y: r.minY + rad), control: CGPoint(x: r.maxX, y: r.minY))
+        p.addLine(to: CGPoint(x: r.maxX, y: r.minY + shoulder))
+        p.addLine(to: CGPoint(x: r.midX + w * 0.1, y: r.maxY - h * 0.02))
+        p.addQuadCurve(to: CGPoint(x: r.midX - w * 0.1, y: r.maxY - h * 0.02),
+                       control: CGPoint(x: r.midX, y: r.maxY + h * 0.03))
+        p.addLine(to: CGPoint(x: r.minX, y: r.minY + shoulder))
+        p.closeSubpath()
+        return p
+    }
+}
+
 /// Analogue stick. Drag from anywhere in the base; a quick double tap
 /// clicks the stick (L3 / R3).
 private struct StickControl: View {
@@ -462,18 +569,29 @@ private struct StickControl: View {
     var body: some View {
         let radius = u * 1.15
         ZStack {
+            // Well the stick moves in.
             Circle()
-                .fill(Color.white.opacity(0.10))
-                .overlay(Circle().strokeBorder(.white.opacity(0.3), lineWidth: 1))
-            Circle()
-                .fill(Color.white.opacity(clicked ? 0.6 : 0.35))
-                .frame(width: u * 1.0, height: u * 1.0)
-                .offset(knob)
-            Text(verbatim: left ? "L3" : "R3")
-                .font(.system(size: u * 0.22, weight: .semibold, design: .rounded))
-                .foregroundStyle(.white.opacity(0.6))
-                .offset(knob)
-                .allowsHitTesting(false)
+                .fill(RadialGradient(colors: [Color.black.opacity(0.45), Color(white: 0.12).opacity(0.35)],
+                                     center: .center, startRadius: 0, endRadius: radius))
+                .overlay(Circle().stroke(PadStyle.rim(false), lineWidth: 1))
+            // Cap: a raised rim around a concave thumb pad.
+            ZStack {
+                Circle().padKey(pressed: clicked, lineWidth: 1.2)
+                Circle()
+                    .fill(RadialGradient(colors: [Color.black.opacity(0.35), Color(white: 0.3).opacity(0.25)],
+                                         center: UnitPoint(x: 0.5, y: 0.42),
+                                         startRadius: 0, endRadius: u * 0.36))
+                    .padding(u * 0.14)
+                Circle()
+                    .stroke(.white.opacity(0.10), lineWidth: 1)
+                    .padding(u * 0.14)
+                Text(verbatim: left ? "L3" : "R3")
+                    .font(.system(size: u * 0.2, weight: .semibold, design: .rounded))
+                    .foregroundStyle(PadStyle.glyphDim)
+            }
+            .frame(width: u * 1.05, height: u * 1.05)
+            .offset(knob)
+            .allowsHitTesting(false)
         }
         .frame(width: radius * 2, height: radius * 2)
         .contentShape(Circle())
@@ -518,10 +636,10 @@ private struct TouchpadControl: View {
 
     var body: some View {
         GeometryReader { proxy in
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(Color.white.opacity(start == nil ? (large ? 0.06 : 0.10) : 0.25))
-                .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .strokeBorder(.white.opacity(0.3), lineWidth: 1))
+            UnevenRoundedRectangle(topLeadingRadius: 10, bottomLeadingRadius: large ? 26 : 16,
+                                   bottomTrailingRadius: large ? 26 : 16, topTrailingRadius: 10,
+                                   style: .continuous)
+                .padKey(pressed: start != nil)
                 .overlay(
                     VStack(spacing: 6) {
                         Image(systemName: "hand.point.up.left")
@@ -530,7 +648,7 @@ private struct TouchpadControl: View {
                                 .font(.caption.weight(.semibold))
                         }
                     }
-                    .foregroundStyle(.white.opacity(0.5))
+                    .foregroundStyle(PadStyle.glyphDim.opacity(0.7))
                     .allowsHitTesting(false))
                 .contentShape(Rectangle())
                 .gesture(DragGesture(minimumDistance: 0)

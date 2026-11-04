@@ -125,16 +125,39 @@ struct TouchControllerView: View {
     }
 
     /// Base size: a face button is about one unit.
+    ///
+    /// Each layout's divisors are its real extent in units (controls +
+    /// spacing + padding), so the unit always fits both directions and no
+    /// control overlaps another, from the Duo's 466-pt outer display to an
+    /// iPad.
     private func unit(for size: CGSize) -> CGFloat {
-        let short = min(size.width, size.height)
+        let fit: CGFloat
+        let largest: CGFloat
         switch style {
-        case .overlay, .touchpadStrip: return max(30, min(64, short / 7.6))
-        // The panel stacks shoulders, D-pad/face buttons and sticks: about
-        // 7.5 units tall, so it fits the Duo's lower half without the
-        // shoulder row being cut off under the fold.
-        case .panel: return max(26, min(70, min(size.width / 9.6, size.height / 7.6)))
-        case .touchpad: return max(40, min(70, min(size.width / 8.5, size.height / 5.2)))
+        case .overlay:
+            // Height: shoulders (L2 0.82 + 0.2 + L1 0.62) over the tallest
+            // bottom column (face 3.16 + 0.35 + stick 2.3) + padding 0.6.
+            // + 0.2 air. Book pose adds the system row under the shoulders (0.9).
+            // Width: D-pad 2.9 + system row 2.75 + face 3.16 + 4 gaps of 0.4
+            // + padding 0.9.
+            let tall: CGFloat = avoidCenter ? 9.2 : 8.3
+            let wide: CGFloat = avoidCenter ? 8.0 : 11.4
+            fit = min(size.height / tall, size.width / wide)
+            largest = 64
+        case .touchpadStrip:
+            fit = min(size.height / 2.2, size.width / 9.0)
+            largest = 64
+        case .panel:
+            // Height: shoulder row 1.1 + face 3.16 + sticks 2.3 + gaps 0.6
+            // + padding 0.6. Width: L2 L1 | touchpad 3.2 | R1 R2 = 9.5 +
+            // padding 0.7 + a little air.
+            fit = min(size.height / 7.9, size.width / 10.6)
+            largest = 70
+        case .touchpad:
+            fit = min(size.height / 5.2, size.width / 8.5)
+            largest = 70
         }
+        return max(18, min(fit, largest))
     }
 
     // Landscape: shoulders in the top corners, sticks and buttons at the
@@ -142,7 +165,7 @@ struct TouchControllerView: View {
     // for the picture.
     @ViewBuilder
     private func overlayLayout(size: CGSize, u: CGFloat) -> some View {
-        VStack {
+        VStack(spacing: 0) {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: u * 0.25) {
                     shoulderColumn(left: true, u: u)
@@ -190,7 +213,7 @@ struct TouchControllerView: View {
     @ViewBuilder
     private func panelLayout(size: CGSize, u: CGFloat) -> some View {
         VStack(spacing: u * 0.3) {
-            HStack {
+            HStack(spacing: 0) {
                 HStack(spacing: u * 0.25) {
                     TriggerButton(pad: pad, left: true, u: u)
                     PadButton(pad: pad, button: .l1, label: .text("L1"), u: u, shape: .capsule)

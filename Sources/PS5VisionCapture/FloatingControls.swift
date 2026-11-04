@@ -135,9 +135,7 @@ struct PlayerControlsPanel: View {
     #endif
 
     private var isTV: Bool { Platform.isTV }
-    private var tileHeight: CGFloat { isTV ? 150 : 84 }
-    private var iconSize: CGFloat { isTV ? 38 : 24 }
-    private var columns: Int { isTV ? 4 : 3 }
+    private var columns: Int { 4 }
 
     private func run(_ action: () -> Void) {
         action()
@@ -170,8 +168,8 @@ struct PlayerControlsPanel: View {
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
 
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: isTV ? 24 : 10), count: columns),
-                      spacing: isTV ? 24 : 10) {
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: columns),
+                      alignment: .center, spacing: 14) {
                 if app.activeSource == .remote {
                     tile("PS Button", "button.programmable") { run { app.remote.pressPSButton() } }
                     tile("Stream", "dial.medium") { run { onOpen(.stream) } }
@@ -236,15 +234,17 @@ struct PlayerControlsPanel: View {
             } label: {
                 Label("Stop", systemImage: "stop.fill")
                     .font(.headline)
-                    .frame(maxWidth: .infinity, minHeight: isTV ? 60 : 46)
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity, minHeight: 50)
+                    .background(Color.red, in: Capsule())
+                    .contentShape(Capsule())
             }
-            .buttonStyle(.borderedProminent)
-            .tint(.red)
+            .buttonStyle(.plain)
         }
-        .padding(isTV ? 40 : 18)
+        .padding(20)
         // Plain system glass inside the card's outline: no pattern.
-        .modifier(SystemGlassCard(cornerRadius: isTV ? 40 : 26))
-        .overlay(RoundedRectangle(cornerRadius: isTV ? 40 : 26, style: .continuous)
+        .modifier(SystemGlassCard(cornerRadius: 34))
+        .overlay(RoundedRectangle(cornerRadius: 34, style: .continuous)
             .strokeBorder(.white.opacity(0.18), lineWidth: 1)
             .allowsHitTesting(false))
         .environment(\.colorScheme, .dark)
@@ -252,39 +252,15 @@ struct PlayerControlsPanel: View {
         #endif
     }
 
-    private func tileLabel(_ title: LocalizedStringKey, _ icon: String) -> some View {
-        VStack(spacing: 8) {
-            Image(systemName: icon)
-                .font(.system(size: iconSize, weight: .medium))
-                .frame(height: iconSize + 4)
-            Text(title)
-                .font(isTV ? .callout.weight(.medium) : .footnote.weight(.medium))
-                .multilineTextAlignment(.center)
-                .lineLimit(2)
-                .minimumScaleFactor(0.8)
-        }
-        .frame(maxWidth: .infinity, minHeight: tileHeight)
-        .padding(.horizontal, 4)
-    }
-
+    // Same look as the visionOS dock: a circular icon with a caption below.
     private func tile(_ title: LocalizedStringKey, _ icon: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            tileLabel(title, icon)
-                .background(.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-        }
-        .plainOrCardButtonStyle()
+        DockButton(title: title, icon: icon, psGlyph: icon == "button.programmable",
+                   size: .compact, action: action)
     }
 
     private func toggleTile(_ title: LocalizedStringKey, _ icon: String, isOn: Bool,
                             action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            tileLabel(title, icon)
-                .foregroundStyle(isOn ? Color.white : Color.primary)
-                .background(isOn ? Brand.blue.opacity(0.85) : Color.white.opacity(0.08),
-                            in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-        }
-        .plainOrCardButtonStyle()
-        .accessibilityValue(Text(isOn ? "On" : "Off"))
+        DockButton(title: title, icon: icon, isOn: isOn, size: .compact, action: action)
     }
 }
 #if os(tvOS)

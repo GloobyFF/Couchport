@@ -523,164 +523,114 @@ private struct PlayerView: View {
     }
 }
 
+/// visionOS window ornament: the same rounded dock as the theater, with
+/// circular icon buttons and a caption under each.
 private struct PlayerControlBar: View {
     @ObservedObject var app: AppModel
     @ObservedObject var renderOptions: RenderOptions
     let onInteraction: () -> Void
     let onOpen: (PlayerPanel) -> Void
-    @State private var width: CGFloat = 1000
-
-    /// Narrow screens (iPhone, iPhone Duo folded): icons only, no stats text.
-    private var compact: Bool { !Platform.isVision && width < 700 }
 
     var body: some View {
-        ViewThatFits(in: .horizontal) {
-            bar
-            ScrollView(.horizontal, showsIndicators: false) { bar }
-        }
-        .frame(maxWidth: Platform.isVision ? nil : .infinity)
-        .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width = $0 }
-    }
+        HStack(alignment: .top, spacing: 4) {
+            status
+                .padding(.trailing, 8)
 
-    private var bar: some View {
-        HStack(spacing: compact ? 10 : 14) {
-            VStack(alignment: .leading, spacing: 3) {
-                Label(app.sourceTitle, systemImage: app.sourceIcon)
-                    .font(.headline)
-                    .lineLimit(1)
-                HStack(spacing: 12) {
-                    if let left = app.freeSecondsLeft {
-                        FreeTimeChip(secondsLeft: left)
-                    }
-                    if !compact {
-                        Text(app.formatText)
-                        Text(app.rateText)
-                        Label(app.audioText, systemImage: "speaker.wave.2")
-                            .lineLimit(1)
-                    }
-                }
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            }
-            .frame(minWidth: compact ? 0 : 260, alignment: .leading)
-            .frame(maxWidth: compact ? 150 : nil, alignment: .leading)
-
-            Divider().frame(height: 36)
+            DockDivider()
 
             if Platform.supportsTheater {
-                Button {
+                DockButton(title: "Theater", icon: "mountain.2.fill") {
                     onInteraction()
                     renderOptions.displayMode = .theater
-                } label: {
-                    Label("Theater", systemImage: "mountain.2.fill")
                 }
             }
-
-            Button {
-                onOpen(.enhance)
-            } label: {
-                Label("Enhance", systemImage: "wand.and.stars")
-            }
-
+            DockButton(title: "Enhance", icon: "wand.and.stars") { onOpen(.enhance) }
             if app.activeSource == .capture {
                 if !app.capture.availableFormats.isEmpty {
-                    Button {
-                        onOpen(.resolution)
-                    } label: {
-                        Label("Resolution", systemImage: "slider.horizontal.3")
-                    }
+                    DockButton(title: "Resolution", icon: "slider.horizontal.3") { onOpen(.resolution) }
                 }
             } else {
-                Button {
+                DockButton(title: "Stream", icon: "dial.medium") { onOpen(.stream) }
+            }
+            DockButton(title: "Stats", icon: "chart.xyaxis.line") { onOpen(.stats) }
+            moreMenu
+
+            DockDivider()
+
+            if app.activeSource == .remote {
+                DockButton(title: "PS", psGlyph: true) {
                     onInteraction()
                     app.remote.pressPSButton()
-                } label: {
-                    Label("PS", systemImage: "button.programmable")
                 }
+                .disabled(app.remote.state != .streaming)
+                .accessibilityLabel(Text("PS Button"))
                 .help("PS button")
-
-                Button {
-                    onOpen(.stream)
-                } label: {
-                    Label("Stream", systemImage: "dial.medium")
-                }
             }
-
-            Menu {
-                Button {
-                    onOpen(.stats)
-                } label: {
-                    Label("Performance Stats", systemImage: "chart.xyaxis.line")
-                }
-                if app.activeSource == .capture {
-                    Button {
-                        app.capture.refreshDevices()
-                    } label: {
-                        Label("Refresh Devices", systemImage: "arrow.clockwise")
-                    }
-                    Button {
-                        app.capture.audioMonitor.toggle()
-                    } label: {
-                        Label(LocalizedStringKey(app.capture.audioMonitor.isMonitoring ? "Mute Capture Audio" : "Play Capture Audio"),
-                              systemImage: "speaker.wave.2")
-                    }
-                } else {
-                    #if os(iOS)
-                    if app.remote.settings.pictureInPicture {
-                        Button {
-                            NotificationCenter.default.post(name: .couchportStartPictureInPicture, object: nil)
-                        } label: {
-                            Label("Picture in Picture", systemImage: "pip.enter")
-                        }
-                    }
-                    Toggle(isOn: Binding(get: { app.remote.settings.tabletopReflection },
-                                         set: { app.remote.settings.tabletopReflection = $0 })) {
-                        Label("Reflection", systemImage: "square.bottomhalf.filled")
-                    }
-                    // Shows what the app detected, to explain Automatic mode.
-                    Text("Detected controller: \(app.remote.gamepad.controllerName ?? String(localized: "None"))")
-                    Picker(selection: touchModeBinding) {
-                        ForEach(TouchControlsMode.allCases) { mode in
-                            Text(LocalizedStringKey(mode.rawValue)).tag(mode)
-                        }
-                    } label: {
-                        Label("On-Screen Controller", systemImage: "gamecontroller")
-                    }
-                    #endif
-                    Button(role: .destructive) {
-                        app.remote.putConsoleToSleep()
-                    } label: {
-                        Label("Put Console in Rest Mode", systemImage: "moon.zzz")
-                    }
-                }
-            } label: {
-                Label("More", systemImage: "ellipsis")
-            }
-
-            Button {
+            DockButton(title: "Stop", icon: "stop.fill", fill: .red) {
                 app.stopAndGoHome()
-            } label: {
-                Label("Stop", systemImage: "stop.fill")
-                    .foregroundStyle(.white)
             }
-            .buttonStyle(.borderedProminent)
-            .tint(.red)
         }
-        .labelStyle(AdaptiveLabelStyle(iconOnly: compact))
-        .padding(.horizontal, compact ? 14 : 20)
-        .padding(.vertical, compact ? 10 : 14)
-        .brandPanel(in: Capsule())
+        .padding(.horizontal, 26)
+        .padding(.vertical, 16)
+        .fixedSize()
+        .brandPanel(in: RoundedRectangle(cornerRadius: 52, style: .continuous))
     }
-}
 
-#if os(iOS)
-private extension PlayerControlBar {
-    var touchModeBinding: Binding<TouchControlsMode> {
-        Binding(get: { app.remote.settings.touchControls },
-                set: { app.remote.settings.touchControls = $0 })
+    private var status: some View {
+        HStack(spacing: 12) {
+            Image(systemName: app.sourceIcon)
+                .font(.system(size: 24, weight: .semibold))
+                .frame(width: 60, height: 60)
+                .background(Circle().fill(Brand.blue.opacity(0.35)))
+            VStack(alignment: .leading, spacing: 3) {
+                Text(app.sourceTitle)
+                    .font(.headline)
+                    .lineLimit(1)
+                if let left = app.freeSecondsLeft {
+                    FreeTimeChip(secondsLeft: left)
+                }
+                Text(verbatim: "\(app.formatText) · \(app.rateText)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                Label(app.audioText, systemImage: "speaker.wave.2")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+        }
+        .frame(width: 250, alignment: .leading)
+        .padding(.top, 4)
+    }
+
+    private var moreMenu: some View {
+        Menu {
+            if app.activeSource == .capture {
+                Button {
+                    app.capture.refreshDevices()
+                } label: {
+                    Label("Refresh Devices", systemImage: "arrow.clockwise")
+                }
+                Button {
+                    app.capture.audioMonitor.toggle()
+                } label: {
+                    Label(LocalizedStringKey(app.capture.audioMonitor.isMonitoring ? "Mute Capture Audio" : "Play Capture Audio"),
+                          systemImage: "speaker.wave.2")
+                }
+            } else {
+                Button(role: .destructive) {
+                    app.remote.putConsoleToSleep()
+                } label: {
+                    Label("Put Console in Rest Mode", systemImage: "moon.zzz")
+                }
+            }
+        } label: {
+            DockItem(title: "More", icon: "ellipsis")
+        }
+        .menuStyle(.button)
+        .buttonStyle(.plain)
     }
 }
-#endif
 
 enum PlayerPanel: String, Identifiable {
     case enhance, resolution, stream, stats
@@ -740,18 +690,6 @@ private struct TheaterControlPanel: View {
             .navigationTitle("Theater")
         }
         .brandWindowBackground()
-    }
-}
-
-/// Title and icon on wide screens, icon only on narrow ones.
-private struct AdaptiveLabelStyle: LabelStyle {
-    let iconOnly: Bool
-    func makeBody(configuration: Configuration) -> some View {
-        if iconOnly {
-            Label(configuration).labelStyle(.iconOnly)
-        } else {
-            Label(configuration).labelStyle(.titleAndIcon)
-        }
     }
 }
 

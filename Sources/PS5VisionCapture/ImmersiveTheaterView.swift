@@ -182,34 +182,33 @@ private struct FloatingTheaterControls: View {
 
             dockDivider
 
-            TheaterDockButton(title: "Screen", icon: "rectangle.on.rectangle",
+            DockButton(title: "Screen", icon: "rectangle.on.rectangle",
                               isOn: activePanel == .screen) { toggle(.screen) }
-            TheaterDockButton(title: "Enhance", icon: "wand.and.stars",
+            DockButton(title: "Enhance", icon: "wand.and.stars",
                               isOn: activePanel == .enhance) { toggle(.enhance) }
             if app.activeSource == .capture && !captureManager.availableFormats.isEmpty {
-                TheaterDockButton(title: "Resolution", icon: "slider.horizontal.3",
+                DockButton(title: "Resolution", icon: "slider.horizontal.3",
                                   isOn: activePanel == .resolution) { toggle(.resolution) }
             }
             if app.activeSource == .remote {
-                TheaterDockButton(title: "Stream", icon: "dial.medium",
+                DockButton(title: "Stream", icon: "dial.medium",
                                   isOn: activePanel == .stream) { toggle(.stream) }
             }
-            TheaterDockButton(title: "Stats", icon: "chart.xyaxis.line",
+            DockButton(title: "Stats", icon: "chart.xyaxis.line",
                               isOn: activePanel == .stats) { toggle(.stats) }
-            TheaterDockButton(title: "Hide Hands", icon: "hand.raised.slash",
+            DockButton(title: "Hide Hands", icon: "hand.raised.slash",
                               isOn: app.theaterHideHands) {
                 markInteraction()
                 app.theaterHideHands.toggle()
             }
             .help("Hiding hands uses full immersion and hides your surroundings. Turn this off to restore passthrough.")
-            TheaterDockButton(title: "More", icon: "ellipsis",
+            DockButton(title: "More", icon: "ellipsis",
                               isOn: activePanel == .more) { toggle(.more) }
 
             dockDivider
 
             if app.activeSource == .remote {
-                TheaterDockButton(title: "PS", icon: "",
-                                  customGlyph: true) {
+                DockButton(title: "PS", psGlyph: true) {
                     markInteraction()
                     app.remote.pressPSButton()
                 }
@@ -220,7 +219,7 @@ private struct FloatingTheaterControls: View {
 
             // Stop = end the stream and go Home. Exit Theater keeps the
             // stream and returns to the window.
-            TheaterDockButton(title: LocalizedStringKey(app.isRunning ? "Stop" : "Start"),
+            DockButton(title: LocalizedStringKey(app.isRunning ? "Stop" : "Start"),
                               icon: app.isRunning ? "stop.fill" : "play.fill",
                               fill: app.isRunning ? .red : Brand.blue) {
                 markInteraction()
@@ -231,7 +230,7 @@ private struct FloatingTheaterControls: View {
                     app.toggleRunning()
                 }
             }
-            TheaterDockButton(title: "Exit Theater", icon: "macwindow") {
+            DockButton(title: "Exit Theater", icon: "macwindow") {
                 Task { await onExit() }
             }
             .help("Back to the window; the stream keeps running")
@@ -239,7 +238,7 @@ private struct FloatingTheaterControls: View {
             dockDivider
 
             moveHandle
-            TheaterDockButton(title: "Collapse", icon: "chevron.down") {
+            DockButton(title: "Collapse", icon: "chevron.down") {
                 activePanel = nil
                 withAnimation(.easeInOut(duration: 0.2)) { expanded = false }
             }
@@ -251,14 +250,7 @@ private struct FloatingTheaterControls: View {
         .brandPanel(in: RoundedRectangle(cornerRadius: 56, style: .continuous))
     }
 
-    private var dockDivider: some View {
-        Capsule()
-            .fill(.white.opacity(0.18))
-            .frame(width: 2, height: 56)
-            .padding(.horizontal, 10)
-            .padding(.top, 10)
-            .allowsHitTesting(false)
-    }
+    private var dockDivider: some View { DockDivider() }
 
     private var statusSummary: some View {
         HStack(spacing: 14) {
@@ -295,7 +287,7 @@ private struct FloatingTheaterControls: View {
     }
 
     private var moveHandle: some View {
-        TheaterDockItem(title: "Move", icon: "arrow.up.and.down.and.arrow.left.and.right")
+        DockItem(title: "Move", icon: "arrow.up.and.down.and.arrow.left.and.right")
             .help("Move Controls")
             .gesture(
                 DragGesture()
@@ -392,68 +384,6 @@ private struct FloatingTheaterControls: View {
         lastInteraction = Date()
     }
 
-}
-
-/// Visual of one dock item: a circular icon with a short caption below.
-private struct TheaterDockItem: View {
-    let title: LocalizedStringKey
-    let icon: String
-    var isOn = false
-    var fill: Color? = nil
-    var customGlyph = false
-    @Environment(\.isEnabled) private var isEnabled
-
-    var body: some View {
-        VStack(spacing: 8) {
-            glyph
-                .font(.system(size: 28, weight: .semibold))
-                .foregroundStyle(.white)
-                .frame(width: 72, height: 72)
-                .background(Circle().fill(background))
-                .overlay(Circle().strokeBorder(.white.opacity(isOn ? 0.55 : 0.12), lineWidth: 1.5))
-                .contentShape(.hoverEffect, Circle())
-                .hoverEffect()
-            Text(title)
-                .font(.callout.weight(.medium))
-                .foregroundStyle(isOn ? .primary : .secondary)
-                .lineLimit(1)
-                .fixedSize()
-        }
-        .frame(minWidth: 92)
-        .opacity(isEnabled ? 1 : 0.4)
-        .contentShape(Rectangle())
-    }
-
-    @ViewBuilder private var glyph: some View {
-        if customGlyph {
-            // Neutral PS button glyph (no Sony logo): bold "PS" text.
-            Text(verbatim: "PS").font(.system(size: 24, weight: .heavy, design: .rounded))
-        } else {
-            Image(systemName: icon)
-        }
-    }
-
-    private var background: Color {
-        if let fill { return fill }
-        return isOn ? Brand.blue : .white.opacity(0.10)
-    }
-}
-
-private struct TheaterDockButton: View {
-    let title: LocalizedStringKey
-    let icon: String
-    var isOn = false
-    var fill: Color? = nil
-    var customGlyph = false
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            TheaterDockItem(title: title, icon: icon, isOn: isOn,
-                            fill: fill, customGlyph: customGlyph)
-        }
-        .buttonStyle(.plain)
-    }
 }
 
 /// Shown above the theater bar one minute before a free session ends.

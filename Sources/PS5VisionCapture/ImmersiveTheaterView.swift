@@ -94,7 +94,7 @@ private enum TheaterPanel {
     case more
 }
 
-/// A two-times-size window-style toolbar. Settings are rendered in an inline
+/// A rounded dock of icon buttons with captions. Settings are rendered in an inline
 /// panel above it because window popovers do not have a reliable presentation
 /// anchor inside a RealityView attachment.
 private struct FloatingTheaterControls: View {
@@ -173,57 +173,56 @@ private struct FloatingTheaterControls: View {
         .frame(width: 2064, height: 900, alignment: .bottom)
     }
 
+    /// Rounded dock: circular icon buttons with a short caption under each,
+    /// grouped by thin dividers. Sizes itself to its content.
     private var expandedBar: some View {
-        HStack(spacing: 14) {
+        HStack(alignment: .top, spacing: 6) {
             statusSummary
+                .padding(.trailing, 10)
 
-            Spacer(minLength: 12)
+            dockDivider
 
-            toolbarButton("Screen", icon: "rectangle.on.rectangle", panel: .screen,
-                          minWidth: 110)
-            Toggle(isOn: $app.theaterHideHands) {
-                Label("Hide Hands", systemImage: "hand.raised.slash")
-                    .lineLimit(1)
-                    .fixedSize(horizontal: true, vertical: false)
-            }
-            .toggleStyle(.button)
-            .help("Hiding hands uses full immersion and hides your surroundings. Turn this off to restore passthrough.")
-            .onChange(of: app.theaterHideHands) { _, _ in markInteraction() }
-            toolbarButton("Enhance", icon: "wand.and.stars", panel: .enhance,
-                          minWidth: 130)
-
+            TheaterDockButton(title: "Screen", icon: "rectangle.on.rectangle",
+                              isOn: activePanel == .screen) { toggle(.screen) }
+            TheaterDockButton(title: "Enhance", icon: "wand.and.stars",
+                              isOn: activePanel == .enhance) { toggle(.enhance) }
             if app.activeSource == .capture && !captureManager.availableFormats.isEmpty {
-                toolbarButton("Resolution", icon: "slider.horizontal.3", panel: .resolution,
-                              minWidth: 160)
+                TheaterDockButton(title: "Resolution", icon: "slider.horizontal.3",
+                                  isOn: activePanel == .resolution) { toggle(.resolution) }
             }
+            if app.activeSource == .remote {
+                TheaterDockButton(title: "Stream", icon: "dial.medium",
+                                  isOn: activePanel == .stream) { toggle(.stream) }
+            }
+            TheaterDockButton(title: "Stats", icon: "chart.xyaxis.line",
+                              isOn: activePanel == .stats) { toggle(.stats) }
+            TheaterDockButton(title: "Hide Hands", icon: "hand.raised.slash",
+                              isOn: app.theaterHideHands) {
+                markInteraction()
+                app.theaterHideHands.toggle()
+            }
+            .help("Hiding hands uses full immersion and hides your surroundings. Turn this off to restore passthrough.")
+            TheaterDockButton(title: "More", icon: "ellipsis",
+                              isOn: activePanel == .more) { toggle(.more) }
+
+            dockDivider
 
             if app.activeSource == .remote {
-                Button {
+                TheaterDockButton(title: "PS", icon: "",
+                                  customGlyph: true) {
                     markInteraction()
                     app.remote.pressPSButton()
-                } label: {
-                    Label("PS", systemImage: "button.programmable")
-                        .fixedSize(horizontal: true, vertical: false)
-                        .frame(minWidth: 60)
                 }
-                .buttonStyle(.borderedProminent)
                 .disabled(app.remote.state != .streaming)
                 .accessibilityLabel(Text("PS Button"))
                 .help("Hold L3 + R3 for the PS button")
-
-                toolbarButton("Stream", icon: "dial.medium", panel: .stream,
-                              minWidth: 110)
             }
 
-            toolbarButton("Stats", icon: "chart.xyaxis.line", panel: .stats,
-                          minWidth: 90)
-
-            toolbarButton("More", icon: "ellipsis.circle", panel: .more,
-                          minWidth: 90)
-
-            // Stop = end the stream and go Home. Exit Theater (right) keeps
-            // the stream and returns to the window.
-            Button {
+            // Stop = end the stream and go Home. Exit Theater keeps the
+            // stream and returns to the window.
+            TheaterDockButton(title: LocalizedStringKey(app.isRunning ? "Stop" : "Start"),
+                              icon: app.isRunning ? "stop.fill" : "play.fill",
+                              fill: app.isRunning ? .red : Brand.blue) {
                 markInteraction()
                 if app.isRunning {
                     app.stopAndGoHome()
@@ -231,96 +230,72 @@ private struct FloatingTheaterControls: View {
                 } else {
                     app.toggleRunning()
                 }
-            } label: {
-                Label {
-                    Text(LocalizedStringKey(app.isRunning ? "Stop" : "Start"))
-                } icon: {
-                    Image(systemName: app.isRunning ? "stop.fill" : "play.fill")
-                }
-                    .foregroundStyle(.white)
-                    .lineLimit(1)
-                    .fixedSize(horizontal: true, vertical: false)
-                    .frame(minWidth: 100)
             }
-            .buttonStyle(.borderedProminent)
-            .tint(app.isRunning ? .red : Brand.blue)
+            TheaterDockButton(title: "Exit Theater", icon: "macwindow") {
+                Task { await onExit() }
+            }
+            .help("Back to the window; the stream keeps running")
+
+            dockDivider
 
             moveHandle
-
-            Button {
+            TheaterDockButton(title: "Collapse", icon: "chevron.down") {
                 activePanel = nil
                 withAnimation(.easeInOut(duration: 0.2)) { expanded = false }
-            } label: {
-                Image(systemName: "chevron.down.circle.fill")
-                    .frame(width: 58, height: 58)
             }
-            .buttonStyle(.plain)
             .help("Collapse Controls")
-
-            Button {
-                Task { await onExit() }
-            } label: {
-                Label("Exit Theater", systemImage: "macwindow")
-                    .lineLimit(1)
-                    .fixedSize(horizontal: true, vertical: false)
-            }
-            .buttonStyle(.bordered)
-            .help("Back to the window; the stream keeps running")
         }
-        .font(.title3)
-        .controlSize(.large)
-        .frame(width: 2000, height: 168)
-        .padding(.horizontal, 32)
-        .brandPanel(in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .padding(.horizontal, 30)
+        .padding(.vertical, 18)
+        .fixedSize()
+        .brandPanel(in: RoundedRectangle(cornerRadius: 56, style: .continuous))
+    }
+
+    private var dockDivider: some View {
+        Capsule()
+            .fill(.white.opacity(0.18))
+            .frame(width: 2, height: 56)
+            .padding(.horizontal, 10)
+            .padding(.top, 10)
+            .allowsHitTesting(false)
     }
 
     private var statusSummary: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Label(app.sourceTitle, systemImage: app.sourceIcon)
-                .font(.title3.weight(.semibold))
-                .lineLimit(1)
-            HStack(spacing: 18) {
+        HStack(spacing: 14) {
+            Image(systemName: app.sourceIcon)
+                .font(.system(size: 26, weight: .semibold))
+                .frame(width: 64, height: 64)
+                .background(Circle().fill(Brand.blue.opacity(0.35)))
+            VStack(alignment: .leading, spacing: 4) {
+                Text(app.sourceTitle)
+                    .font(.headline)
+                    .lineLimit(1)
                 if let left = app.freeSecondsLeft {
                     FreeTimeChip(secondsLeft: left)
                 }
-                Label(app.formatText,
-                      systemImage: "rectangle.on.rectangle")
-                Label(app.rateText,
-                      systemImage: "speedometer")
+                Text(app.formatText)
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                Text(app.rateText)
+                    .font(.footnote.monospacedDigit())
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
             }
-            .font(.body)
-            .foregroundStyle(.secondary)
-            .lineLimit(1)
         }
-        .frame(width: 240, alignment: .leading)
+        .frame(width: 230, alignment: .leading)
+        .padding(.top, 4)
     }
 
-    private func toolbarButton(_ title: String, icon: String, panel: TheaterPanel,
-                               minWidth: CGFloat) -> some View {
-        Button {
-            markInteraction()
-            withAnimation(.easeInOut(duration: 0.2)) {
-                activePanel = activePanel == panel ? nil : panel
-            }
-        } label: {
-            Label {
-                Text(LocalizedStringKey(title))
-            } icon: {
-                Image(systemName: icon)
-            }
-                .lineLimit(1)
-                .fixedSize(horizontal: true, vertical: false)
-                .frame(minWidth: minWidth)
+    private func toggle(_ panel: TheaterPanel) {
+        markInteraction()
+        withAnimation(.easeInOut(duration: 0.2)) {
+            activePanel = activePanel == panel ? nil : panel
         }
-        .buttonStyle(.borderedProminent)
     }
 
     private var moveHandle: some View {
-        Image(systemName: "arrow.up.and.down.and.arrow.left.and.right")
-            .font(.system(size: 30, weight: .semibold))
-            .frame(width: 72, height: 72)
-            .contentShape(Rectangle())
-            .hoverEffect()
+        TheaterDockItem(title: "Move", icon: "arrow.up.and.down.and.arrow.left.and.right")
             .help("Move Controls")
             .gesture(
                 DragGesture()
@@ -347,12 +322,14 @@ private struct FloatingTheaterControls: View {
             withAnimation(.easeInOut(duration: 0.2)) { expanded = true }
         } label: {
             Image(systemName: "slider.horizontal.3")
-                .font(.system(size: 50, weight: .semibold))
-                .frame(width: 128, height: 112)
+                .font(.system(size: 36, weight: .semibold))
+                .frame(width: 96, height: 96)
+                .contentShape(Circle())
         }
         .buttonStyle(.plain)
+        .hoverEffect()
         .help("Show Theater Controls")
-        .brandPanel(in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .brandPanel(in: Circle())
         .frame(width: 2064, height: 900, alignment: .bottom)
     }
 
@@ -417,6 +394,68 @@ private struct FloatingTheaterControls: View {
 
 }
 
+/// Visual of one dock item: a circular icon with a short caption below.
+private struct TheaterDockItem: View {
+    let title: LocalizedStringKey
+    let icon: String
+    var isOn = false
+    var fill: Color? = nil
+    var customGlyph = false
+    @Environment(\.isEnabled) private var isEnabled
+
+    var body: some View {
+        VStack(spacing: 8) {
+            glyph
+                .font(.system(size: 28, weight: .semibold))
+                .foregroundStyle(.white)
+                .frame(width: 72, height: 72)
+                .background(Circle().fill(background))
+                .overlay(Circle().strokeBorder(.white.opacity(isOn ? 0.55 : 0.12), lineWidth: 1.5))
+                .contentShape(.hoverEffect, Circle())
+                .hoverEffect()
+            Text(title)
+                .font(.callout.weight(.medium))
+                .foregroundStyle(isOn ? .primary : .secondary)
+                .lineLimit(1)
+                .fixedSize()
+        }
+        .frame(minWidth: 92)
+        .opacity(isEnabled ? 1 : 0.4)
+        .contentShape(Rectangle())
+    }
+
+    @ViewBuilder private var glyph: some View {
+        if customGlyph {
+            // Neutral PS button glyph (no Sony logo): bold "PS" text.
+            Text(verbatim: "PS").font(.system(size: 24, weight: .heavy, design: .rounded))
+        } else {
+            Image(systemName: icon)
+        }
+    }
+
+    private var background: Color {
+        if let fill { return fill }
+        return isOn ? Brand.blue : .white.opacity(0.10)
+    }
+}
+
+private struct TheaterDockButton: View {
+    let title: LocalizedStringKey
+    let icon: String
+    var isOn = false
+    var fill: Color? = nil
+    var customGlyph = false
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            TheaterDockItem(title: title, icon: icon, isOn: isOn,
+                            fill: fill, customGlyph: customGlyph)
+        }
+        .buttonStyle(.plain)
+    }
+}
+
 /// Shown above the theater bar one minute before a free session ends.
 private struct FreeTimeWarningCard: View {
     let onContinue: () -> Void
@@ -448,7 +487,7 @@ private struct FreeTimeWarningCard: View {
         }
         .padding(48)
         .frame(width: 920, height: 700)
-        .brandPanel(in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .brandPanel(in: RoundedRectangle(cornerRadius: 48, style: .continuous))
     }
 }
 
@@ -481,7 +520,7 @@ private struct InlineTheaterPanel<Content: View>: View {
         .font(.title3)
         .controlSize(.large)
         .frame(width: 920, height: 700)
-        .brandPanel(in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .brandPanel(in: RoundedRectangle(cornerRadius: 48, style: .continuous))
     }
 }
 

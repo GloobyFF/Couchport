@@ -52,7 +52,14 @@ git -C "$SRC" checkout --quiet --force "$PYLUX_COMMIT"
 git -C "$SRC" submodule update --init --recursive \
     third-party/nanopb third-party/jerasure third-party/gf-complete third-party/curl
 
-# 2. Patches (idempotent).
+# 2. Patches (idempotent: start from the clean pinned tree every run).
+# Upstream fixes ported from chiaki-ng v1.10.1 onto Pylux; see Docs/Changes-2026-11-04-chiaki-ng-1.10.1.md.
+git -C "$SRC" reset --quiet --hard "$PYLUX_COMMIT"
+for patch in "$ROOT"/Tools/patches/*.patch; do
+    [ -e "$patch" ] || continue
+    echo "=== applying $(basename "$patch")"
+    git -C "$SRC" apply --whitespace=nowarn "$patch"
+done
 cp "$ROOT/ChiakiShim/vp_chiaki.c" "$SRC/lib/src/vp_chiaki.c"
 cp "$ROOT/ChiakiShim/vp_chiaki.h" "$SRC/lib/include/vp_chiaki.h"
 python3 - "$SRC" <<'PY'

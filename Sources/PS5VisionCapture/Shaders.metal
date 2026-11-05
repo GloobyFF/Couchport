@@ -295,20 +295,61 @@ kernel void waterReflection(texture2d<float, access::sample> inTex  [[texture(0)
     outTex.write(float4(saturate(color), 1.0), gid);
 }
 
-// MARK: - Vision Pro theater: floor reflection
+// MARK: - Vision Pro theater: floor reflection + water
 
-/// Same float4 packing as WaterParams.
+/// Same float4 packing as WaterParams. Lengths are metres on the floor.
 struct TheaterReflectionParams {
-    float4 misc;          // x time (s), y waves 0...1, z aspect (w/h), w max mip level
-    float4 info;          // x number of drops
-    float4 drops[8];      // x, y centre (UV), z start time, w amplitude
+    float4 misc;          // x time (s), y waves 0...1, z screen width W, w screen height H
+    float4 geo;           // x distance D (viewer → screen), y eye height above floor E,
+                          // z screen bottom above floor b, w max mip level
+    float4 info;          // x number of drops, y water depth sMax, z water width
+    float4 drops[8];      // x floor x (m), y s = metres in front of the screen, z start time, w amplitude
 };
 
-/// The theater screen's reflection texture: the picture (same orientation,
-/// the mesh mirrors it) blurred progressively away from the screen's bottom
-/// edge by sampling deeper mip levels, and disturbed by water ripples whose
-/// strength follows how often controller buttons are pressed. The fade to
-/// transparent is a separate opacity mask on the material.
+/// Ripples live on the horizontal floor (the water surface between the
+/// screen and its reflection), in floor metres: fp.x across, fp.y = s, the
+/// distance in front of the screen. Returns the surface displacement and
+/// adds the ring crests to `crest`.
+static float2 theaterRipple(float2 fp, constant TheaterReflectionParams& p, thread float& crest) {
+    float t = p.misc.x, waves = p.misc.y;
+    float k = max(p.misc.z, 1.0) / 4.0;        // scale with the screen size
+    float a = sin(fp.y * 16.0 / k - t * 2.0 + sin(fp.x * 2.5 / k + t * 0.7) * 1.3)
+            + 0.5 * sin(fp.x * 9.0 / k + fp.y * 5.0 / k - t * 1.6);
+    float2 disp = float2(0.35 * a, a) * 0.028 * k * waves;
+    int count = min(int(p.info.x), 8);
+    for (int i = 0; i < count; i++) {
+        float4 drop = p.drops[i];
+        float age = t - drop.z;
+        if (age < 0.0 || age > 2.5) continue;
+        float2 delta = fp - drop.xy;
+        float dist = length(delta);
+        float front = age * 0.45 * k;
+        float env = exp(-abs(dist - front) * 7.0 / k) * exp(-age * 1.3) * drop.w
+                  * saturate(1.0 - dist / (1.3 * k));
+        float ring = sin((dist - front) * 24.0 / k) * env;
+        float2 dir = dist > 1e-4 ? delta / dist : float2(0.0);
+        disp += dir * ring * 0.07 * k;
+        crest += max(0.0, ring);
+    }
+    return disp;
+}
+
+/// Where a floor point shows the mirrored screen, in reflection texture UV
+/// (row 0 = top of the picture). The eye at height E, the mirrored screen
+/// plane D away: the ray eye → floor point (x, s) continues to the plane at
+/// t = D / (D − s), y' = E·s / (D − s) below the floor.
+static float2 theaterFloorToUV(float2 fp, constant TheaterReflectionParams& p) {
+    float W = p.misc.z, H = p.misc.w, D = p.geo.x, E = p.geo.y, b = p.geo.z;
+    float s = clamp(fp.y, 0.0, D * 0.98);
+    float y = E * s / (D - s);
+    float u = fp.x * (D / (D - s)) / W + 0.5;
+    float d = (y - b) / H;
+    return float2(u, 1.0 - d);
+}
+
+/// The reflection texture: the picture blurred progressively away from the
+/// screen's bottom edge (deeper mips) and distorted by the floor ripples,
+/// traced through the floor so the waves lie flat on the water.
 kernel void theaterReflection(texture2d<float, access::sample> src [[texture(0)]],
                               texture2d<float, access::write>  dst [[texture(1)]],
                               constant TheaterReflectionParams& p  [[buffer(0)]],
@@ -317,44 +358,45 @@ kernel void theaterReflection(texture2d<float, access::sample> src [[texture(0)]
     uint w = dst.get_width(), h = dst.get_height();
     if (gid.x >= w || gid.y >= h) return;
     constexpr sampler s(address::clamp_to_edge, filter::linear, mip_filter::linear);
+    float W = p.misc.z, H = p.misc.w, D = p.geo.x, E = p.geo.y, b = p.geo.z, maxLod = p.geo.w;
 
     float2 uv = (float2(gid) + 0.5) / float2(w, h);
-    float d = 1.0 - uv.y;                 // 0 at the screen's bottom edge (the floor line)
-    float t = p.misc.x, waves = p.misc.y, aspect = p.misc.z, maxLod = p.misc.w;
+    float d = 1.0 - uv.y;                       // 0 at the screen's bottom edge
 
-    // Ambient swell, stronger and longer away from the screen.
-    float amb = sin(d * 40.0 / (0.3 + d) - t * 2.0 + sin(uv.x * 6.0 + t * 0.8) * 1.4)
-              + 0.5 * sin(uv.x * 25.0 + d * 13.0 - t * 1.5);
-    float2 offset = float2(amb * 0.003, amb * 0.005) * (0.2 + d) * waves;
+    // The floor point this texel is seen through.
+    float y = b + d * H;
+    float sFloor = y * D / (E + y);
+    float2 fp = float2((uv.x - 0.5) * W * (D - sFloor) / D, sFloor);
+    float crest = 0.0;
+    float2 q = theaterFloorToUV(fp + theaterRipple(fp, p, crest), p);
 
-    // Rings from button presses.
-    float highlight = 0.0;
-    int count = min(int(p.info.x), 8);
-    for (int i = 0; i < count; i++) {
-        float4 drop = p.drops[i];
-        float age = t - drop.z;
-        if (age < 0.0 || age > 2.5) continue;
-        float2 delta = (uv - drop.xy) * float2(aspect, 1.0);
-        float dist = length(delta);
-        float front = age * 0.18;
-        float envelope = exp(-abs(dist - front) * 18.0) * exp(-age * 1.6) * drop.w
-                       * saturate(1.0 - dist / 0.4);
-        float ring = sin((dist - front) * 60.0) * envelope;
-        float2 dir = dist > 1e-4 ? delta / dist : float2(0.0);
-        offset += dir * ring * 0.025 * float2(1.0 / aspect, 1.0);
-        highlight += max(0.0, ring) * 0.25;
-    }
-
-    // Progressive blur: deeper mips further from the screen, plus a small
-    // cross of taps to round off the mip blocks.
-    float lod = min(maxLod, 0.6 + d * d * 2.2 * maxLod * 0.45 + d * 2.0);
-    float2 q = uv + offset;
+    float lod = min(maxLod, 0.6 + d * 2.0 + d * d * maxLod * 1.0);
     float2 px = exp2(lod) / float2(src.get_width(), src.get_height());
     float3 c = src.sample(s, q, level(lod)).rgb * 0.4
              + src.sample(s, q + float2(px.x, 0), level(lod)).rgb * 0.15
              + src.sample(s, q - float2(px.x, 0), level(lod)).rgb * 0.15
              + src.sample(s, q + float2(0, px.y), level(lod)).rgb * 0.15
              + src.sample(s, q - float2(0, px.y), level(lod)).rgb * 0.15;
-    c += highlight * waves;
     dst.write(float4(c, 1.0), gid);
+}
+
+/// The water surface itself: a horizontal plane on the floor from the
+/// screen's foot toward the viewer, drawing only the ring crests as a faint
+/// glint. Every channel holds the same value so the texture works as both
+/// colour and opacity. Row 0 is the screen edge (s = 0).
+kernel void theaterWater(texture2d<float, access::write> dst  [[texture(0)]],
+                         constant TheaterReflectionParams& p   [[buffer(0)]],
+                         uint2 gid                             [[thread_position_in_grid]])
+{
+    uint w = dst.get_width(), h = dst.get_height();
+    if (gid.x >= w || gid.y >= h) return;
+    float2 uv = (float2(gid) + 0.5) / float2(w, h);
+    float sMax = p.info.y, width = p.info.z;
+    float2 fp = float2((uv.x - 0.5) * width, uv.y * sMax);
+    float crest = 0.0;
+    theaterRipple(fp, p, crest);
+    float edge = smoothstep(0.0, 0.12, uv.x) * smoothstep(0.0, 0.12, 1.0 - uv.x);
+    float fade = pow(saturate(1.0 - uv.y), 1.2) * smoothstep(0.0, 0.04, uv.y) * edge;
+    float v = saturate(crest * 0.9) * fade;
+    dst.write(float4(v, v, v, v), gid);
 }

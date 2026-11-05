@@ -46,6 +46,15 @@ final class TheaterScene {
     private var reflection: ModelEntity?
     private var reflectionTexture: LowLevelTexture?
     private let reflectionPipeline: MTLComputePipelineState?
+    private let waterPipeline: MTLComputePipelineState?
+    /// The water surface: a horizontal plane on the floor between the screen
+    /// and the viewer that carries the ring glints (the reflection itself
+    /// only gets the distortion, traced through this plane).
+    private var water: ModelEntity?
+    private var waterTexture: LowLevelTexture?
+    private var waterMeshKey = SIMD3<Float>(-1, -1, -1)
+    /// Floor y, screen bottom above floor, eye height above floor, eye → screen distance.
+    private var floorGeo = SIMD4<Float>(0, 0.4, 1.2, 3)
     private var screenHeightMeters: Float = 0
     private let epoch = CACurrentMediaTime()
     /// Ripple drops: x, y (reflection UV), start time, amplitude.
@@ -83,10 +92,16 @@ final class TheaterScene {
         self.options = options
         self.device = renderer.metalDevice
         self.commandQueue = device.makeCommandQueue()
-        if let fn = (try? device.makeDefaultLibrary(bundle: .main))?.makeFunction(name: "theaterReflection") {
+        let library = try? device.makeDefaultLibrary(bundle: .main)
+        if let fn = library?.makeFunction(name: "theaterReflection") {
             reflectionPipeline = try? device.makeComputePipelineState(function: fn)
         } else {
             reflectionPipeline = nil
+        }
+        if let fn = library?.makeFunction(name: "theaterWater") {
+            waterPipeline = try? device.makeComputePipelineState(function: fn)
+        } else {
+            waterPipeline = nil
         }
     }
 
@@ -119,6 +134,9 @@ final class TheaterScene {
         screen = nil
         reflection = nil
         reflectionTexture = nil
+        water = nil
+        waterTexture = nil
+        waterMeshKey = SIMD3(-1, -1, -1)
         touchCursor = nil
         colorTexture = nil
         textureResource = nil
@@ -253,6 +271,8 @@ final class TheaterScene {
         guard let reflection else { return }
         let show = reflectionWanted && !isReclined
         if reflection.isEnabled != show { reflection.isEnabled = show }
+        let showWater = show && ripplesEnabled() && waterTexture != nil
+        if let water, water.isEnabled != showWater { water.isEnabled = showWater }
         guard show else { return }
         let tilt = options.theaterTilt * (Float.pi / 180)
         let halfExtent = screenHeightMeters / 2 * abs(cos(tilt))
@@ -261,6 +281,50 @@ final class TheaterScene {
         reflection.position = SIMD3(0, 2 * floor - options.theaterHeight, -options.theaterDistance)
         reflection.orientation = simd_quatf(angle: -tilt, axis: [1, 0, 0])
         reflection.scale = SIMD3(1, -1, 1)
+
+        // Geometry the kernels trace through: eye height and distance from
+        // the head when tracked, else a seated viewer at the origin.
+        let head = headPosition() ?? SIMD3(0, Self.seatedEye, 0)
+        let eye = max(0.3, head.y - floor)
+        let dist = max(1, options.theaterDistance + head.z)
+        floorGeo = SIMD4(floor, max(0, bottom - floor), eye, dist)
+        if showWater { updateWaterPlane() }
+    }
+
+    /// How far in front of the screen the reflection can be seen on the
+    /// floor (where its top edge appears), capped short of the viewer.
+    private var waterDepth: Float {
+        let b = floorGeo.y, e = floorGeo.z, d = floorGeo.w
+        let top = b + screenHeightMeters
+        return max(0.3, min(d - 0.4, top * d / (e + top)))
+    }
+
+    /// Water quad on the floor: from the screen's foot (s = 0, texture row 0)
+    /// toward the viewer (s = waterDepth). Rebuilt when its size changes.
+    private func updateWaterPlane() {
+        guard let water else { return }
+        let width = options.theaterWidth * 1.15
+        let depth = waterDepth
+        let key = SIMD3(width, depth, options.theaterDistance)
+        if simd_length(key - waterMeshKey) > 0.02 {
+            waterMeshKey = key
+            let z0 = -options.theaterDistance, z1 = z0 + depth
+            var desc = MeshDescriptor(name: "theaterWater")
+            desc.positions = MeshBuffer([
+                SIMD3(-width / 2, 0, z0), SIMD3(width / 2, 0, z0),
+                SIMD3(-width / 2, 0, z1), SIMD3(width / 2, 0, z1),
+            ])
+            desc.normals = MeshBuffer([SIMD3<Float>](repeating: [0, 1, 0], count: 4))
+            // RealityKit's v runs bottom-up: v = 1 is texture row 0 (s = 0).
+            desc.textureCoordinates = MeshBuffer([
+                SIMD2<Float>(0, 1), SIMD2<Float>(1, 1), SIMD2<Float>(0, 0), SIMD2<Float>(1, 0),
+            ])
+            desc.primitives = .triangles([0, 2, 1, 1, 2, 3])
+            if let mesh = try? MeshResource.generate(from: [desc]) {
+                water.model?.mesh = mesh
+            }
+        }
+        water.position = SIMD3(0, floorGeo.x + 0.004, 0)
     }
 
     /// Blurred (more with distance from the screen), rippled copy of the
@@ -280,8 +344,12 @@ final class TheaterScene {
             for _ in 0..<fresh { pressTimes.append(now) }
             let activity = Float(pressTimes.filter { now - $0 < 2 }.count)
             let amp = 0.35 + min(activity / 8, 1) * 0.65
+            // On the floor: across most of the screen width, in the part of
+            // the water where the reflection shows.
+            let halfW = options.theaterWidth * 0.4, depth = waterDepth
             for _ in 0..<fresh {
-                drops.append(SIMD4(Float.random(in: 0.12...0.88), Float.random(in: 0.62...0.97), time, amp))
+                drops.append(SIMD4(Float.random(in: -halfW...halfW),
+                                   Float.random(in: (depth * 0.12)...(depth * 0.75)), time, amp))
             }
         }
         lastPresses = presses
@@ -293,22 +361,37 @@ final class TheaterScene {
         waves += (target - waves) * 0.05
 
         let out = rt.replace(using: commandBuffer)
-        var params = [SIMD4<Float>](repeating: .zero, count: 10)
+        var params = [SIMD4<Float>](repeating: .zero, count: 11)
         let maxLod = Float(max(0, source.mipmapLevelCount - 1))
-        params[0] = SIMD4(time, waves, Float(out.width) / Float(max(out.height, 1)), min(maxLod, 6.5))
-        params[1] = SIMD4(Float(ripples ? min(drops.count, 8) : 0), 0, 0, 0)
-        if ripples { for (i, d) in drops.prefix(8).enumerated() { params[2 + i] = d } }
+        params[0] = SIMD4(time, waves, options.theaterWidth, screenHeightMeters)
+        params[1] = SIMD4(floorGeo.w, floorGeo.z, floorGeo.y, min(maxLod, 6.5))
+        params[2] = SIMD4(Float(ripples ? min(drops.count, 8) : 0), waterDepth, options.theaterWidth * 1.15, 0)
+        if ripples { for (i, d) in drops.prefix(8).enumerated() { params[3 + i] = d } }
+        let length = MemoryLayout<SIMD4<Float>>.stride * params.count
 
         encoder.setComputePipelineState(pipeline)
         encoder.setTexture(source, index: 0)
         encoder.setTexture(out, index: 1)
-        encoder.setBytes(params, length: MemoryLayout<SIMD4<Float>>.stride * params.count, index: 0)
+        encoder.setBytes(params, length: length, index: 0)
+        Self.dispatch(encoder, pipeline, out)
+
+        if water?.isEnabled == true, let waterPipeline, let wt = waterTexture {
+            let wout = wt.replace(using: commandBuffer)
+            encoder.setComputePipelineState(waterPipeline)
+            encoder.setTexture(wout, index: 0)
+            encoder.setBytes(params, length: length, index: 0)
+            Self.dispatch(encoder, waterPipeline, wout)
+        }
+        encoder.endEncoding()
+    }
+
+    private static func dispatch(_ encoder: MTLComputeCommandEncoder,
+                                 _ pipeline: MTLComputePipelineState, _ out: MTLTexture) {
         let tw = pipeline.threadExecutionWidth
         let th = max(1, pipeline.maxTotalThreadsPerThreadgroup / tw)
         encoder.dispatchThreadgroups(
             MTLSize(width: (out.width + tw - 1) / tw, height: (out.height + th - 1) / th, depth: 1),
             threadsPerThreadgroup: MTLSize(width: tw, height: th, depth: 1))
-        encoder.endEncoding()
     }
 
     // MARK: Touchpad
@@ -423,6 +506,8 @@ final class TheaterScene {
 
         root.children.removeAll()
         touchCursor = nil
+        water = nil
+        waterTexture = nil
         let entity = ModelEntity(mesh: mesh, materials: [material])
         entity.name = Self.screenName
         // No Y-axis rotation: the mesh is built in the XY plane with its front
@@ -459,6 +544,26 @@ final class TheaterScene {
         mirrored.isEnabled = false
         root.addChild(mirrored)
         reflection = mirrored
+
+        // Water surface glints (ring crests), same value in every channel so
+        // one texture is both colour and opacity.
+        if waterPipeline != nil {
+            let wd = LowLevelTexture.Descriptor(pixelFormat: .rgba16Float, width: 1024, height: 512,
+                                                textureUsage: [.shaderRead, .shaderWrite])
+            if let wllt = try? LowLevelTexture(descriptor: wd), let wres = try? TextureResource(from: wllt) {
+                var wm = UnlitMaterial(applyPostProcessToneMap: false)
+                wm.color = .init(tint: UIColor(white: 0.85, alpha: 1), texture: .init(wres))
+                wm.faceCulling = .none
+                wm.blending = .transparent(opacity: .init(scale: 0.8, texture: .init(wres)))
+                let plane = ModelEntity(mesh: .generatePlane(width: 0.01, depth: 0.01), materials: [wm])
+                plane.components.set(ModelSortGroupComponent(group: sortGroup, order: 2))
+                plane.isEnabled = false
+                root.addChild(plane)
+                water = plane
+                waterTexture = wllt
+                waterMeshKey = SIMD3(-1, -1, -1)
+            }
+        }
         updateCollision(mesh: mesh, width: w, height: w / aspect)
         updatePlacement()
         return true

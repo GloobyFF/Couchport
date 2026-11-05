@@ -28,3 +28,14 @@
   handle resizes it (rp.touchpad.bigScale 0.35…1); the shrink button closes it.
 
 Not compiled (no Apple toolchain); the Swift was checked with tree-sitter. Shaders.metal is unchecked.
+
+## Follow-up: ripples on a horizontal water plane
+- The ripple field now lives in floor metres (x across, s = distance in front of the screen),
+  shared by both kernels via `theaterRipple`.
+- `theaterReflection` traces each reflection texel to the floor point it is seen through
+  (eye height E, eye→screen D, screen bottom b): s = y′D/(E+y′). It displaces that point and maps
+  it back (u = x·D/(D−s)/W + ½, y′ = E·s/(D−s)), so the distortion lies flat on the water. The
+  amplitude is larger (rings 0.07·W/4 m, swell 0.028·W/4 m). There are no white rings in the reflection any more.
+- `theaterWater` draws the ring crests on a horizontal quad at the floor, from the screen's foot
+  to where the reflection's top shows (waterDepth). It is on only with Water Ripples. E and D come from the ARKit head
+  when tracked.

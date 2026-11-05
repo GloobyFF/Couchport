@@ -49,3 +49,9 @@ Not compiled (no Apple toolchain); the Swift was checked with tree-sitter. Shade
 - Reflection mask: (1 − 0.35·smooth(0, .45, d)) · (1 − smooth(.38, .78, d)), so it dissolves to fully transparent from about halfway.
 - Blur LOD: 0.5 + 1.5d + smooth(.35, .8, d)·0.9·maxLod, so it blurs sharply in the far half.
 - Distortion: rings 0.07→0.12·W/4 m, swell 0.028→0.05·W/4 m.
+
+## Follow-up: fade baked into the reflection kernel
+- Device test: the reflection was cut off hard. The static CGImage opacity mask on the UnlitMaterial evidently was not applied.
+- `theaterReflection` now writes premultiplied rgb·a with alpha a = fade(d)·roundedEdge. The mirror material uses that same
+  texture as its opacity (scale 0.6), so the falloff shows even if the opacity texture is ignored (rgb goes to black).
+  The CGImage mask remains only as the fallback when there is no kernel.

@@ -523,6 +523,7 @@ final class TheaterScene {
         // Reflection texture: half resolution, linear float (written by the
         // compute kernel). Falls back to the picture itself without the kernel.
         var mirrorTexture: TextureResource = res
+        var kernelFade = false
         if reflectionPipeline != nil {
             let rd = LowLevelTexture.Descriptor(
                 pixelFormat: .rgba16Float, width: max(16, width / 2), height: max(16, height / 2),
@@ -530,12 +531,18 @@ final class TheaterScene {
             if let rllt = try? LowLevelTexture(descriptor: rd), let rres = try? TextureResource(from: rllt) {
                 reflectionTexture = rllt
                 mirrorTexture = rres
+                kernelFade = true
             }
         }
         var mirror = UnlitMaterial(applyPostProcessToneMap: false)
         mirror.color = .init(tint: UIColor(white: 0.6, alpha: 1), texture: .init(mirrorTexture))
         mirror.faceCulling = .none
-        if let fade = Self.reflectionMask(aspect: aspectRatio) {
+        if kernelFade {
+            // The kernel writes premultiplied colour with the fade in alpha
+            // (and the same falloff in rgb), so the reflection dissolves even
+            // if only one of the two is honoured.
+            mirror.blending = .transparent(opacity: .init(scale: 0.6, texture: .init(mirrorTexture)))
+        } else if let fade = Self.reflectionMask(aspect: aspectRatio) {
             mirror.blending = .transparent(opacity: .init(scale: 0.5, texture: .init(fade)))
         } else {
             mirror.blending = .transparent(opacity: .init(floatLiteral: 0.2))

@@ -377,7 +377,17 @@ kernel void theaterReflection(texture2d<float, access::sample> src [[texture(0)]
              + src.sample(s, q - float2(px.x, 0), level(lod)).rgb * 0.15
              + src.sample(s, q + float2(0, px.y), level(lod)).rgb * 0.15
              + src.sample(s, q - float2(0, px.y), level(lod)).rgb * 0.15;
-    dst.write(float4(c, 1.0), gid);
+
+    // Fade baked into the texture itself (the material uses this texture as
+    // its own opacity too): fairly solid near the screen, dissolving from
+    // about halfway to nothing by ~78%, rounded corners like the screen.
+    float fade = (1.0 - 0.35 * smoothstep(0.0, 0.45, d)) * (1.0 - smoothstep(0.38, 0.78, d));
+    float2 pix = (float2(gid) + 0.5) - float2(w, h) * 0.5;
+    float radius = float(h) * 0.03;
+    float2 qd = abs(pix) - (float2(w, h) * 0.5 - 1.0 - radius);
+    float sd = length(max(qd, 0.0)) + min(max(qd.x, qd.y), 0.0) - radius;
+    float a = fade * saturate(0.5 - sd / 1.5);
+    dst.write(float4(c * a, a), gid);
 }
 
 /// The water surface itself: a horizontal plane on the floor from the

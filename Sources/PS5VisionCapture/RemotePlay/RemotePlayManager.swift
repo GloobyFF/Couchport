@@ -391,6 +391,10 @@ final class RemotePlayManager: ObservableObject {
         guard state == .streaming else { return }
         gamepad.pressPSButton()
     }
+    func pressTouchpadButton() {
+        guard state == .streaming else { return }
+        gamepad.pressTouchpadButton()
+    }
     func putConsoleToSleep() { core?.putConsoleToSleep() }
 
     private func handle(_ event: RemoteSessionEvent) {

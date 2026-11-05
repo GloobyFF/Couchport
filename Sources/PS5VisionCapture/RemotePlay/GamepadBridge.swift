@@ -49,6 +49,7 @@ final class GamepadBridge: ObservableObject {
     private var psComboTask: Task<Void, Never>?
     private var psComboActive = false
     private var psPressTask: Task<Void, Never>?
+    private var touchpadPressTask: Task<Void, Never>?
     private var psPressActive = false
 
     let feedback = ControllerFeedback()
@@ -104,6 +105,8 @@ final class GamepadBridge: ObservableObject {
         psPressTask?.cancel()
         psPressTask = nil
         psPressActive = false
+        touchpadPressTask?.cancel()
+        touchpadPressTask = nil
         hasPhysicalController = false
         last = GamepadSnapshot()
         virtualPad = GamepadSnapshot()
@@ -185,6 +188,24 @@ final class GamepadBridge: ObservableObject {
         let bit: UInt32 = 1 << 14
         if pressed { v.buttons |= bit } else { v.buttons &= ~bit }
         setVirtual(v)
+    }
+
+    /// A short touchpad click from an on-screen button (dock). Puts a finger
+    /// in the middle of the pad for the press when none is down, like a real
+    /// press would.
+    func pressTouchpadButton() {
+        guard onState != nil, touchpadPressTask == nil else { return }
+        let addedFinger = virtualPad.touch0 == nil
+        if addedFinger { setTouchpadFinger(CGPoint(x: 0.5, y: 0.5)) }
+        setTouchpadClick(true)
+        touchpadPressTask = Task { [weak self] in
+            do { try await Task.sleep(for: .milliseconds(150)) }
+            catch { return }
+            guard let self else { return }
+            self.setTouchpadClick(false)
+            if addedFinger { self.setTouchpadFinger(nil) }
+            self.touchpadPressTask = nil
+        }
     }
 
     /// Merge a short PS press into every outgoing snapshot, including the

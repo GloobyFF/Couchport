@@ -55,3 +55,14 @@ Not compiled (no Apple toolchain); the Swift was checked with tree-sitter. Shade
 - `theaterReflection` now writes premultiplied rgb·a with alpha a = fade(d)·roundedEdge. The mirror material uses that same
   texture as its opacity (scale 0.6), so the falloff shows even if the opacity texture is ignored (rgb goes to black).
   The CGImage mask remains only as the fallback when there is no kernel.
+
+## Follow-up: dock grouping, controller keys, collapsed icon
+- `DockControllerKeys` (DockControls.swift): PS and touchpad click side by side in a tinted pill, split by a divider,
+  both with the violet `controllerKeyGradient` (`DockItem.controllerKey`). The touchpad click is
+  `GamepadBridge.pressTouchpadButton()` (150 ms, with a centre finger if none is down), reached via `RemotePlayManager.pressTouchpadButton()`.
+- Theater dock groups: status | Screen, Enhance, Resolution/Stream, Stats | Recline, Reflection, Hide Hands, Pinch Touch
+  | [PS ┃ Touchpad] | Start/Stop, Exit Theater | More, Move, Collapse. The pinch-touchpad mode toggle is renamed "Pinch Touch".
+  The attachment width went 2064 → 2400 for the longer bar.
+- Window ornament (visionOS): uses the same controller-key pill; its touchpad-hint button is also "Pinch Touch".
+- Collapsed icon: fades to 22% after 4 s untouched. A custom hoverEffect brings it back at full opacity while looked at; tap or drag restores it.
+  A grab bar under it drags the controls in x/y and in depth (translation3D.z), and the dock's Move item shares the same gesture.

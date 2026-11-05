@@ -167,6 +167,8 @@ private struct FloatingTheaterControls: View {
     @State private var activePanel: TheaterPanel?
     @State private var lastInteraction = Date()
     @State private var dragStartPosition: SIMD3<Float>?
+    /// Collapsed icon has faded out after a while untouched.
+    @State private var iconDimmed = false
 
     private let collapseDelay: TimeInterval = 12
 
@@ -184,6 +186,7 @@ private struct FloatingTheaterControls: View {
         .onChange(of: app.freeTimeWarning) { _, warn in
             guard warn else { return }
             markInteraction()
+            iconDimmed = false
             withAnimation(.easeInOut(duration: 0.2)) {
                 activePanel = nil
                 expanded = true
@@ -193,8 +196,15 @@ private struct FloatingTheaterControls: View {
             while !Task.isCancelled {
                 try? await Task.sleep(nanoseconds: 1_000_000_000)
                 guard !Task.isCancelled else { break }
+                if !expanded, !iconDimmed, dragStartPosition == nil,
+                   Date().timeIntervalSince(lastInteraction) >= dimDelay {
+                    iconDimmed = true
+                }
                 guard expanded, activePanel == nil, dragStartPosition == nil else { continue }
                 if Date().timeIntervalSince(lastInteraction) >= collapseDelay {
+                    // Show the icon fully for a moment before it fades.
+                    lastInteraction = Date()
+                    iconDimmed = false
                     withAnimation(.easeInOut(duration: 0.2)) {
                         expanded = false
                     }
@@ -228,7 +238,7 @@ private struct FloatingTheaterControls: View {
 
             expandedBar
         }
-        .frame(width: 2064, height: 900, alignment: .bottom)
+        .frame(width: Self.attachmentWidth, height: 900, alignment: .bottom)
     }
 
     /// Rounded dock: circular icon buttons with a short caption under each,
@@ -254,14 +264,10 @@ private struct FloatingTheaterControls: View {
             }
             DockButton(title: "Stats", icon: "chart.xyaxis.line",
                               isOn: activePanel == .stats) { toggle(.stats) }
-            if app.activeSource == .remote {
-                DockButton(title: "Touchpad", icon: "hand.point.up.left",
-                           isOn: renderOptions.theaterTouchpad) {
-                    markInteraction()
-                    renderOptions.theaterTouchpad.toggle()
-                }
-                .help("Pinch and drag on the screen to use the touchpad. A quick pinch clicks it.")
-            }
+
+            // Space: how the theater sits around you and how you touch it.
+            dockDivider
+
             DockButton(title: "Recline", icon: "bed.double",
                        isOn: renderOptions.theaterRecline > 0.5) {
                 markInteraction()
@@ -280,20 +286,26 @@ private struct FloatingTheaterControls: View {
                 app.theaterHideHands.toggle()
             }
             .help("Hiding hands uses full immersion and hides your surroundings. Turn this off to restore passthrough.")
-            DockButton(title: "More", icon: "ellipsis",
-                              isOn: activePanel == .more) { toggle(.more) }
-
-            dockDivider
-
             if app.activeSource == .remote {
-                DockButton(title: "PS", psGlyph: true) {
+                DockButton(title: "Pinch Touch", icon: "hand.point.up.left",
+                           isOn: renderOptions.theaterTouchpad) {
                     markInteraction()
-                    app.remote.pressPSButton()
+                    renderOptions.theaterTouchpad.toggle()
                 }
-                .disabled(app.remote.state != .streaming)
-                .accessibilityLabel(Text("PS Button"))
-                .help("Hold L3 + R3 for the PS button")
+                .help("Pinch and drag on the screen to use the touchpad. A quick pinch clicks it.")
             }
+
+            // Controller keys sent to the console.
+            if app.activeSource == .remote {
+                dockDivider
+                DockControllerKeys(
+                    enabled: app.remote.state == .streaming,
+                    onPS: { markInteraction(); app.remote.pressPSButton() },
+                    onTouchpad: { markInteraction(); app.remote.pressTouchpadButton() })
+            }
+
+            // Session.
+            dockDivider
 
             // Stop = end the stream and go Home. Exit Theater keeps the
             // stream and returns to the window.
@@ -313,11 +325,16 @@ private struct FloatingTheaterControls: View {
             }
             .help("Back to the window; the stream keeps running")
 
+            // Dock itself.
             dockDivider
 
+            DockButton(title: "More", icon: "ellipsis",
+                              isOn: activePanel == .more) { toggle(.more) }
             moveHandle
             DockButton(title: "Collapse", icon: "chevron.down") {
                 activePanel = nil
+                markInteraction()
+                iconDimmed = false
                 withAnimation(.easeInOut(duration: 0.2)) { expanded = false }
             }
             .help("Collapse Controls")
@@ -367,41 +384,73 @@ private struct FloatingTheaterControls: View {
     private var moveHandle: some View {
         DockItem(title: "Move", icon: "arrow.up.and.down.and.arrow.left.and.right")
             .help("Move Controls")
-            .gesture(
-                DragGesture()
-                    .onChanged { value in
-                        markInteraction()
-                        let start = dragStartPosition ?? position
-                        if dragStartPosition == nil { dragStartPosition = start }
-                        let scale: Float = 1.0 / 1360.0
-                        position.x = min(2.5, max(-2.5,
-                            start.x + Float(value.translation.width) * scale))
-                        position.y = min(2.5, max(0.15,
-                            start.y - Float(value.translation.height) * scale))
-                    }
-                    .onEnded { _ in
-                        dragStartPosition = nil
-                        markInteraction()
-                    }
-            )
+            .gesture(moveGesture)
     }
 
-    private var collapsedButton: some View {
-        Button {
-            markInteraction()
-            withAnimation(.easeInOut(duration: 0.2)) { expanded = true }
-        } label: {
-            Image(systemName: "slider.horizontal.3")
-                .font(.system(size: 36, weight: .semibold))
-                .frame(width: 96, height: 96)
-                .contentShape(Circle())
-        }
-        .buttonStyle(.plain)
-        .hoverEffect()
-        .help("Show Theater Controls")
-        .brandPanel(in: Circle())
-        .frame(width: 2064, height: 900, alignment: .bottom)
+    /// Drag the controls anywhere: left/right, up/down, and nearer/farther
+    /// (pull toward you or push away). Shared by the dock's Move item and the
+    /// collapsed icon's grab bar.
+    private var moveGesture: some Gesture {
+        DragGesture()
+            .onChanged { value in
+                markInteraction()
+                iconDimmed = false
+                let start = dragStartPosition ?? position
+                if dragStartPosition == nil { dragStartPosition = start }
+                let scale: Float = 1.0 / 1360.0
+                position.x = min(3, max(-3, start.x + Float(value.translation.width) * scale))
+                position.y = min(2.6, max(0.1, start.y - Float(value.translation.height) * scale))
+                position.z = min(-0.5, max(-4, start.z + Float(value.translation3D.z) * scale))
+            }
+            .onEnded { _ in
+                dragStartPosition = nil
+                markInteraction()
+            }
     }
+
+    /// Collapsed: the controls icon with a grab bar under it. After a few
+    /// seconds untouched it fades to a faint ghost so it stays out of the
+    /// game; looking at it brings it back (system hover), and so does a tap
+    /// or a drag.
+    private var collapsedButton: some View {
+        VStack(spacing: 12) {
+            Button {
+                markInteraction()
+                iconDimmed = false
+                withAnimation(.easeInOut(duration: 0.2)) { expanded = true }
+            } label: {
+                Image(systemName: "slider.horizontal.3")
+                    .font(.system(size: 36, weight: .semibold))
+                    .frame(width: 96, height: 96)
+                    .contentShape(Circle())
+            }
+            .buttonStyle(.plain)
+            .hoverEffect()
+            .help("Show Theater Controls")
+            .brandPanel(in: Circle())
+
+            // Grab bar: drag to put the icon (and the dock) anywhere.
+            Capsule()
+                .fill(.white.opacity(0.55))
+                .frame(width: 72, height: 12)
+                .frame(width: 140, height: 44)
+                .contentShape(Rectangle())
+                .hoverEffect(.highlight)
+                .gesture(moveGesture)
+                .accessibilityLabel(Text("Move Controls"))
+        }
+        .hoverEffect { effect, isActive, _ in
+            effect.animation(.easeInOut(duration: 0.5)) {
+                $0.opacity(isActive || !iconDimmed ? 1 : Self.dimmedOpacity)
+            }
+        }
+        .frame(width: Self.attachmentWidth, height: 900, alignment: .bottom)
+    }
+
+    /// Wide enough for the grouped dock in the longest locale (German).
+    private static let attachmentWidth: CGFloat = 2400
+    private static let dimmedOpacity: Double = 0.22
+    private let dimDelay: TimeInterval = 4
 
     @ViewBuilder
     private func panel(for panel: TheaterPanel) -> some View {

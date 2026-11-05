@@ -556,7 +556,7 @@ private struct PlayerControlBar: View {
             DockButton(title: "Stats", icon: "chart.xyaxis.line") { onOpen(.stats) }
             if app.activeSource == .remote && Platform.supportsTheater {
                 // The touchpad lives on the big theater screen.
-                DockButton(title: "Touchpad", icon: "hand.point.up.left") {
+                DockButton(title: "Pinch Touch", icon: "hand.point.up.left") {
                     onInteraction()
                     showTouchpadHint = true
                 }
@@ -566,13 +566,11 @@ private struct PlayerControlBar: View {
             DockDivider()
 
             if app.activeSource == .remote {
-                DockButton(title: "PS", psGlyph: true) {
-                    onInteraction()
-                    app.remote.pressPSButton()
-                }
-                .disabled(app.remote.state != .streaming)
-                .accessibilityLabel(Text("PS Button"))
-                .help("PS button")
+                DockControllerKeys(
+                    enabled: app.remote.state == .streaming,
+                    onPS: { onInteraction(); app.remote.pressPSButton() },
+                    onTouchpad: { onInteraction(); app.remote.pressTouchpadButton() })
+                DockDivider()
             }
             DockButton(title: "Stop", icon: "stop.fill", fill: .red) {
                 app.stopAndGoHome()

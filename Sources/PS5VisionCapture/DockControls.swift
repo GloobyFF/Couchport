@@ -23,6 +23,9 @@ struct DockItem: View {
     var fill: Color? = nil
     /// Neutral "PS" text glyph instead of an SF Symbol (no Sony logo).
     var psGlyph = false
+    /// Controller key (PS, touchpad click): a distinct violet gradient so the
+    /// keys that go to the console stand apart from app controls.
+    var controllerKey = false
     var size: DockItemSize = .regular
     @Environment(\.isEnabled) private var isEnabled
 
@@ -33,7 +36,7 @@ struct DockItem: View {
                 .foregroundStyle(.white)
                 .frame(width: size.circle, height: size.circle)
                 .background(Circle().fill(background))
-                .overlay(Circle().strokeBorder(.white.opacity(isOn ? 0.55 : 0.12), lineWidth: 1.5))
+                .overlay(Circle().strokeBorder(.white.opacity(isOn || controllerKey ? 0.45 : 0.12), lineWidth: 1.5))
                 #if !os(tvOS)
                 .contentShape(.hoverEffect, Circle())
                 .hoverEffect()
@@ -62,9 +65,14 @@ struct DockItem: View {
         }
     }
 
-    private var background: Color {
-        if let fill { return fill }
-        return isOn ? Brand.blue : .white.opacity(0.10)
+    static let controllerKeyGradient = LinearGradient(
+        colors: [Color(red: 0.44, green: 0.36, blue: 1.0), Color(red: 0.84, green: 0.38, blue: 0.84)],
+        startPoint: .topLeading, endPoint: .bottomTrailing)
+
+    private var background: AnyShapeStyle {
+        if controllerKey { return AnyShapeStyle(Self.controllerKeyGradient) }
+        if let fill { return AnyShapeStyle(fill) }
+        return AnyShapeStyle(isOn ? Brand.blue : Color.white.opacity(0.10))
     }
 }
 
@@ -74,15 +82,43 @@ struct DockButton: View {
     var isOn = false
     var fill: Color? = nil
     var psGlyph = false
+    var controllerKey = false
     var size: DockItemSize = .regular
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
             DockItem(title: title, icon: icon, isOn: isOn, fill: fill,
-                     psGlyph: psGlyph, size: size)
+                     psGlyph: psGlyph, controllerKey: controllerKey, size: size)
         }
         .buttonStyle(.plain)
+    }
+}
+
+/// The keys that go straight to the console, kept together: PS and the
+/// touchpad click, split by a thin divider inside one tinted pill.
+struct DockControllerKeys: View {
+    var size: DockItemSize = .regular
+    let enabled: Bool
+    let onPS: () -> Void
+    let onTouchpad: () -> Void
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 2) {
+            DockButton(title: "PS", psGlyph: true, controllerKey: true, size: size, action: onPS)
+                .accessibilityLabel(Text("PS Button"))
+            DockDivider(height: size.circle * 0.8)
+            DockButton(title: "Touchpad", icon: "hand.tap.fill", controllerKey: true,
+                       size: size, action: onTouchpad)
+                .accessibilityLabel(Text("Touchpad Button"))
+        }
+        .padding(.horizontal, size == .regular ? 10 : 6)
+        .padding(.vertical, size == .regular ? 8 : 6)
+        .background(RoundedRectangle(cornerRadius: size == .regular ? 30 : 22, style: .continuous)
+            .fill(Color(red: 0.62, green: 0.42, blue: 1.0).opacity(0.14)))
+        .overlay(RoundedRectangle(cornerRadius: size == .regular ? 30 : 22, style: .continuous)
+            .strokeBorder(.white.opacity(0.10), lineWidth: 1))
+        .disabled(!enabled)
     }
 }
 

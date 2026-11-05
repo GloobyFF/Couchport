@@ -39,3 +39,7 @@ Not compiled (no Apple toolchain); the Swift was checked with tree-sitter. Shade
 - `theaterWater` draws the ring crests on a horizontal quad at the floor, from the screen's foot
   to where the reflection's top shows (waterDepth). It is on only with Water Ripples. E and D come from the ARKit head
   when tracked.
+
+## Follow-up: Reflection Gap
+- `RenderOptions.theaterReflectionGap` (0–1 m, default 0.25 m; Screen panel slider "Reflection Gap", shown with Floor Reflection).
+  The water line is now `screen bottom − gap` (it used to be `min(0, bottom − 0.02)`), so the reflection starts 2×gap below the picture.

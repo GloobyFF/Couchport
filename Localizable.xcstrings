@@ -16337,6 +16337,52 @@
           }
         }
       }
+    },
+    "Reflection Gap": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "zh-Hans"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "zh-Hant"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "de"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "es"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "fr"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ja"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ko"
+          }
+        }
+      }
     }
   },
   "version": "1.2"

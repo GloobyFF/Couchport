@@ -144,6 +144,7 @@ struct TheaterScreenSection: View {
             Toggle("Floor Reflection", isOn: $renderOptions.theaterReflection)
                 .disabled(renderOptions.theaterRecline >= 10)
             if renderOptions.theaterReflection && renderOptions.theaterRecline < 10 {
+                slider("Reflection Gap", $renderOptions.theaterReflectionGap, 0...1, "cm")
                 Toggle("Water Ripples", isOn: Binding(get: { app.remote.settings.waterRipples },
                                                      set: { app.remote.settings.waterRipples = $0 }))
                 Text("Ripples follow how fast you press the controller buttons.")
@@ -245,6 +246,7 @@ struct TheaterScreenSection: View {
         if unit.isEmpty { return String(format: "%.2f", value) }
         if unit == "°" { return String(format: "%.0f", value) + unit }
         if unit == "%" { return String(format: "%.0f%%", value * 100) }
+        if unit == "cm" { return String(format: "%.0f cm", value * 100) }
         return String(format: "%.1f", value) + unit
     }
 }

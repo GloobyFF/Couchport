@@ -87,6 +87,9 @@ final class RenderOptions: ObservableObject {
     @Published var theaterDim: Float = 0.6 { didSet { save() } }
     /// Mirror of the theater screen on the floor (planar reflection).
     @Published var theaterReflection: Bool = true { didSet { save() } }
+    /// Gap between the screen's bottom edge and the reflection's water line,
+    /// in metres (0...1). The reflection starts twice this far below the picture.
+    @Published var theaterReflectionGap: Float = 0.25 { didSet { save() } }
     /// Lying back: the screen arcs up over the head by this angle (0...85°)
     /// and faces down. The floor reflection is off while reclined.
     @Published var theaterRecline: Float = 0 { didSet { save() } }
@@ -159,6 +162,7 @@ final class RenderOptions: ObservableObject {
         d.set(theaterTilt, forKey: "theaterTilt")
         d.set(theaterDim, forKey: "theaterDim")
         d.set(theaterReflection, forKey: "theaterReflection")
+        d.set(theaterReflectionGap, forKey: "theaterReflectionGap")
         d.set(theaterRecline, forKey: "theaterRecline")
         d.set(theaterTouchpad, forKey: "theaterTouchpad")
         d.set(flipHorizontal, forKey: "flipHorizontal")
@@ -192,6 +196,9 @@ final class RenderOptions: ObservableObject {
         theaterTilt = d.float(forKey: "theaterTilt")
         if d.object(forKey: "theaterDim") != nil { theaterDim = d.float(forKey: "theaterDim") }
         if d.object(forKey: "theaterReflection") != nil { theaterReflection = d.bool(forKey: "theaterReflection") }
+        if d.object(forKey: "theaterReflectionGap") != nil {
+            theaterReflectionGap = max(0, min(1, d.float(forKey: "theaterReflectionGap")))
+        }
         theaterRecline = d.float(forKey: "theaterRecline")
         if d.object(forKey: "theaterTouchpad") != nil { theaterTouchpad = d.bool(forKey: "theaterTouchpad") }
         flipHorizontal = d.bool(forKey: "flipHorizontal")

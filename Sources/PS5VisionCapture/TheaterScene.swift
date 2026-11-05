@@ -277,7 +277,8 @@ final class TheaterScene {
         let tilt = options.theaterTilt * (Float.pi / 180)
         let halfExtent = screenHeightMeters / 2 * abs(cos(tilt))
         let bottom = options.theaterHeight - halfExtent
-        let floor = min(0, bottom - 0.02)
+        // Water line a user-set gap below the picture (Reflection Gap).
+        let floor = bottom - max(0.005, min(1, options.theaterReflectionGap))
         reflection.position = SIMD3(0, 2 * floor - options.theaterHeight, -options.theaterDistance)
         reflection.orientation = simd_quatf(angle: -tilt, axis: [1, 0, 0])
         reflection.scale = SIMD3(1, -1, 1)

@@ -139,6 +139,7 @@ struct TheaterScreenSection: View {
             }
             slider("Room Dimming", $renderOptions.theaterDim, 0...1, "%")
             #if os(visionOS)
+            Toggle("Floor Reflection", isOn: $renderOptions.theaterReflection)
             Toggle("Hide Hands", isOn: $app.theaterHideHands)
             Text("Hiding hands uses full immersion and hides your surroundings. Turn this off to restore passthrough.")
                 .font(.caption)

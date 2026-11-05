@@ -196,6 +196,12 @@ private struct FloatingTheaterControls: View {
             }
             DockButton(title: "Stats", icon: "chart.xyaxis.line",
                               isOn: activePanel == .stats) { toggle(.stats) }
+            DockButton(title: "Reflection", icon: "square.bottomhalf.filled",
+                       isOn: renderOptions.theaterReflection) {
+                markInteraction()
+                renderOptions.theaterReflection.toggle()
+            }
+            .help("Floor Reflection")
             DockButton(title: "Hide Hands", icon: "hand.raised.slash",
                               isOn: app.theaterHideHands) {
                 markInteraction()

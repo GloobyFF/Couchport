@@ -85,6 +85,8 @@ final class RenderOptions: ObservableObject {
     @Published var theaterTilt: Float = 0 { didSet { save() } }
     /// Darkens the room around the theater screen (0 = passthrough, 1 = black).
     @Published var theaterDim: Float = 0.6 { didSet { save() } }
+    /// Mirror of the theater screen on the floor (planar reflection).
+    @Published var theaterReflection: Bool = true { didSet { save() } }
 
     // Manual image flips, applied at the YCbCr→RGB stage so both the window
     // and theater paths stay consistent. A safety net for capture cards that
@@ -151,6 +153,7 @@ final class RenderOptions: ObservableObject {
         d.set(theaterCurvature, forKey: "theaterCurvature")
         d.set(theaterTilt, forKey: "theaterTilt")
         d.set(theaterDim, forKey: "theaterDim")
+        d.set(theaterReflection, forKey: "theaterReflection")
         d.set(flipHorizontal, forKey: "flipHorizontal")
         d.set(flipVertical, forKey: "flipVertical")
         d.set(colorMatrix.rawValue, forKey: "colorMatrix")
@@ -181,6 +184,7 @@ final class RenderOptions: ObservableObject {
         theaterCurvature = d.float(forKey: "theaterCurvature")
         theaterTilt = d.float(forKey: "theaterTilt")
         if d.object(forKey: "theaterDim") != nil { theaterDim = d.float(forKey: "theaterDim") }
+        if d.object(forKey: "theaterReflection") != nil { theaterReflection = d.bool(forKey: "theaterReflection") }
         flipHorizontal = d.bool(forKey: "flipHorizontal")
         flipVertical = d.bool(forKey: "flipVertical")
         if let v = d.string(forKey: "colorMatrix"), let m = ColorMatrix(rawValue: v) { colorMatrix = m }

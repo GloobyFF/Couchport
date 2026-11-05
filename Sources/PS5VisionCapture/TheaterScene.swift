@@ -1,6 +1,7 @@
 #if os(visionOS)
 import RealityKit
 import SwiftUI
+import UIKit
 import Metal
 import Combine
 import QuartzCore
@@ -22,6 +23,10 @@ final class TheaterScene {
     private var colorTexture: LowLevelTexture?
     private var textureResource: TextureResource?
     private var screen: ModelEntity?
+    /// Planar floor reflection: the same mesh and texture mirrored about
+    /// the floor (y = 0 of the immersive space), faded toward the far edge.
+    private var reflection: ModelEntity?
+    private var screenHeightMeters: Float = 0
     private var currentSize = SIMD2<Int>(0, 0)
     private var lastGeneration = -1
     private var updateSubscription: EventSubscription?
@@ -63,6 +68,7 @@ final class TheaterScene {
         surround.children.removeAll()
         lastDim = -1
         screen = nil
+        reflection = nil
         colorTexture = nil
         textureResource = nil
         currentSize = .init(0, 0)
@@ -129,6 +135,23 @@ final class TheaterScene {
             axis: SIMD3<Float>(1, 0, 0)
         )
         applyScreenGeometryIfNeeded()
+        updateReflection()
+    }
+
+    /// Mirror across the floor plane: S·R(t) = R(-t)·S with S = diag(1,-1,1),
+    /// so the reflection is the screen at -height, tilted by -t, scaled -1 in
+    /// Y. Being real geometry, it stays correct as the head moves (unlike a
+    /// flipped 2D copy). Hidden when the screen dips into the floor.
+    private func updateReflection() {
+        guard let reflection else { return }
+        let tilt = options.theaterTilt * (Float.pi / 180)
+        let bottom = options.theaterHeight - screenHeightMeters / 2 * cos(tilt)
+        let show = options.theaterReflection && bottom > 0.03
+        if reflection.isEnabled != show { reflection.isEnabled = show }
+        guard show else { return }
+        reflection.position = SIMD3(0, -options.theaterHeight, -options.theaterDistance)
+        reflection.orientation = simd_quatf(angle: -tilt, axis: SIMD3<Float>(1, 0, 0))
+        reflection.scale = SIMD3(1, -1, 1)
     }
 
     /// Rebuilds the curved mesh when width/curvature changes.
@@ -146,6 +169,8 @@ final class TheaterScene {
         let mesh = Self.curvedScreenMesh(width: w, height: w / aspect,
                                          curvature: options.theaterCurvature)
         screen?.model?.mesh = mesh
+        reflection?.model?.mesh = mesh
+        screenHeightMeters = w / aspect
     }
 
     /// Creates the screen (color texture + curved mesh + material) once we
@@ -203,6 +228,24 @@ final class TheaterScene {
         entity.components.set(ModelSortGroupComponent(group: sortGroup, order: 1))
         root.addChild(entity)
         screen = entity
+        screenHeightMeters = w / aspect
+
+        // Reflection: same texture, dimmed, with a mask that fades it out
+        // away from the screen's bottom edge (where it meets its mirror).
+        var mirror = UnlitMaterial(applyPostProcessToneMap: false)
+        mirror.color = .init(tint: UIColor(white: 0.55, alpha: 1), texture: .init(res))
+        mirror.faceCulling = .none
+        if let fade = Self.reflectionMask(aspect: aspectRatio) {
+            mirror.blending = .transparent(opacity: .init(scale: 0.45, texture: .init(fade)))
+        } else {
+            mirror.blending = .transparent(opacity: .init(floatLiteral: 0.2))
+        }
+        let mirrored = ModelEntity(mesh: mesh, materials: [mirror])
+        mirrored.components.set(ModelSortGroupComponent(group: sortGroup, order: 1))
+        mirrored.isEnabled = false
+        root.addChild(mirrored)
+        reflection = mirrored
+        updateReflection()
         return true
     }
 
@@ -242,6 +285,49 @@ final class TheaterScene {
             return nil
         }
         maskCache[h] = texture
+        return texture
+    }
+
+    /// Reflection mask: the rounded-corner edge mask times a fade that is
+    /// strongest at the screen's bottom edge (texture bottom rows, uv.y = 0)
+    /// and gone 55 % of the way up, like a glossy floor.
+    private static var reflectionMaskCache: [Int: TextureResource] = [:]
+    static func reflectionMask(aspect: Float) -> TextureResource? {
+        let w = 512
+        let h = max(16, Int((Float(w) / max(aspect, 0.1)).rounded()))
+        if let cached = reflectionMaskCache[h] { return cached }
+        let radius = Float(h) * 0.03
+        let feather: Float = 1.5
+        var pixels = [UInt8](repeating: 0, count: w * h * 4)
+        let hw = Float(w) / 2, hh = Float(h) / 2
+        for y in 0..<h {
+            let py = abs(Float(y) + 0.5 - hh)
+            // 0 at the bottom edge, 1 at the top.
+            let fromBottom = 1 - (Float(y) + 0.5) / Float(h)
+            let t = max(0, 1 - fromBottom / 0.55)
+            let fade = t * t * (3 - 2 * t)
+            for x in 0..<w {
+                let px = abs(Float(x) + 0.5 - hw)
+                let qx = px - (hw - feather / 2 - radius)
+                let qy = py - (hh - feather / 2 - radius)
+                let outside = (max(qx, 0) * max(qx, 0) + max(qy, 0) * max(qy, 0)).squareRoot()
+                let sd = outside + min(max(qx, qy), 0) - radius
+                let edge = max(0, min(1, 0.5 - sd / feather))
+                let a = UInt8(edge * fade * 255)
+                let i = (y * w + x) * 4
+                pixels[i] = a; pixels[i + 1] = a; pixels[i + 2] = a; pixels[i + 3] = a
+            }
+        }
+        guard let provider = CGDataProvider(data: Data(pixels) as CFData),
+              let image = CGImage(width: w, height: h, bitsPerComponent: 8, bitsPerPixel: 32,
+                                  bytesPerRow: w * 4, space: CGColorSpaceCreateDeviceRGB(),
+                                  bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue),
+                                  provider: provider, decode: nil, shouldInterpolate: true,
+                                  intent: .defaultIntent),
+              let texture = try? TextureResource(image: image, options: .init(semantic: .raw)) else {
+            return nil
+        }
+        reflectionMaskCache[h] = texture
         return texture
     }
 

@@ -623,10 +623,14 @@ final class TheaterScene {
         let hw = Float(w) / 2, hh = Float(h) / 2
         for y in 0..<h {
             let py = abs(Float(y) + 0.5 - hh)
-            // 0 at the bottom edge, 1 at the top: a long, gradual fade
-            // over the whole height (no hard cut halfway).
-            let fromBottom = 1 - (Float(y) + 0.5) / Float(h)
-            let fade = pow(max(0, 1 - fromBottom), 1.8)
+            // d = 0 at the screen's bottom edge, 1 at the far edge. Fairly
+            // solid near the screen, then from about halfway it dissolves to
+            // fully transparent by ~78% (the kernel blurs harder there too).
+            let d = 1 - (Float(y) + 0.5) / Float(h)
+            func smooth(_ a: Float, _ b: Float, _ x: Float) -> Float {
+                let t = max(0, min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t)
+            }
+            let fade = (1 - 0.35 * smooth(0, 0.45, d)) * (1 - smooth(0.38, 0.78, d))
             for x in 0..<w {
                 let px = abs(Float(x) + 0.5 - hw)
                 let qx = px - (hw - feather / 2 - radius)

@@ -315,7 +315,7 @@ static float2 theaterRipple(float2 fp, constant TheaterReflectionParams& p, thre
     float k = max(p.misc.z, 1.0) / 4.0;        // scale with the screen size
     float a = sin(fp.y * 16.0 / k - t * 2.0 + sin(fp.x * 2.5 / k + t * 0.7) * 1.3)
             + 0.5 * sin(fp.x * 9.0 / k + fp.y * 5.0 / k - t * 1.6);
-    float2 disp = float2(0.35 * a, a) * 0.028 * k * waves;
+    float2 disp = float2(0.35 * a, a) * 0.05 * k * waves;
     int count = min(int(p.info.x), 8);
     for (int i = 0; i < count; i++) {
         float4 drop = p.drops[i];
@@ -328,7 +328,7 @@ static float2 theaterRipple(float2 fp, constant TheaterReflectionParams& p, thre
                   * saturate(1.0 - dist / (1.3 * k));
         float ring = sin((dist - front) * 24.0 / k) * env;
         float2 dir = dist > 1e-4 ? delta / dist : float2(0.0);
-        disp += dir * ring * 0.07 * k;
+        disp += dir * ring * 0.12 * k;
         crest += max(0.0, ring);
     }
     return disp;
@@ -370,7 +370,7 @@ kernel void theaterReflection(texture2d<float, access::sample> src [[texture(0)]
     float crest = 0.0;
     float2 q = theaterFloorToUV(fp + theaterRipple(fp, p, crest), p);
 
-    float lod = min(maxLod, 0.6 + d * 2.0 + d * d * maxLod * 1.0);
+    float lod = min(maxLod, 0.5 + d * 1.5 + smoothstep(0.35, 0.8, d) * maxLod * 0.9);
     float2 px = exp2(lod) / float2(src.get_width(), src.get_height());
     float3 c = src.sample(s, q, level(lod)).rgb * 0.4
              + src.sample(s, q + float2(px.x, 0), level(lod)).rgb * 0.15

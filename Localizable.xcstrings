@@ -16343,43 +16343,43 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "zh-Hans"
+            "value": "倒影间距"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "zh-Hant"
+            "value": "倒影間距"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "de"
+            "value": "Spiegelungsabstand"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "es"
+            "value": "Separación del reflejo"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "fr"
+            "value": "Écart du reflet"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "ja"
+            "value": "反射の間隔"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "ko"
+            "value": "반사 간격"
           }
         }
       }

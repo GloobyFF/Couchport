@@ -43,3 +43,9 @@ Not compiled (no Apple toolchain); the Swift was checked with tree-sitter. Shade
 ## Follow-up: Reflection Gap
 - `RenderOptions.theaterReflectionGap` (0–1 m, default 0.25 m; Screen panel slider "Reflection Gap", shown with Floor Reflection).
   The water line is now `screen bottom − gap` (it used to be `min(0, bottom − 0.02)`), so the reflection starts 2×gap below the picture.
+
+## Follow-up: fade, blur, stronger distortion
+- Fixed the "Reflection Gap" strings (they had been written as locale codes; l10n_add7.py now also accepts {locale: value} dicts).
+- Reflection mask: (1 − 0.35·smooth(0, .45, d)) · (1 − smooth(.38, .78, d)), so it dissolves to fully transparent from about halfway.
+- Blur LOD: 0.5 + 1.5d + smooth(.35, .8, d)·0.9·maxLod, so it blurs sharply in the far half.
+- Distortion: rings 0.07→0.12·W/4 m, swell 0.028→0.05·W/4 m.

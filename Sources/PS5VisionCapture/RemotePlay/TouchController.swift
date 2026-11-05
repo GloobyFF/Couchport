@@ -103,6 +103,10 @@ struct TouchControllerView: View {
     /// Leave the centre column empty (iPhone Duo book pose: the fold runs
     /// down the middle). System buttons move under the shoulder buttons.
     var avoidCenter = false
+    /// Enlarged touchpad (for drawing), opened from the small pad's corner.
+    @State private var bigTouchpad = false
+    /// Its size as a fraction of the area, set with the corner handle.
+    @AppStorage("rp.touchpad.bigScale") private var bigScale: Double = 0.85
 
     var body: some View {
         GeometryReader { proxy in
@@ -114,6 +118,12 @@ struct TouchControllerView: View {
                 case .panel: panelLayout(size: size, u: u)
                 case .touchpad: touchpadLayout(size: size, u: u)
                 case .touchpadStrip: stripLayout(size: size, u: u)
+                }
+                if bigTouchpad {
+                    BigTouchpad(pad: pad, area: size, scale: $bigScale) {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) { bigTouchpad = false }
+                    }
+                    .transition(.scale(scale: 0.6).combined(with: .opacity))
                 }
             }
             .frame(width: size.width, height: size.height)
@@ -295,7 +305,7 @@ struct TouchControllerView: View {
             Spacer()
             HStack(spacing: u * 0.4) {
                 PadButton(pad: pad, button: .create, label: .symbol("square.and.arrow.up"), u: u * 0.7, shape: .capsule)
-                TouchpadControl(pad: pad)
+                TouchpadControl(pad: pad, onExpand: expandTouchpad)
                     .frame(width: min(size.width * 0.4, u * 6), height: u * 1.5)
                 VStack(spacing: u * 0.2) {
                     PadButton(pad: pad, button: .options, label: .symbol("line.3.horizontal"), u: u * 0.7, shape: .capsule)
@@ -307,8 +317,13 @@ struct TouchControllerView: View {
     }
 
     private func touchpad(u: CGFloat) -> some View {
-        TouchpadControl(pad: pad)
+        TouchpadControl(pad: pad, onExpand: expandTouchpad)
             .frame(width: u * 3.2, height: u * 1.1)
+    }
+
+    private func expandTouchpad() {
+        pad.setTouch(nil)
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) { bigTouchpad = true }
     }
 }
 
@@ -654,10 +669,31 @@ private struct StickControl: View {
 private struct TouchpadControl: View {
     @ObservedObject var pad: VirtualPad
     var large = false
+    /// Shows an enlarge button in the corner (small pads only).
+    var onExpand: (() -> Void)? = nil
     @State private var start: Date?
     @State private var moved = false
 
     var body: some View {
+        ZStack(alignment: .topTrailing) {
+            surface
+            if let onExpand {
+                Button(action: onExpand) {
+                    Image(systemName: "arrow.up.left.and.arrow.down.right")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(PadStyle.glyph)
+                        .frame(width: 22, height: 22)
+                        .background(Circle().fill(.black.opacity(0.35)))
+                        .contentShape(Rectangle().inset(by: -6))
+                }
+                .buttonStyle(.plain)
+                .padding(3)
+                .accessibilityLabel(Text("Enlarge Touchpad"))
+            }
+        }
+    }
+
+    private var surface: some View {
         GeometryReader { proxy in
             UnevenRoundedRectangle(topLeadingRadius: 10, bottomLeadingRadius: large ? 26 : 16,
                                    bottomTrailingRadius: large ? 26 : 16, topTrailingRadius: 10,
@@ -694,6 +730,63 @@ private struct TouchpadControl: View {
                         }
                     })
         }
+    }
+}
+
+/// The touchpad enlarged for drawing: keeps the real pad's 1920:942 shape,
+/// centred over the controller area. The corner handle resizes it (the size
+/// is remembered); the button beside it shrinks it back.
+private struct BigTouchpad: View {
+    @ObservedObject var pad: VirtualPad
+    let area: CGSize
+    @Binding var scale: Double
+    let onClose: () -> Void
+    @State private var dragStartScale: Double?
+
+    private static let aspect: CGFloat = 1920.0 / 942.0
+
+    var body: some View {
+        let s = CGFloat(min(max(scale, 0.35), 1.0))
+        let maxW = area.width - 16, maxH = area.height - 16
+        let w = min(maxW * s, maxH * s * Self.aspect)
+        let h = w / Self.aspect
+        ZStack(alignment: .bottomTrailing) {
+            TouchpadControl(pad: pad, large: true)
+                .frame(width: w, height: h)
+            HStack(spacing: 8) {
+                Button(action: onClose) {
+                    handle("arrow.down.right.and.arrow.up.left")
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(Text("Shrink Touchpad"))
+                handle("arrow.up.left.and.down.right.and.arrow.up.right.and.down.left")
+                    .gesture(DragGesture(minimumDistance: 2)
+                        .onChanged { value in
+                            let start = dragStartScale ?? scale
+                            if dragStartScale == nil { dragStartScale = start }
+                            // Growing from the centre: the corner moves half as fast.
+                            let base = max(1, min(maxW, maxH * Self.aspect))
+                            let delta = Double(max(value.translation.width,
+                                                   value.translation.height * Self.aspect) * 2 / base)
+                            scale = min(1, max(0.35, start + delta))
+                        }
+                        .onEnded { _ in dragStartScale = nil })
+                    .accessibilityLabel(Text("Resize Touchpad"))
+            }
+            .padding(8)
+        }
+        .frame(width: w, height: h)
+        .frame(width: area.width, height: area.height)
+    }
+
+    private func handle(_ symbol: String) -> some View {
+        Image(systemName: symbol)
+            .font(.system(size: 14, weight: .bold))
+            .foregroundStyle(PadStyle.glyph)
+            .frame(width: 36, height: 36)
+            .background(Circle().fill(.black.opacity(0.45)))
+            .overlay(Circle().stroke(.white.opacity(0.3), lineWidth: 1))
+            .contentShape(Circle())
     }
 }
 #endif

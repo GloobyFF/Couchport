@@ -92,7 +92,8 @@ final class AppModel: ObservableObject {
     // MARK: - Free tier
 
     /// Resets anything a free user cannot use: 1080p, HDR, bitrates outside
-    /// 10–20 Mbps, upscaling, sharpening and colour presets.
+    /// 10–20 Mbps, upscaling, sharpening and the other colour presets
+    /// (free stays on Gaming).
     func applyFreeTierLimits() {
         let s = remote.settings
         if s.resolution > FreeTier.maxResolution { s.resolution = FreeTier.maxResolution }
@@ -103,7 +104,9 @@ final class AppModel: ObservableObject {
         let r = renderOptions
         if r.upscale != .off { r.upscale = .off }
         if r.sharpenEnabled { r.sharpenEnabled = false }
-        if r.preset != .original { r.preset = .original }
+        // Free users get the Gaming grade (Original looks flat on most TVs
+        // and headsets); the other presets and Custom stay Pro.
+        if r.preset != .gaming { r.preset = .gaming }
     }
 
     /// Runs the free-session clock only while a Remote Play stream is live.

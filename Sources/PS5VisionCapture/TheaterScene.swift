@@ -6,6 +6,7 @@ import Metal
 import Combine
 import QuartzCore
 import simd
+import ARKit
 
 /// Immersive theater: a large curved screen showing the live capture.
 ///
@@ -15,6 +16,8 @@ import simd
 @MainActor
 final class TheaterScene {
     let root = Entity()
+    /// Name of the screen entity, so gestures can find it (touchpad).
+    static let screenName = "theaterScreen"
 
     private let renderer: MetalVideoRenderer
     private let device: MTLDevice
@@ -23,10 +26,6 @@ final class TheaterScene {
     private var colorTexture: LowLevelTexture?
     private var textureResource: TextureResource?
     private var screen: ModelEntity?
-    /// Planar floor reflection: the same mesh and texture mirrored about
-    /// the floor (y = 0 of the immersive space), faded toward the far edge.
-    private var reflection: ModelEntity?
-    private var screenHeightMeters: Float = 0
     private var currentSize = SIMD2<Int>(0, 0)
     private var lastGeneration = -1
     private var updateSubscription: EventSubscription?
@@ -39,11 +38,56 @@ final class TheaterScene {
     /// Draw order: the dim sphere first, then the (blended) screen.
     private let sortGroup = ModelSortGroup(depthPass: nil)
 
+    // MARK: Floor reflection
+
+    /// Planar floor reflection: the same mesh mirrored about the floor,
+    /// textured with a blurred, rippled copy of the picture (see the
+    /// `theaterReflection` kernel) and faded out away from the screen.
+    private var reflection: ModelEntity?
+    private var reflectionTexture: LowLevelTexture?
+    private let reflectionPipeline: MTLComputePipelineState?
+    private var screenHeightMeters: Float = 0
+    private let epoch = CACurrentMediaTime()
+    /// Ripple drops: x, y (reflection UV), start time, amplitude.
+    private var drops: [SIMD4<Float>] = []
+    private var pressTimes: [CFTimeInterval] = []
+    private var lastPresses: Int?
+    private var waves: Float = 0
+    /// Total controller button presses so far (rising edges); drives ripples.
+    var buttonPresses: (@MainActor () -> Int)?
+    /// Water ripples on the reflection (user setting).
+    var ripplesEnabled: @MainActor () -> Bool = { true }
+
+    // MARK: Recline
+
+    private let arSession = ARKitSession()
+    private let worldTracking = WorldTrackingProvider()
+    /// Head position the reclined screen orbits around. Captured when the
+    /// recline starts and on Recenter.
+    private var reclinePivot: SIMD3<Float>?
+    private var recenterRequested = false
+    /// Seated eye height the screen's Height setting is measured against
+    /// when reclined.
+    private static let seatedEye: Float = 1.2
+
+    /// The control dock, placed per frame so it follows the recline.
+    weak var controls: Entity?
+    var controlsBase = SIMD3<Float>(0, 0.72, -1.25)
+
+    // MARK: Touchpad cursor
+
+    private var touchCursor: ModelEntity?
+
     init(renderer: MetalVideoRenderer, options: RenderOptions) {
         self.renderer = renderer
         self.options = options
         self.device = renderer.metalDevice
         self.commandQueue = device.makeCommandQueue()
+        if let fn = (try? device.makeDefaultLibrary(bundle: .main))?.makeFunction(name: "theaterReflection") {
+            reflectionPipeline = try? device.makeComputePipelineState(function: fn)
+        } else {
+            reflectionPipeline = nil
+        }
     }
 
     /// Starts pulling frames by subscribing to per-frame updates on the
@@ -56,12 +100,17 @@ final class TheaterScene {
         updateSubscription = content.subscribe(to: SceneEvents.Update.self) { [weak self] _ in
             self?.pullFrame()
         }
+        if WorldTrackingProvider.isSupported {
+            let session = arSession, provider = worldTracking
+            Task { try? await session.run([provider]) }
+        }
     }
 
     func deactivate() {
         renderer.theaterEnabled.value = false
         updateSubscription?.cancel()
         updateSubscription = nil
+        arSession.stop()
         root.children.removeAll()
         surround.removeFromParent()
         surroundModel = nil
@@ -69,11 +118,16 @@ final class TheaterScene {
         lastDim = -1
         screen = nil
         reflection = nil
+        reflectionTexture = nil
+        touchCursor = nil
         colorTexture = nil
         textureResource = nil
         currentSize = .init(0, 0)
         lastGeneration = -1
     }
+
+    /// Re-centres the reclined screen on where the head is now.
+    func recenter() { recenterRequested = true }
 
     private func buildSurround() {
         guard surroundModel == nil else { return }
@@ -95,9 +149,14 @@ final class TheaterScene {
         sphere.components.set(OpacityComponent(opacity: dim))
     }
 
+    private var reclineRadians: Float { max(0, min(85, options.theaterRecline)) * (Float.pi / 180) }
+    private var isReclined: Bool { options.theaterRecline > 0.5 }
+    private var reflectionWanted: Bool { options.theaterReflection && options.theaterRecline < 10 }
+
     /// Called once per RealityKit frame on the main actor.
     private func pullFrame() {
         updateSurround()
+        updatePlacement()
         guard let frame = renderer.latestTheaterFrame() else { return }
 
         guard ensureScreen(width: frame.texture.width, height: frame.texture.height),
@@ -113,6 +172,7 @@ final class TheaterScene {
                 defer {
                     // Mipmaps: without them a 1080p/4K texture shrunk onto a
                     // distant screen shimmers and aliases on fine detail.
+                    // The reflection blur samples them too.
                     if dest.mipmapLevelCount > 1 { blit.generateMipmaps(for: dest) }
                     blit.endEncoding()
                 }
@@ -124,34 +184,179 @@ final class TheaterScene {
                           to: dest, destinationSlice: 0, destinationLevel: 0,
                           destinationOrigin: MTLOrigin(x: 0, y: 0, z: 0))
             }
+            if reflection?.isEnabled == true {
+                encodeReflection(from: dest, commandBuffer: commandBuffer)
+            }
         }
         commandBuffer.commit()
-
-        // Apply live screen placement and tilt. Positive X rotation brings the
-        // top edge toward the viewer, useful when watching while reclined.
-        screen?.position = SIMD3(0, options.theaterHeight, -options.theaterDistance)
-        screen?.orientation = simd_quatf(
-            angle: options.theaterTilt * (Float.pi / 180),
-            axis: SIMD3<Float>(1, 0, 0)
-        )
         applyScreenGeometryIfNeeded()
+    }
+
+    // MARK: Placement (seated or reclined)
+
+    /// Seated (recline 0): exactly the old placement, from the floor origin.
+    /// Reclined: the seated offset from the eye is rotated up around the
+    /// head by the recline angle, so the screen arcs overhead and faces down
+    /// toward someone lying back. The dock follows the same rotation.
+    private func updatePlacement() {
+        let tiltQ = simd_quatf(angle: options.theaterTilt * (Float.pi / 180), axis: [1, 0, 0])
+        let dockLean = simd_quatf(angle: -.pi / 6, axis: [1, 0, 0])
+        if isReclined {
+            if reclinePivot == nil || recenterRequested {
+                if let head = headPosition() {
+                    reclinePivot = head
+                    recenterRequested = false
+                } else if reclinePivot == nil {
+                    reclinePivot = SIMD3(0, Self.seatedEye, 0)
+                }
+            }
+            let pivot = reclinePivot ?? SIMD3(0, Self.seatedEye, 0)
+            let r = simd_quatf(angle: reclineRadians, axis: [1, 0, 0])
+            let seated = SIMD3<Float>(0, options.theaterHeight - Self.seatedEye, -options.theaterDistance)
+            screen?.position = pivot + r.act(seated)
+            screen?.orientation = r * tiltQ
+            if let controls {
+                controls.position = pivot + r.act(controlsBase - SIMD3(0, Self.seatedEye, 0))
+                controls.orientation = r * dockLean
+            }
+        } else {
+            reclinePivot = nil
+            recenterRequested = false
+            screen?.position = SIMD3(0, options.theaterHeight, -options.theaterDistance)
+            screen?.orientation = tiltQ
+            if let controls {
+                controls.position = controlsBase
+                controls.orientation = dockLean
+            }
+        }
         updateReflection()
     }
 
-    /// Mirror across the floor plane: S·R(t) = R(-t)·S with S = diag(1,-1,1),
-    /// so the reflection is the screen at -height, tilted by -t, scaled -1 in
-    /// Y. Being real geometry, it stays correct as the head moves (unlike a
-    /// flipped 2D copy). Hidden when the screen dips into the floor.
+    private func headPosition() -> SIMD3<Float>? {
+        guard worldTracking.state == .running,
+              let anchor = worldTracking.queryDeviceAnchor(atTimestamp: CACurrentMediaTime()) else {
+            return nil
+        }
+        let c = anchor.originFromAnchorTransform.columns.3
+        return SIMD3(c.x, c.y, c.z)
+    }
+
+    // MARK: Reflection
+
+    /// Mirror across the floor plane y = f: S·R(t) = R(-t)·S with
+    /// S = diag(1,-1,1), so the reflection is the screen at 2f - height,
+    /// tilted by -t, scaled -1 in Y. Being real geometry it stays correct as
+    /// the head moves. The floor is the real one (y = 0) unless the screen
+    /// reaches below it; then it drops to just under the screen's bottom
+    /// edge so the reflection never vanishes at large sizes.
     private func updateReflection() {
         guard let reflection else { return }
-        let tilt = options.theaterTilt * (Float.pi / 180)
-        let bottom = options.theaterHeight - screenHeightMeters / 2 * cos(tilt)
-        let show = options.theaterReflection && bottom > 0.03
+        let show = reflectionWanted && !isReclined
         if reflection.isEnabled != show { reflection.isEnabled = show }
         guard show else { return }
-        reflection.position = SIMD3(0, -options.theaterHeight, -options.theaterDistance)
-        reflection.orientation = simd_quatf(angle: -tilt, axis: SIMD3<Float>(1, 0, 0))
+        let tilt = options.theaterTilt * (Float.pi / 180)
+        let halfExtent = screenHeightMeters / 2 * abs(cos(tilt))
+        let bottom = options.theaterHeight - halfExtent
+        let floor = min(0, bottom - 0.02)
+        reflection.position = SIMD3(0, 2 * floor - options.theaterHeight, -options.theaterDistance)
+        reflection.orientation = simd_quatf(angle: -tilt, axis: [1, 0, 0])
         reflection.scale = SIMD3(1, -1, 1)
+    }
+
+    /// Blurred (more with distance from the screen), rippled copy of the
+    /// frame into the reflection texture. Ripples come from controller
+    /// presses: each press drops a ring, and the faster you press the
+    /// stronger and busier the water gets.
+    private func encodeReflection(from source: MTLTexture, commandBuffer: MTLCommandBuffer) {
+        guard let pipeline = reflectionPipeline, let rt = reflectionTexture,
+              let encoder = commandBuffer.makeComputeCommandEncoder() else { return }
+        let now = CACurrentMediaTime()
+        let time = Float(now - epoch)
+        let ripples = ripplesEnabled()
+
+        let presses = buttonPresses?() ?? 0
+        if let last = lastPresses, presses > last, ripples {
+            let fresh = min(presses - last, 3)
+            for _ in 0..<fresh { pressTimes.append(now) }
+            let activity = Float(pressTimes.filter { now - $0 < 2 }.count)
+            let amp = 0.35 + min(activity / 8, 1) * 0.65
+            for _ in 0..<fresh {
+                drops.append(SIMD4(Float.random(in: 0.12...0.88), Float.random(in: 0.62...0.97), time, amp))
+            }
+        }
+        lastPresses = presses
+        pressTimes.removeAll { now - $0 > 2 }
+        drops.removeAll { time - $0.z > 2.5 }
+        if drops.count > 8 { drops.removeFirst(drops.count - 8) }
+        let activity = Float(pressTimes.count)
+        let target: Float = ripples ? 0.12 + min(activity / 10, 1) * 0.88 : 0
+        waves += (target - waves) * 0.05
+
+        let out = rt.replace(using: commandBuffer)
+        var params = [SIMD4<Float>](repeating: .zero, count: 10)
+        let maxLod = Float(max(0, source.mipmapLevelCount - 1))
+        params[0] = SIMD4(time, waves, Float(out.width) / Float(max(out.height, 1)), min(maxLod, 6.5))
+        params[1] = SIMD4(Float(ripples ? min(drops.count, 8) : 0), 0, 0, 0)
+        if ripples { for (i, d) in drops.prefix(8).enumerated() { params[2 + i] = d } }
+
+        encoder.setComputePipelineState(pipeline)
+        encoder.setTexture(source, index: 0)
+        encoder.setTexture(out, index: 1)
+        encoder.setBytes(params, length: MemoryLayout<SIMD4<Float>>.stride * params.count, index: 0)
+        let tw = pipeline.threadExecutionWidth
+        let th = max(1, pipeline.maxTotalThreadsPerThreadgroup / tw)
+        encoder.dispatchThreadgroups(
+            MTLSize(width: (out.width + tw - 1) / tw, height: (out.height + th - 1) / th, depth: 1),
+            threadsPerThreadgroup: MTLSize(width: tw, height: th, depth: 1))
+        encoder.endEncoding()
+    }
+
+    // MARK: Touchpad
+
+    /// Touchpad position (0...1, y down) for a point in the screen entity's
+    /// local space; nil when it is off the picture.
+    func touchpadPoint(local p: SIMD3<Float>) -> CGPoint? {
+        guard currentSize.x > 0, screenHeightMeters > 0 else { return nil }
+        let w = options.theaterWidth
+        let u = p.x / w + 0.5
+        let v = 0.5 - p.y / screenHeightMeters
+        guard u >= -0.02, u <= 1.02, v >= -0.02, v <= 1.02 else { return nil }
+        return CGPoint(x: Double(max(0, min(1, u))), y: Double(max(0, min(1, v))))
+    }
+
+    /// Small glowing dot under the finger; nil hides it.
+    func showTouchCursor(atLocal p: SIMD3<Float>?) {
+        guard let screen else { return }
+        guard let p else { touchCursor?.isEnabled = false; return }
+        if touchCursor == nil {
+            var m = UnlitMaterial(color: .white)
+            m.blending = .transparent(opacity: 0.85)
+            let dot = ModelEntity(mesh: .generateSphere(radius: 1), materials: [m])
+            dot.components.set(ModelSortGroupComponent(group: sortGroup, order: 2))
+            screen.addChild(dot)
+            touchCursor = dot
+        }
+        let w = options.theaterWidth
+        let u = p.x / w + 0.5
+        let z = options.theaterCurvature * pow((u - 0.5) * 2, 2) * w * 0.15
+        touchCursor?.scale = SIMD3(repeating: max(0.012, w * 0.006))
+        touchCursor?.position = SIMD3(p.x, p.y, z + 0.01)
+        touchCursor?.isEnabled = true
+    }
+
+    /// Lets gestures hit the screen (touchpad); refreshed with the mesh.
+    private func updateCollision(mesh: MeshResource, width: Float, height: Float) {
+        guard let screen else { return }
+        let depth = max(0.02, options.theaterCurvature * width * 0.15)
+        let box = ShapeResource.generateBox(width: width, height: height, depth: depth)
+            .offsetBy(translation: [0, 0, depth / 2])
+        screen.components.set(CollisionComponent(shapes: [box], isStatic: true))
+        screen.components.set(InputTargetComponent(allowedInputTypes: .indirect))
+        // The exact curved surface, once generated, for accurate hits.
+        Task { @MainActor [weak screen] in
+            guard let shape = try? await ShapeResource.generateStaticMesh(from: mesh) else { return }
+            screen?.components.set(CollisionComponent(shapes: [shape], isStatic: true))
+        }
     }
 
     /// Rebuilds the curved mesh when width/curvature changes.
@@ -171,6 +376,8 @@ final class TheaterScene {
         screen?.model?.mesh = mesh
         reflection?.model?.mesh = mesh
         screenHeightMeters = w / aspect
+        updateCollision(mesh: mesh, width: w, height: w / aspect)
+        updateReflection()
     }
 
     /// Creates the screen (color texture + curved mesh + material) once we
@@ -215,12 +422,9 @@ final class TheaterScene {
                                          curvature: options.theaterCurvature)
 
         root.children.removeAll()
+        touchCursor = nil
         let entity = ModelEntity(mesh: mesh, materials: [material])
-        entity.position = SIMD3(0, options.theaterHeight, -options.theaterDistance)
-        entity.orientation = simd_quatf(
-            angle: options.theaterTilt * (Float.pi / 180),
-            axis: SIMD3<Float>(1, 0, 0)
-        )
+        entity.name = Self.screenName
         // No Y-axis rotation: the mesh is built in the XY plane with its front
         // face (+Z normal) already toward the viewer, and the material is
         // double-sided (faceCulling = .none). A 180° Y rotation here would mirror
@@ -230,13 +434,23 @@ final class TheaterScene {
         screen = entity
         screenHeightMeters = w / aspect
 
-        // Reflection: same texture, dimmed, with a mask that fades it out
-        // away from the screen's bottom edge (where it meets its mirror).
+        // Reflection texture: half resolution, linear float (written by the
+        // compute kernel). Falls back to the picture itself without the kernel.
+        var mirrorTexture: TextureResource = res
+        if reflectionPipeline != nil {
+            let rd = LowLevelTexture.Descriptor(
+                pixelFormat: .rgba16Float, width: max(16, width / 2), height: max(16, height / 2),
+                textureUsage: [.shaderRead, .shaderWrite])
+            if let rllt = try? LowLevelTexture(descriptor: rd), let rres = try? TextureResource(from: rllt) {
+                reflectionTexture = rllt
+                mirrorTexture = rres
+            }
+        }
         var mirror = UnlitMaterial(applyPostProcessToneMap: false)
-        mirror.color = .init(tint: UIColor(white: 0.55, alpha: 1), texture: .init(res))
+        mirror.color = .init(tint: UIColor(white: 0.6, alpha: 1), texture: .init(mirrorTexture))
         mirror.faceCulling = .none
         if let fade = Self.reflectionMask(aspect: aspectRatio) {
-            mirror.blending = .transparent(opacity: .init(scale: 0.45, texture: .init(fade)))
+            mirror.blending = .transparent(opacity: .init(scale: 0.5, texture: .init(fade)))
         } else {
             mirror.blending = .transparent(opacity: .init(floatLiteral: 0.2))
         }
@@ -245,7 +459,8 @@ final class TheaterScene {
         mirrored.isEnabled = false
         root.addChild(mirrored)
         reflection = mirrored
-        updateReflection()
+        updateCollision(mesh: mesh, width: w, height: w / aspect)
+        updatePlacement()
         return true
     }
 
@@ -290,7 +505,7 @@ final class TheaterScene {
 
     /// Reflection mask: the rounded-corner edge mask times a fade that is
     /// strongest at the screen's bottom edge (texture bottom rows, uv.y = 0)
-    /// and gone 55 % of the way up, like a glossy floor.
+    /// and fading gradually to nothing at the top, like a glossy floor.
     private static var reflectionMaskCache: [Int: TextureResource] = [:]
     static func reflectionMask(aspect: Float) -> TextureResource? {
         let w = 512
@@ -302,10 +517,10 @@ final class TheaterScene {
         let hw = Float(w) / 2, hh = Float(h) / 2
         for y in 0..<h {
             let py = abs(Float(y) + 0.5 - hh)
-            // 0 at the bottom edge, 1 at the top.
+            // 0 at the bottom edge, 1 at the top: a long, gradual fade
+            // over the whole height (no hard cut halfway).
             let fromBottom = 1 - (Float(y) + 0.5) / Float(h)
-            let t = max(0, 1 - fromBottom / 0.55)
-            let fade = t * t * (3 - 2 * t)
+            let fade = pow(max(0, 1 - fromBottom), 1.8)
             for x in 0..<w {
                 let px = abs(Float(x) + 0.5 - hw)
                 let qx = px - (hw - feather / 2 - radius)

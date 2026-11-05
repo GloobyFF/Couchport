@@ -152,8 +152,39 @@ final class GamepadBridge: ObservableObject {
     /// so both can be used at once.
     func setVirtual(_ snapshot: GamepadSnapshot) {
         guard snapshot != virtualPad else { return }
+        countPresses(from: virtualPad.buttons, to: snapshot.buttons)
         virtualPad = snapshot
         onState?(output)
+    }
+
+    /// Button presses so far (rising edges, hardware and touch). The Vision
+    /// Pro theater turns the press rate into water ripples.
+    private(set) var buttonPresses = 0
+
+    private func countPresses(from old: UInt32, to new: UInt32) {
+        let rising = new & ~old
+        if rising != 0 { buttonPresses &+= rising.nonzeroBitCount }
+    }
+
+    /// Touchpad finger from a non-controller source (the Vision Pro theater
+    /// screen), in unit coordinates (0...1, y down); nil lifts it.
+    func setTouchpadFinger(_ point: CGPoint?) {
+        var v = virtualPad
+        if let point {
+            v.touch0 = SIMD2(UInt16(clamping: Int((max(0, min(1, point.x)) * 1919).rounded())),
+                             UInt16(clamping: Int((max(0, min(1, point.y)) * 941).rounded())))
+        } else {
+            v.touch0 = nil
+        }
+        setVirtual(v)
+    }
+
+    /// Touchpad click from a non-controller source.
+    func setTouchpadClick(_ pressed: Bool) {
+        var v = virtualPad
+        let bit: UInt32 = 1 << 14
+        if pressed { v.buttons |= bit } else { v.buttons &= ~bit }
+        setVirtual(v)
     }
 
     /// Merge a short PS press into every outgoing snapshot, including the
@@ -215,6 +246,7 @@ final class GamepadBridge: ObservableObject {
         next.accel = last.accel
         updatePSCombo(next.buttons)
         guard next != last else { return }
+        countPresses(from: last.buttons, to: next.buttons)
         last = next
         onState?(output)
     }

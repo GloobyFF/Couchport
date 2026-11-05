@@ -15693,6 +15693,650 @@
           }
         }
       }
+    },
+    "Enter Theater": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "进入影院"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "進入影院"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kino öffnen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Entrar en el cine"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Entrer dans le cinéma"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "シアターに入る"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "극장 모드 열기"
+          }
+        }
+      }
+    },
+    "Lie back: the screen moves up over your head. Adjust the angle in Screen.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "躺下观看：屏幕移到头顶上方。可在“屏幕”中调整角度。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "躺下觀看：螢幕移到頭頂上方。可在「螢幕」中調整角度。"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zurücklehnen: Der Bildschirm wandert über deinen Kopf. Den Winkel stellst du unter „Bildschirm“ ein."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recuéstate: la pantalla sube sobre tu cabeza. Ajusta el ángulo en Pantalla."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allongez-vous : l’écran passe au-dessus de votre tête. Réglez l’angle dans Écran."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "寝そべり：画面が頭上に移動します。角度は「スクリーン」で調整できます。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "누워서 보기: 화면이 머리 위로 이동합니다. 각도는 ‘화면’에서 조절하세요."
+          }
+        }
+      }
+    },
+    "Pinch and drag on the screen to use the touchpad. A quick pinch clicks it.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在屏幕上捏合并拖动即可使用触摸板，快速捏合一下为点击。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在螢幕上捏合並拖動即可使用觸控板，快速捏合一下為點按。"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Auf dem Bildschirm zusammenziehen und ziehen, um das Touchpad zu nutzen. Kurz zusammenziehen klickt."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pellizca y arrastra en la pantalla para usar el panel táctil. Un pellizco rápido hace clic."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pincez et faites glisser sur l’écran pour utiliser le pavé tactile. Un pincement rapide clique."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "画面上でピンチしたままドラッグするとタッチパッドを操作できます。素早くピンチするとクリックします。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "화면에서 집은 채로 끌면 터치패드를 사용합니다. 빠르게 집으면 클릭됩니다."
+          }
+        }
+      }
+    },
+    "Recenter": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重新居中"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重新置中"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Neu zentrieren"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recentrar"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recentrer"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "中央に戻す"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "다시 가운데로"
+          }
+        }
+      }
+    },
+    "Recline": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "躺下"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "躺下"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zurücklehnen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reclinar"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Incliner"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "寝そべり"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "기대기"
+          }
+        }
+      }
+    },
+    "Sit": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "坐着"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "坐著"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sitzen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sentado"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Assis"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "座る"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "앉기"
+          }
+        }
+      }
+    },
+    "Lie Down": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "平躺"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "平躺"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Liegen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tumbado"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allongé"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "横になる"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "눕기"
+          }
+        }
+      }
+    },
+    "Ripples follow how fast you press the controller buttons.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按手柄按键越快，水波纹越多越强。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按手把按鍵越快，水波紋越多越強。"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Je schneller du Tasten drückst, desto stärker die Wellen."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cuanto más rápido pulses los botones, más ondas habrá."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plus vous appuyez vite sur les boutons, plus les ondulations sont fortes."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "コントローラーのボタンを速く押すほど波紋が強くなります。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "컨트롤러 버튼을 빠르게 누를수록 물결이 강해집니다."
+          }
+        }
+      }
+    },
+    "The screen moves up over your head and faces down. Floor reflection is off while reclined.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "屏幕移到头顶上方并朝下。躺下时地面倒影会自动关闭。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "螢幕移到頭頂上方並朝下。躺下時地面倒影會自動關閉。"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Der Bildschirm wandert über deinen Kopf und zeigt nach unten. Die Bodenspiegelung ist dabei aus."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La pantalla sube sobre tu cabeza y mira hacia abajo. El reflejo en el suelo se desactiva al reclinarte."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’écran passe au-dessus de votre tête, tourné vers le bas. Le reflet au sol est désactivé en position allongée."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "画面が頭上に移動して下を向きます。寝そべり中は床の反射がオフになります。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "화면이 머리 위로 이동해 아래를 향합니다. 누워 있는 동안 바닥 반사는 꺼집니다."
+          }
+        }
+      }
+    },
+    "The touchpad works in Theater: pinch and drag on the big screen to move your finger, and pinch quickly to click.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "触摸板需在影院模式下使用：在大屏幕上捏合并拖动来移动手指，快速捏合一下为点击。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "觸控板需在影院模式下使用：在大螢幕上捏合並拖動來移動手指，快速捏合一下為點按。"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Das Touchpad funktioniert im Kino: Auf dem großen Bildschirm zusammenziehen und ziehen, um den Finger zu bewegen; kurz zusammenziehen klickt."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El panel táctil funciona en el cine: pellizca y arrastra en la pantalla grande para mover el dedo y pellizca rápido para hacer clic."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le pavé tactile fonctionne dans le cinéma : pincez et faites glisser sur le grand écran pour déplacer le doigt, pincez rapidement pour cliquer."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "タッチパッドはシアターで使えます。大画面でピンチしたままドラッグすると指が動き、素早くピンチするとクリックします。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "터치패드는 극장 모드에서 사용할 수 있습니다. 큰 화면에서 집은 채로 끌면 손가락이 움직이고, 빠르게 집으면 클릭됩니다."
+          }
+        }
+      }
+    },
+    "Touchpad in Theater": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "影院模式触摸板"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "影院模式觸控板"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Touchpad im Kino"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Panel táctil en el cine"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pavé tactile au cinéma"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "シアターのタッチパッド"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "극장 모드 터치패드"
+          }
+        }
+      }
+    },
+    "Enlarge Touchpad": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "放大触摸板"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "放大觸控板"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Touchpad vergrößern"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ampliar panel táctil"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Agrandir le pavé tactile"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "タッチパッドを拡大"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "터치패드 확대"
+          }
+        }
+      }
+    },
+    "Resize Touchpad": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "调整触摸板大小"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "調整觸控板大小"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Touchpad-Größe ändern"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cambiar tamaño del panel táctil"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Redimensionner le pavé tactile"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "タッチパッドのサイズを変更"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "터치패드 크기 조절"
+          }
+        }
+      }
+    },
+    "Shrink Touchpad": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "缩小触摸板"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "縮小觸控板"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Touchpad verkleinern"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reducir panel táctil"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réduire le pavé tactile"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "タッチパッドを縮小"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "터치패드 축소"
+          }
+        }
+      }
     }
   },
   "version": "1.2"

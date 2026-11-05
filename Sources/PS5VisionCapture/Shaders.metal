@@ -294,3 +294,67 @@ kernel void waterReflection(texture2d<float, access::sample> inTex  [[texture(0)
     color += highlight * waves * strength;
     outTex.write(float4(saturate(color), 1.0), gid);
 }
+
+// MARK: - Vision Pro theater: floor reflection
+
+/// Same float4 packing as WaterParams.
+struct TheaterReflectionParams {
+    float4 misc;          // x time (s), y waves 0...1, z aspect (w/h), w max mip level
+    float4 info;          // x number of drops
+    float4 drops[8];      // x, y centre (UV), z start time, w amplitude
+};
+
+/// The theater screen's reflection texture: the picture (same orientation,
+/// the mesh mirrors it) blurred progressively away from the screen's bottom
+/// edge by sampling deeper mip levels, and disturbed by water ripples whose
+/// strength follows how often controller buttons are pressed. The fade to
+/// transparent is a separate opacity mask on the material.
+kernel void theaterReflection(texture2d<float, access::sample> src [[texture(0)]],
+                              texture2d<float, access::write>  dst [[texture(1)]],
+                              constant TheaterReflectionParams& p  [[buffer(0)]],
+                              uint2 gid                            [[thread_position_in_grid]])
+{
+    uint w = dst.get_width(), h = dst.get_height();
+    if (gid.x >= w || gid.y >= h) return;
+    constexpr sampler s(address::clamp_to_edge, filter::linear, mip_filter::linear);
+
+    float2 uv = (float2(gid) + 0.5) / float2(w, h);
+    float d = 1.0 - uv.y;                 // 0 at the screen's bottom edge (the floor line)
+    float t = p.misc.x, waves = p.misc.y, aspect = p.misc.z, maxLod = p.misc.w;
+
+    // Ambient swell, stronger and longer away from the screen.
+    float amb = sin(d * 40.0 / (0.3 + d) - t * 2.0 + sin(uv.x * 6.0 + t * 0.8) * 1.4)
+              + 0.5 * sin(uv.x * 25.0 + d * 13.0 - t * 1.5);
+    float2 offset = float2(amb * 0.003, amb * 0.005) * (0.2 + d) * waves;
+
+    // Rings from button presses.
+    float highlight = 0.0;
+    int count = min(int(p.info.x), 8);
+    for (int i = 0; i < count; i++) {
+        float4 drop = p.drops[i];
+        float age = t - drop.z;
+        if (age < 0.0 || age > 2.5) continue;
+        float2 delta = (uv - drop.xy) * float2(aspect, 1.0);
+        float dist = length(delta);
+        float front = age * 0.18;
+        float envelope = exp(-abs(dist - front) * 18.0) * exp(-age * 1.6) * drop.w
+                       * saturate(1.0 - dist / 0.4);
+        float ring = sin((dist - front) * 60.0) * envelope;
+        float2 dir = dist > 1e-4 ? delta / dist : float2(0.0);
+        offset += dir * ring * 0.025 * float2(1.0 / aspect, 1.0);
+        highlight += max(0.0, ring) * 0.25;
+    }
+
+    // Progressive blur: deeper mips further from the screen, plus a small
+    // cross of taps to round off the mip blocks.
+    float lod = min(maxLod, 0.6 + d * d * 2.2 * maxLod * 0.45 + d * 2.0);
+    float2 q = uv + offset;
+    float2 px = exp2(lod) / float2(src.get_width(), src.get_height());
+    float3 c = src.sample(s, q, level(lod)).rgb * 0.4
+             + src.sample(s, q + float2(px.x, 0), level(lod)).rgb * 0.15
+             + src.sample(s, q - float2(px.x, 0), level(lod)).rgb * 0.15
+             + src.sample(s, q + float2(0, px.y), level(lod)).rgb * 0.15
+             + src.sample(s, q - float2(0, px.y), level(lod)).rgb * 0.15;
+    c += highlight * waves;
+    dst.write(float4(c, 1.0), gid);
+}

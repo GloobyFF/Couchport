@@ -13,6 +13,10 @@ struct ImmersiveTheaterView: View {
     @State private var theater: TheaterScene?
     @State private var controlsPosition = Self.defaultControlsPosition
     @State private var isExiting = false
+    /// Theater touchpad: when the pinch started, and whether it moved.
+    @State private var touchStart: Date?
+    @State private var touchMoved = false
+    @State private var touchOrigin: CGPoint?
 
     // The attachment reserves vertical layout space above the toolbar for its
     // inline panel. This centre position keeps the visible toolbar at ~0.45 m.
@@ -23,6 +27,10 @@ struct ImmersiveTheaterView: View {
             let scene = TheaterScene(renderer: captureManager.metalRenderer,
                                      options: captureManager.renderOptions)
             content.add(scene.root)
+            let gamepad = app.remote.gamepad
+            let settings = app.remote.settings
+            scene.buttonPresses = { [weak gamepad] in gamepad?.buttonPresses ?? 0 }
+            scene.ripplesEnabled = { [weak settings] in settings?.waterRipples ?? true }
             scene.activate(content: content)
             theater = scene
 
@@ -32,12 +40,15 @@ struct ImmersiveTheaterView: View {
                 // placed instead of turning with the head.
                 controls.position = controlsPosition
                 // Lean the top back 30° so the bar, which sits below eye
-                // level, faces up toward the viewer.
+                // level, faces up toward the viewer. TheaterScene keeps
+                // placing it each frame (it follows the recline).
                 controls.orientation = simd_quatf(angle: -.pi / 6, axis: [1, 0, 0])
                 content.add(controls)
+                scene.controls = controls
+                scene.controlsBase = controlsPosition
             }
-        } update: { _, attachments in
-            attachments.entity(for: "controls")?.position = controlsPosition
+        } update: { _, _ in
+            theater?.controlsBase = controlsPosition
         } attachments: {
             Attachment(id: "controls") {
                 FloatingTheaterControls(
@@ -46,11 +57,13 @@ struct ImmersiveTheaterView: View {
                     renderOptions: captureManager.renderOptions,
                     position: $controlsPosition,
                     defaultPosition: Self.defaultControlsPosition,
-                    onExit: exitTheater
+                    onExit: exitTheater,
+                    onRecenter: { theater?.recenter() }
                 )
                 .gamepadInputOnly()
             }
         }
+        .gesture(touchpadGesture)
         .gamepadInputOnly()
         .upperLimbVisibility(app.theaterHideHands ? .hidden : .visible)
         .onAppear {
@@ -68,6 +81,50 @@ struct ImmersiveTheaterView: View {
             if captureManager.renderOptions.displayMode == .theater {
                 captureManager.renderOptions.displayMode = .window
                 openWindow(id: "main")
+            }
+        }
+    }
+
+    // MARK: Touchpad
+
+    /// Pinch on the big screen and move: the console touchpad follows the
+    /// pinch (relative to where it started, like a laptop trackpad mapped to
+    /// the whole screen). A quick pinch without moving clicks the touchpad.
+    private var touchpadGesture: some Gesture {
+        DragGesture(minimumDistance: 0)
+            .targetedToAnyEntity()
+            .onChanged { value in
+                guard captureManager.renderOptions.theaterTouchpad,
+                      app.activeSource == .remote,
+                      value.entity.name == TheaterScene.screenName,
+                      let theater else { return }
+                let local = value.convert(value.location3D, from: .local, to: value.entity)
+                guard let point = theater.touchpadPoint(local: local) else { return }
+                if touchStart == nil {
+                    touchStart = Date()
+                    touchMoved = false
+                    touchOrigin = point
+                }
+                if let o = touchOrigin, hypot(point.x - o.x, point.y - o.y) > 0.01 { touchMoved = true }
+                app.remote.gamepad.setTouchpadFinger(point)
+                theater.showTouchCursor(atLocal: local)
+            }
+            .onEnded { _ in endTouch() }
+    }
+
+    private func endTouch() {
+        guard let start = touchStart else { return }
+        let tap = !touchMoved && Date().timeIntervalSince(start) < 0.3
+        touchStart = nil
+        touchOrigin = nil
+        app.remote.gamepad.setTouchpadFinger(nil)
+        theater?.showTouchCursor(atLocal: nil)
+        if tap {
+            let gamepad = app.remote.gamepad
+            gamepad.setTouchpadClick(true)
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(90))
+                gamepad.setTouchpadClick(false)
             }
         }
     }
@@ -104,6 +161,7 @@ private struct FloatingTheaterControls: View {
     @Binding var position: SIMD3<Float>
     let defaultPosition: SIMD3<Float>
     let onExit: () async -> Void
+    let onRecenter: () -> Void
 
     @State private var expanded = true
     @State private var activePanel: TheaterPanel?
@@ -196,8 +254,22 @@ private struct FloatingTheaterControls: View {
             }
             DockButton(title: "Stats", icon: "chart.xyaxis.line",
                               isOn: activePanel == .stats) { toggle(.stats) }
+            if app.activeSource == .remote {
+                DockButton(title: "Touchpad", icon: "hand.point.up.left",
+                           isOn: renderOptions.theaterTouchpad) {
+                    markInteraction()
+                    renderOptions.theaterTouchpad.toggle()
+                }
+                .help("Pinch and drag on the screen to use the touchpad. A quick pinch clicks it.")
+            }
+            DockButton(title: "Recline", icon: "bed.double",
+                       isOn: renderOptions.theaterRecline > 0.5) {
+                markInteraction()
+                withAnimation { renderOptions.theaterRecline = renderOptions.theaterRecline > 0.5 ? 0 : 60 }
+            }
+            .help("Lie back: the screen moves up over your head. Adjust the angle in Screen.")
             DockButton(title: "Reflection", icon: "square.bottomhalf.filled",
-                       isOn: renderOptions.theaterReflection) {
+                       isOn: renderOptions.theaterReflection && renderOptions.theaterRecline < 10) {
                 markInteraction()
                 renderOptions.theaterReflection.toggle()
             }
@@ -337,7 +409,7 @@ private struct FloatingTheaterControls: View {
         case .screen:
             InlineTheaterPanel(title: "Screen", onClose: closePanel) {
                 Form {
-                    TheaterScreenSection(renderOptions: renderOptions)
+                    TheaterScreenSection(renderOptions: renderOptions, onRecenter: onRecenter)
                 }
             }
         case .enhance:

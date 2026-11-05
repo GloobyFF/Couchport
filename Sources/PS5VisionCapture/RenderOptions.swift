@@ -87,6 +87,11 @@ final class RenderOptions: ObservableObject {
     @Published var theaterDim: Float = 0.6 { didSet { save() } }
     /// Mirror of the theater screen on the floor (planar reflection).
     @Published var theaterReflection: Bool = true { didSet { save() } }
+    /// Lying back: the screen arcs up over the head by this angle (0...85°)
+    /// and faces down. The floor reflection is off while reclined.
+    @Published var theaterRecline: Float = 0 { didSet { save() } }
+    /// Pinch and drag on the theater screen drives the console touchpad.
+    @Published var theaterTouchpad: Bool = true { didSet { save() } }
 
     // Manual image flips, applied at the YCbCr→RGB stage so both the window
     // and theater paths stay consistent. A safety net for capture cards that
@@ -154,6 +159,8 @@ final class RenderOptions: ObservableObject {
         d.set(theaterTilt, forKey: "theaterTilt")
         d.set(theaterDim, forKey: "theaterDim")
         d.set(theaterReflection, forKey: "theaterReflection")
+        d.set(theaterRecline, forKey: "theaterRecline")
+        d.set(theaterTouchpad, forKey: "theaterTouchpad")
         d.set(flipHorizontal, forKey: "flipHorizontal")
         d.set(flipVertical, forKey: "flipVertical")
         d.set(colorMatrix.rawValue, forKey: "colorMatrix")
@@ -185,6 +192,8 @@ final class RenderOptions: ObservableObject {
         theaterTilt = d.float(forKey: "theaterTilt")
         if d.object(forKey: "theaterDim") != nil { theaterDim = d.float(forKey: "theaterDim") }
         if d.object(forKey: "theaterReflection") != nil { theaterReflection = d.bool(forKey: "theaterReflection") }
+        theaterRecline = d.float(forKey: "theaterRecline")
+        if d.object(forKey: "theaterTouchpad") != nil { theaterTouchpad = d.bool(forKey: "theaterTouchpad") }
         flipHorizontal = d.bool(forKey: "flipHorizontal")
         flipVertical = d.bool(forKey: "flipVertical")
         if let v = d.string(forKey: "colorMatrix"), let m = ColorMatrix(rawValue: v) { colorMatrix = m }
@@ -198,5 +207,11 @@ final class RenderOptions: ObservableObject {
         saturation = d.float(forKey: "saturation")
         gamma = d.float(forKey: "gamma")
         isLoading = false
+        // 2026-11-05: Gaming is the default look. Installs that were left on
+        // Original (the old free-tier reset) move to Gaming once.
+        if !d.bool(forKey: "presetGamingMigrated") {
+            d.set(true, forKey: "presetGamingMigrated")
+            if preset == .original { preset = .gaming }
+        }
     }
 }

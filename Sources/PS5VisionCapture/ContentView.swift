@@ -530,6 +530,7 @@ private struct PlayerControlBar: View {
     @ObservedObject var renderOptions: RenderOptions
     let onInteraction: () -> Void
     let onOpen: (PlayerPanel) -> Void
+    @State private var showTouchpadHint = false
 
     var body: some View {
         HStack(alignment: .top, spacing: 4) {
@@ -553,6 +554,13 @@ private struct PlayerControlBar: View {
                 DockButton(title: "Stream", icon: "dial.medium") { onOpen(.stream) }
             }
             DockButton(title: "Stats", icon: "chart.xyaxis.line") { onOpen(.stats) }
+            if app.activeSource == .remote && Platform.supportsTheater {
+                // The touchpad lives on the big theater screen.
+                DockButton(title: "Touchpad", icon: "hand.point.up.left") {
+                    onInteraction()
+                    showTouchpadHint = true
+                }
+            }
             moreMenu
 
             DockDivider()
@@ -574,6 +582,12 @@ private struct PlayerControlBar: View {
         .padding(.vertical, 16)
         .fixedSize()
         .brandPanel(in: RoundedRectangle(cornerRadius: 52, style: .continuous))
+        .alert("Touchpad in Theater", isPresented: $showTouchpadHint) {
+            Button("Enter Theater") { renderOptions.displayMode = .theater }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("The touchpad works in Theater: pinch and drag on the big screen to move your finger, and pinch quickly to click.")
+        }
     }
 
     private var status: some View {

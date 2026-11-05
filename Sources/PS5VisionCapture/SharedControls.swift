@@ -125,6 +125,8 @@ struct EnhancePanel: View {
 /// Shared screen placement controls used by both theater control surfaces.
 struct TheaterScreenSection: View {
     @ObservedObject var renderOptions: RenderOptions
+    /// Re-centres the reclined screen on the head (theater only).
+    var onRecenter: (() -> Void)? = nil
     #if os(visionOS)
     @EnvironmentObject private var app: AppModel
     #endif
@@ -140,6 +142,15 @@ struct TheaterScreenSection: View {
             slider("Room Dimming", $renderOptions.theaterDim, 0...1, "%")
             #if os(visionOS)
             Toggle("Floor Reflection", isOn: $renderOptions.theaterReflection)
+                .disabled(renderOptions.theaterRecline >= 10)
+            if renderOptions.theaterReflection && renderOptions.theaterRecline < 10 {
+                Toggle("Water Ripples", isOn: Binding(get: { app.remote.settings.waterRipples },
+                                                     set: { app.remote.settings.waterRipples = $0 }))
+                Text("Ripples follow how fast you press the controller buttons.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            reclineControls
             Toggle("Hide Hands", isOn: $app.theaterHideHands)
             Text("Hiding hands uses full immersion and hides your surroundings. Turn this off to restore passthrough.")
                 .font(.caption)
@@ -157,11 +168,48 @@ struct TheaterScreenSection: View {
                 renderOptions.theaterHeight = 1.3
                 renderOptions.theaterTilt = 0
                 renderOptions.theaterCurvature = 0.35
+                renderOptions.theaterRecline = 0
             } label: {
                 Label("Reset Screen", systemImage: "arrow.counterclockwise")
             }
         }
     }
+
+    #if os(visionOS)
+    /// Lying back: angle presets, a fine slider and Recenter.
+    @ViewBuilder private var reclineControls: some View {
+        HStack(spacing: 10) {
+            reclinePreset("Sit", 0)
+            reclinePreset("Recline", 35)
+            reclinePreset("Lie Down", 75)
+        }
+        slider("Recline", $renderOptions.theaterRecline, 0...85, "°")
+        if renderOptions.theaterRecline > 0.5 {
+            if let onRecenter {
+                Button {
+                    onRecenter()
+                } label: {
+                    Label("Recenter", systemImage: "scope")
+                }
+            }
+            Text("The screen moves up over your head and faces down. Floor reflection is off while reclined.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private func reclinePreset(_ title: String, _ angle: Float) -> some View {
+        Button {
+            withAnimation { renderOptions.theaterRecline = angle }
+        } label: {
+            Text(LocalizedStringKey(title))
+                .font(.callout)
+                .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.bordered)
+        .tint(abs(renderOptions.theaterRecline - angle) < 1 ? Brand.blue : nil)
+    }
+    #endif
 
     private func preset(_ title: String, width: Float, distance: Float, height: Float,
                         curve: Float) -> some View {
